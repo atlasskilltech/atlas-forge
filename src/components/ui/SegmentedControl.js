@@ -16,7 +16,7 @@ const ACTIVE = {
 
 const INACTIVE = {
   ink: 'border border-line bg-surface text-muted hover:text-ink',
-  primary: 'bg-primary-100/60 text-muted hover:text-primary-500',
+  primary: 'bg-primary-100/60 text-muted hover:text-primary-text',
 }
 
 export default function SegmentedControl({

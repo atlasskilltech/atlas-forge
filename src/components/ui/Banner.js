@@ -11,9 +11,9 @@ import { cn } from '@/lib/utils'
 const TONES = {
   neutral: 'border-line bg-canvas text-muted',
   info: 'border-primary-200 bg-primary-50 text-primary-600',
-  success: 'border-success/20 bg-success/8 text-success',
-  warning: 'border-warning/25 bg-warning/8 text-warning',
-  danger: 'border-danger/20 bg-danger/8 text-danger',
+  success: 'border-success-fill/20 bg-success-fill/8 text-success',
+  warning: 'border-warning-fill/25 bg-warning-fill/8 text-warning',
+  danger: 'border-danger-fill/20 bg-danger-fill/8 text-danger',
 }
 
 /**

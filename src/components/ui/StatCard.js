@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
  */
 
 const TONES = {
-  primary: 'text-primary-500',
+  primary: 'text-primary-text',
   success: 'text-success',
   warning: 'text-warning',
   danger: 'text-danger',
@@ -22,10 +22,13 @@ const TONES = {
  * @param {string} props.label         Caption beneath the value.
  * @param {'primary'|'success'|'warning'|'danger'|'neutral'|'ink'} [props.tone]
  * @param {boolean} [props.compact]    Mobile tile proportions.
+ * @param {string} [props.caption]     Optional third line, e.g. "+2 this week"
+ *   on the Super Admin Activity Report tiles.
  */
 export default function StatCard({
   value,
   label,
+  caption,
   tone = 'primary',
   compact = false,
   className,
@@ -57,6 +60,9 @@ export default function StatCard({
       >
         {label}
       </p>
+      {caption ? (
+        <p className="mt-1 text-[11px] text-muted/70">{caption}</p>
+      ) : null}
     </div>
   )
 }

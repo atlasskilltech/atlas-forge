@@ -77,7 +77,7 @@ export default function StartupPage() {
         <Button
           variant="subtle"
           size="lg"
-          className="mt-4 border-0 bg-primary-100 text-primary-500"
+          className="mt-4 border-0 bg-primary-100 text-primary-text"
         >
           + Add Team Member (App ID)
         </Button>

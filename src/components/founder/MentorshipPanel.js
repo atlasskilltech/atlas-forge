@@ -46,7 +46,7 @@ export default function MentorshipPanel() {
             <p className="text-[15px] font-bold text-ink lg:text-base">{mentor.name}</p>
             <p className="mt-0.5 text-[13px] text-muted lg:hidden">{mentor.mobileRole}</p>
             <p className="mt-1 hidden text-sm text-muted lg:block">{mentor.role}</p>
-            <p className="mt-1 hidden text-[13px] text-primary-500 lg:block">
+            <p className="mt-1 hidden text-[13px] text-primary-text lg:block">
               {mentor.note}
             </p>
           </div>

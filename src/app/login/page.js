@@ -1,7 +1,6 @@
-import Image from 'next/image'
 import LoginForm from '@/components/auth/LoginForm'
-import { Chip } from '@/components/ui'
-import { brand, siteConfig } from '@/config/site'
+import { BrandLogo, Chip } from '@/components/ui'
+import { siteConfig } from '@/config/site'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -47,36 +46,23 @@ export default function LoginPage() {
       <section className="flex flex-col items-center px-6 pt-[61px] text-center lg:items-start lg:justify-center lg:px-20 lg:pt-0 lg:text-left">
         <div className="flex items-center gap-[33px]">
           {/* White-alpha variant on both breakpoints — the panel is #1E2235. */}
-          <Image
-            src={brand.universityLogoWhite}
-            alt={siteConfig.university}
-            width={146}
-            height={84}
-            priority
-            className="h-[42px] w-auto lg:h-[84px]"
-          />
-          <Image
-            src={brand.forgeLogo}
-            alt={siteConfig.name}
-            width={230}
-            height={64}
-            priority
-            className="hidden h-16 w-auto lg:block"
-          />
+          <BrandLogo mark="universityWhite" priority className="h-[42px] lg:h-[84px]" />
+          <BrandLogo mark="forge" priority className="hidden h-16 lg:block" />
         </div>
 
         {/* Mobile-only lockup */}
         <h1 className="mt-[13px] text-[22px] leading-tight font-bold tracking-[0.01em] text-white lg:hidden">
           ATLAS FORGE
         </h1>
-        <p className="mt-[5px] text-[13px] leading-[15px] text-muted lg:hidden">
+        {/* On the navy panel — `-fill` is the original, higher-contrast tone here. */}
+        <p className="mt-[5px] text-[13px] leading-[15px] text-muted-fill lg:hidden">
           {siteConfig.tagline}
           <br />
           {siteConfig.university}
         </p>
 
         {/* Desktop-only supporting copy */}
-        <p className="mt-[31px] hidden max-w-[465px] text-sm leading-[18px] text-muted lg:block">
+        <p className="mt-[31px] hidden max-w-[465px] text-sm leading-[18px] text-muted-fill lg:block">
           The Product Development Centre for ATLAS SkillTech University -
           connecting students, founders, and mentors.
         </p>
@@ -96,14 +82,7 @@ export default function LoginPage() {
       {/* ---- Form panel -------------------------------------------------- */}
       <section className="flex px-4 pb-10 lg:min-h-dvh lg:items-center lg:justify-center lg:bg-surface lg:px-[100px] lg:pb-0">
         <div className="mt-[83px] w-full rounded-card bg-surface px-6 py-7 lg:mt-0 lg:max-w-[560px] lg:rounded-none lg:p-0">
-          <Image
-            src={brand.forgeLogo}
-            alt={siteConfig.name}
-            width={115}
-            height={32}
-            priority
-            className="h-8 w-auto lg:hidden"
-          />
+          <BrandLogo mark="forge" priority className="h-8 lg:hidden" />
 
           <h1 className="mt-3.5 text-2xl leading-tight font-bold tracking-[-0.01em] text-ink lg:mt-0 lg:text-[30px]">
             <span className="lg:hidden">Sign in</span>

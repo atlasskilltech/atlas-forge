@@ -101,7 +101,7 @@ export default function IncubationForm() {
                           className={cn(
                             'mt-0.5 flex size-[18px] shrink-0 items-center justify-center rounded-full border text-[10px]',
                             done
-                              ? 'border-success bg-success text-white'
+                              ? 'border-success-fill bg-success-fill text-white'
                               : 'border-line-soft bg-surface'
                           )}
                         >
@@ -157,7 +157,7 @@ export default function IncubationForm() {
                     aria-hidden="true"
                     className={cn(
                       'size-1.5 shrink-0 rounded-full',
-                      done ? 'bg-success' : 'bg-primary-500'
+                      done ? 'bg-success-fill' : 'bg-primary-500'
                     )}
                   />
                   <span

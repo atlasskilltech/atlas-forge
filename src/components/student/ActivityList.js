@@ -3,9 +3,9 @@ import { cn } from '@/lib/utils'
 
 const DOT = {
   primary: 'bg-primary-500',
-  success: 'bg-success',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
+  success: 'bg-success-fill',
+  warning: 'bg-warning-fill',
+  danger: 'bg-danger-fill',
 }
 
 /**

@@ -16,14 +16,14 @@ import { cn } from '@/lib/utils'
 
 const ACTIVE_TILE = {
   primary: 'bg-primary-500/12',
-  success: 'bg-success/12',
-  warning: 'bg-warning/12',
-  danger: 'bg-danger/12',
-  neutral: 'bg-neutral/12',
+  success: 'bg-success-fill/12',
+  warning: 'bg-warning-fill/12',
+  danger: 'bg-danger-fill/12',
+  neutral: 'bg-neutral-fill/12',
 }
 
 const ACTIVE_LABEL = {
-  primary: 'text-primary-500',
+  primary: 'text-primary-text',
   success: 'text-success',
   warning: 'text-warning',
   danger: 'text-danger',

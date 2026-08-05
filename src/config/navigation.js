@@ -324,28 +324,87 @@ export const NAVBAR_NAV = {
     },
   ],
   [ROLES.FORGE_MANAGER]: [
-    { ...BASE_NAVBAR_LINKS[0], href: '/forge/student-pool' },
-    { ...BASE_NAVBAR_LINKS[1], href: '/forge/projects' },
-    { ...BASE_NAVBAR_LINKS[2], href: '/forge/assign-mentors' },
-    { ...BASE_NAVBAR_LINKS[3], href: '/forge/approval-queue' },
+    {
+      ...BASE_NAVBAR_LINKS[0],
+      href: '/forge/student-pool',
+      match: ['/forge/student-pool', '/forge/contact-log', '/forge/posted-needs'],
+    },
+    {
+      ...BASE_NAVBAR_LINKS[1],
+      href: '/forge/projects',
+      match: ['/forge/projects', '/forge/featured', '/forge/active-startups'],
+    },
+    {
+      ...BASE_NAVBAR_LINKS[2],
+      href: '/forge/assign-mentors',
+      match: ['/forge/assign-mentors', '/forge/session-log'],
+    },
+    {
+      ...BASE_NAVBAR_LINKS[3],
+      href: '/forge/approval-queue',
+      match: ['/forge/approval-queue', '/forge/listings', '/forge/contract-log'],
+    },
     { ...BASE_NAVBAR_LINKS[4], href: '/forge/applications' },
-    { label: 'Manage', key: 'manage', href: '/forge/user-accounts' },
+    {
+      label: 'Manage',
+      key: 'manage',
+      href: '/forge/user-accounts',
+      match: [
+        '/forge/user-accounts',
+        '/forge/role-assignments',
+        '/forge/platform-logs',
+        '/forge/students',
+        '/forge/founders',
+      ],
+    },
   ],
   [ROLES.BACKEND_MANAGER]: [
     { ...BASE_NAVBAR_LINKS[0], href: '/backend/contact-log' },
     { ...BASE_NAVBAR_LINKS[1], href: '/backend/listings' },
     { ...BASE_NAVBAR_LINKS[2], href: '/backend/activity-log' },
+    // Hiring covers the job queue; everything administrative sits under Manage —
+    // the BM reference frames highlight Manage on Dashboard, All Users,
+    // Role Management, Platform Settings and Platform Logs.
     { ...BASE_NAVBAR_LINKS[3], href: '/backend/job-queue' },
-    { ...BASE_NAVBAR_LINKS[4], href: '/backend/role-assignments' },
-    { label: 'Manage', key: 'manage', href: '/backend/settings' },
+    { ...BASE_NAVBAR_LINKS[4], href: '/backend/contract-log' },
+    {
+      label: 'Manage',
+      key: 'manage',
+      href: '/backend/settings',
+      match: [
+        '/backend/settings',
+        '/backend/dashboard',
+        '/backend/users',
+        '/backend/role-assignments',
+        '/backend/grant-access',
+        '/backend/revoke-access',
+        '/backend/logs',
+        '/backend/error-logs',
+        '/backend/profile',
+        '/backend/help',
+      ],
+    },
   ],
+  // Reference active states: Projects on All Startups, Manage on Platform
+  // Overview / All Users / Activity Report.
   [ROLES.SUPER_ADMIN]: [
     { ...BASE_NAVBAR_LINKS[0], href: '/admin/contact-log' },
     { ...BASE_NAVBAR_LINKS[1], href: '/admin/startups' },
-    { ...BASE_NAVBAR_LINKS[2], href: '/admin/activity-report' },
+    { ...BASE_NAVBAR_LINKS[2], href: '/admin/contract-log' },
     { ...BASE_NAVBAR_LINKS[3], href: '/admin/job-listings' },
     { ...BASE_NAVBAR_LINKS[4], href: '/admin/incubation-status' },
-    { label: 'Manage', key: 'manage', href: '/admin/summary' },
+    {
+      label: 'Manage',
+      key: 'manage',
+      href: '/admin/overview',
+      match: [
+        '/admin/overview',
+        '/admin/users',
+        '/admin/summary',
+        '/admin/activity-report',
+        '/admin/profile',
+      ],
+    },
   ],
 }
 

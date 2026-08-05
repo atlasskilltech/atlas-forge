@@ -53,7 +53,11 @@ export default function AppShell({
         <div className={cn(padded && 'px-4 pt-6 pb-8 lg:px-8 lg:pt-7')}>
           {showBanner ? (
             <Banner icon="👁" className="mb-4 lg:mb-5">
-              You are in view-only mode. No actions can be taken from this account.
+              {/* The mobile frames shorten this copy. */}
+              <span className="lg:hidden">View-only — no actions available</span>
+              <span className="hidden lg:inline">
+                You are in view-only mode. No actions can be taken from this account.
+              </span>
             </Banner>
           ) : null}
           {children}

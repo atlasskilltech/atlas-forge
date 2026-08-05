@@ -63,7 +63,7 @@ export default function MentorshipPanel() {
               tone="warning"
               shape="square"
               size="xl"
-              className="bg-warning text-white"
+              className="bg-warning-fill text-white"
             />
             <div className="min-w-0">
               <p className="text-[15px] font-bold text-ink">{assignedMentor.name}</p>

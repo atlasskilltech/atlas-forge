@@ -58,7 +58,7 @@ export default function FounderApplicantsPage() {
                   <Button
                     variant="subtle"
                     size="md"
-                    className="shrink-0 border-0 bg-primary-100 text-primary-500"
+                    className="shrink-0 border-0 bg-primary-100 text-primary-text"
                   >
                     View Profile
                   </Button>

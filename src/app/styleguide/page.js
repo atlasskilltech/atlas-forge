@@ -47,10 +47,10 @@ export default function StyleguidePage() {
         {[
           ['primary-500', 'bg-primary-500'],
           ['primary-100', 'bg-primary-100'],
-          ['success', 'bg-success'],
-          ['warning', 'bg-warning'],
-          ['danger', 'bg-danger'],
-          ['muted', 'bg-muted'],
+          ['success', 'bg-success-fill'],
+          ['warning', 'bg-warning-fill'],
+          ['danger', 'bg-danger-fill'],
+          ['muted', 'bg-muted-fill'],
           ['navy-900', 'bg-navy-900'],
           ['navy-active', 'bg-navy-active'],
           ['canvas', 'bg-canvas'],
@@ -238,7 +238,7 @@ export default function StyleguidePage() {
             label="Complete"
             size={100}
             thickness={13}
-            tone="var(--color-success)"
+            tone="var(--color-success-fill)"
           />
         </div>
       </section>

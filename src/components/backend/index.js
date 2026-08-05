@@ -1,0 +1,5 @@
+export { default as AllUsersTable } from './AllUsersTable'
+export { default as JobQueueTable } from './JobQueueTable'
+export { default as PlatformLogsTable } from './PlatformLogsTable'
+export { default as PlatformSettings } from './PlatformSettings'
+export { default as RoleManagement } from './RoleManagement'

@@ -1,9 +1,8 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { brand, siteConfig } from '@/config/site'
+import { BrandLogo } from '@/components/ui'
 import { getRole } from '@/config/roles'
 import { cn } from '@/lib/utils'
 
@@ -18,12 +17,20 @@ import { cn } from '@/lib/utils'
  * Role chip is the role accent at 20% over the navy, with the accent as the label.
  */
 
+/**
+ * This bar sits on the dark navy, where the bright Figma tones already clear
+ * WCAG AA comfortably (5.5–9.5:1) — the darkened text tokens are for light
+ * surfaces and would *fail* here (~3.4:1). So the `-fill` values are used for
+ * the label as well as the tint.
+ */
 const CHIP_TONE = {
-  primary: 'bg-primary-500/20 text-primary-500',
-  success: 'bg-success/20 text-success',
-  warning: 'bg-warning/20 text-warning',
-  danger: 'bg-danger/20 text-danger',
-  neutral: 'bg-neutral/20 text-neutral',
+  // primary-400 rather than -500: the Figma violet is only 4.10:1 on this navy,
+  // and the darkened text token would be 2.88:1. primary-400 reaches 6.54:1.
+  primary: 'bg-primary-500/20 text-primary-400',
+  success: 'bg-success-fill/20 text-success-fill',
+  warning: 'bg-warning-fill/20 text-warning-fill',
+  danger: 'bg-danger-fill/20 text-danger-fill',
+  neutral: 'bg-neutral-fill/20 text-neutral-fill',
 }
 
 function IconButton({ children, label, ...props }) {
@@ -89,14 +96,7 @@ export default function TopBar({ role, title, backHref, onLogout }) {
 
           <div className="ml-auto flex items-center gap-2">
             {/* White-alpha variant — the bar sits on #1E2235. */}
-            <Image
-              src={brand.universityLogoWhite}
-              alt={siteConfig.university}
-              width={48}
-              height={28}
-              priority
-              className="h-7 w-auto"
-            />
+            <BrandLogo mark="universityWhite" priority className="h-7" />
           </div>
         </>
       )}

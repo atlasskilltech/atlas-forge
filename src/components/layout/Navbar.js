@@ -1,11 +1,10 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Avatar } from '@/components/ui'
+import { Avatar, BrandLogo } from '@/components/ui'
 import { NAVBAR_NAV, ROLE_HOME } from '@/config/navigation'
-import { brand, siteConfig } from '@/config/site'
+import { siteConfig } from '@/config/site'
 import { cn } from '@/lib/utils'
 
 /**
@@ -17,16 +16,21 @@ import { cn } from '@/lib/utils'
  *   31px gap · links (34px text-to-text) · 31px gap · search 80x30 · 8px · 34px buttons
  *   Log out pill sits 92px from the right edge — consistent across all five screens.
  */
-export default function Navbar({
-  role,
-  user = { name: 'Shantanu Ghuriani', initials: 'SG' },
-  notificationLabel = 'N',
-  onLogout,
-}) {
+/**
+ * Signed-in identity drawn in each reference frame: student and founder screens
+ * show SG, all three manager screens show MP. Overridable via the `user` prop.
+ */
+const DEFAULT_USER = {
+  member: { name: 'Shantanu Ghuriani', initials: 'SG' },
+  manager: { name: 'Mihir Pawar', initials: 'MP' },
+}
+
+export default function Navbar({ role, user, notificationLabel = 'N', onLogout }) {
   const pathname = usePathname()
   const router = useRouter()
   const links = NAVBAR_NAV[role] || []
   const isManager = links.some((link) => link.key === 'manage')
+  const identity = user ?? DEFAULT_USER[isManager ? 'manager' : 'member']
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 hidden h-navbar border-b border-line bg-surface lg:block">
@@ -36,22 +40,8 @@ export default function Navbar({
           className="flex shrink-0 items-center gap-[30px]"
           aria-label={`${siteConfig.name} home`}
         >
-          <Image
-            src={brand.universityLogo}
-            alt={siteConfig.university}
-            width={65}
-            height={38}
-            priority
-            className="h-[38px] w-auto"
-          />
-          <Image
-            src={brand.forgeLogo}
-            alt={siteConfig.name}
-            width={118}
-            height={34}
-            priority
-            className="h-[34px] w-auto"
-          />
+          <BrandLogo mark="university" priority className="h-[38px]" />
+          <BrandLogo mark="forge" priority className="h-[34px]" />
         </Link>
 
         {/* Links stay visible from lg; only the search collapses on laptops. */}
@@ -67,7 +57,7 @@ export default function Navbar({
                     className={cn(
                       'rounded-control px-3 py-1.5 text-sm font-medium transition-colors',
                       active
-                        ? 'bg-primary-100 text-primary-500'
+                        ? 'bg-primary-100 text-primary-text'
                         : 'text-muted hover:text-ink'
                     )}
                   >
@@ -98,8 +88,8 @@ export default function Navbar({
             {notificationLabel}
           </button>
           <Avatar
-            name={user.name}
-            initials={user.initials}
+            name={identity.name}
+            initials={identity.initials}
             tone={isManager ? 'dark' : 'primary'}
             size="lg"
             className="size-[34px] text-[13px]"

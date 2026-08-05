@@ -8,7 +8,8 @@ import { siteConfig } from '@/config/site'
  * @param {string}  options.title        Page title (template-wrapped by the root layout).
  * @param {string}  options.description  Meta description.
  * @param {string}  options.path         Route path used for the canonical URL, e.g. '/login'.
- * @param {string}  [options.image]      Absolute or root-relative OG image.
+ * @param {string}  [options.image]      Overrides the shared card. Omit to inherit
+ *   `src/app/opengraph-image.png` via Next's file convention.
  * @param {string[]}[options.keywords]   Additional keywords merged with the site defaults.
  * @param {boolean} [options.noIndex]    Exclude the page from search engines (authenticated areas).
  */
@@ -16,7 +17,7 @@ export function buildMetadata({
   title,
   description = siteConfig.description,
   path = '/',
-  image = siteConfig.ogImage,
+  image,
   keywords = [],
   noIndex = false,
 }) {
@@ -38,14 +39,16 @@ export function buildMetadata({
       description,
       url,
       locale: siteConfig.locale,
-      images: [{ url: image, width: 1200, height: 630, alt: fullTitle }],
+      // Only set when overridden — otherwise the opengraph-image.png file
+      // convention supplies the card with a correct absolute URL.
+      ...(image ? { images: [{ url: image, width: 1200, height: 630, alt: fullTitle }] } : {}),
     },
     twitter: {
       card: 'summary_large_image',
       site: siteConfig.twitter,
       title: fullTitle,
       description,
-      images: [image],
+      ...(image ? { images: [image] } : {}),
     },
   }
 }

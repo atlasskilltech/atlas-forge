@@ -93,7 +93,7 @@ export default function HiringPanel() {
                   <p className="truncate text-sm font-bold text-ink">{applicant.name}</p>
                   <p className="text-[13px] text-muted">{applicant.meta}</p>
                 </div>
-                <Button variant="subtle" size="md" className="border-0 bg-primary-100 text-primary-500">
+                <Button variant="subtle" size="md" className="border-0 bg-primary-100 text-primary-text">
                   View Profile
                 </Button>
               </li>

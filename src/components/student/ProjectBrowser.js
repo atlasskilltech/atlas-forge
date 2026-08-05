@@ -52,7 +52,7 @@ export default function ProjectBrowser() {
             </div>
             <p className="mt-3 text-[13px] text-muted">{startup.description}</p>
             {startup.openRoles > 0 ? (
-              <p className="mt-3 text-[13px] font-semibold text-primary-500">
+              <p className="mt-3 text-[13px] font-semibold text-primary-text">
                 {startup.openRoles} open roles
               </p>
             ) : null}

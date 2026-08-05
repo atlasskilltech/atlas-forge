@@ -16,6 +16,10 @@
   --color-primary-500: #7c6ff7; /* core violet — buttons, badges, links */
   --color-primary-600: #6c5df5;
   --color-primary-700: #5b4bf0;
+  /* Violet used as TEXT (links, chip labels, active nav). Darkened from
+     #7C6FF7 so it clears AA on white, the canvas and the #EBE7FF pill tint.
+     `--color-primary-500` is untouched and still paints every fill. */
+  --color-primary-text: #5d4df5;
 
   /* ---- Dark navy (sidebar, login panel, mobile top bar) ------------------ */
   --color-navy-950: #171a29;
@@ -23,8 +27,11 @@
   --color-navy-800: #22263b;
   --color-navy-700: #2f3551;
   --color-navy-active: #2d2e52; /* active sidebar item background */
-  --color-navy-label: #3d4466; /* sidebar group labels + inactive bullets */
-  --color-navy-item: #5b638c; /* sidebar inactive item label */
+  /* Sidebar text, lightened from #3D4466 / #5B638C to clear AA 4.5:1 on the
+     navy (these are 11–13px, so the 3:1 large-text allowance does not apply). */
+  --color-navy-label: #7f87b2; /* sidebar group labels */
+  --color-navy-item: #9197b7; /* sidebar inactive item label */
+  --color-navy-dot: #3d4466; /* inactive bullet — the original fill value */
   --color-navy-item-active: #afa7f7; /* sidebar active item label */
   --color-navy-control: #303345; /* mobile top-bar icon button */
   --color-handle: #c0c5d9; /* mobile tray drag handle */
@@ -32,19 +39,36 @@
   /* ---- Neutrals / surfaces ---------------------------------------------- */
   --color-ink: #1a1d2e; /* headings, primary text */
   --color-ink-soft: #22263b;
-  --color-muted: #9097b8; /* secondary text, view-only, placeholders */
+  /* Secondary text. Darkened from the Figma's #9097B8 to clear WCAG AA 4.5:1
+     against every surface it actually sits on — white, the #F7F8FC canvas and
+     the #F5F6F9 divider fill (the canvas is the binding constraint). */
+  --color-muted: #656f9d;
+  /* The original #9097B8. Used for fills, and for muted text on the dark navy
+     panels where it already clears AA at 5.47:1 (the darkened token would
+     drop to 3.47:1 there). */
+  --color-muted-fill: #9097b8;
   --color-canvas: #f7f8fc; /* app background + input fill */
   --color-surface: #ffffff; /* cards, navbar */
   --color-line: #ecedf4; /* default border */
   --color-line-soft: #f5f6f9; /* subtle divider */
   --color-search: #edeef5; /* navbar search field */
 
-  /* ---- Status accents ---------------------------------------------------- */
-  --color-success: #00c87a; /* Active / Live / Approved / Available */
-  --color-warning: #ffbe0b; /* Pending / In Review / Requested */
-  --color-danger: #ff7456; /* Rejected / Revoke */
+  /* ---- Status accents ----------------------------------------------------
+     Each accent has two values:
+       --color-X       the TEXT tone, darkened to pass WCAG AA 4.5:1 on white
+       --color-X-fill  the exact Figma value, used for every background,
+                       tint, dot, border and solid button
+     So chips, dots, avatars and buttons look precisely as drawn while their
+     labels stay readable. */
+  --color-success: #007f4d; /* Active / Live / Approved / Available */
+  --color-success-fill: #00c87a;
+  --color-warning: #936c00; /* Pending / In Review / Requested */
+  --color-warning-fill: #ffbe0b;
+  --color-danger: #d52600; /* Rejected / Revoke */
+  --color-danger-fill: #ff7456;
   --color-info: #7c6ff7; /* Applied / Interview / neutral-brand */
-  --color-neutral: #9097b8; /* View-only / Done */
+  --color-neutral: #646e9c; /* View-only / Done */
+  --color-neutral-fill: #9097b8;
 
   /* ---- Radii ------------------------------------------------------------- */
   --radius-control: 8px; /* buttons, chips-with-corners */

@@ -22,7 +22,7 @@ export default function ContactLogView() {
     appId: entry.appId,
     context: entry.context,
     when: entry.when,
-    ccd: <span className="text-primary-500">{entry.ccd}</span>,
+    ccd: <span className="text-primary-text">{entry.ccd}</span>,
     status: <Chip tone={entry.tone}>{entry.status}</Chip>,
   }))
 

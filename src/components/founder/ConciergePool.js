@@ -142,7 +142,7 @@ export default function ConciergePool() {
                 >
                   <span
                     aria-hidden="true"
-                    className="flex size-8 shrink-0 items-center justify-center rounded-tile bg-primary-100 text-xs text-primary-500"
+                    className="flex size-8 shrink-0 items-center justify-center rounded-tile bg-primary-100 text-xs text-primary-text"
                   >
                     →
                   </span>
@@ -179,7 +179,7 @@ export default function ConciergePool() {
             <Button
               variant="subtle"
               size="md"
-              className="shrink-0 border-0 bg-primary-100 text-primary-500"
+              className="shrink-0 border-0 bg-primary-100 text-primary-text"
               onClick={() => setContacted(student)}
             >
               Contact

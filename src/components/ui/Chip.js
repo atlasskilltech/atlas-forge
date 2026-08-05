@@ -9,13 +9,13 @@ import { cn } from '@/lib/utils'
  */
 
 const TONES = {
-  success: 'bg-success/12 text-success',
-  warning: 'bg-warning/10 text-warning',
-  danger: 'bg-danger/10 text-danger',
-  info: 'bg-primary-500/12 text-primary-500',
-  neutral: 'bg-neutral/10 text-neutral',
+  success: 'bg-success-fill/12 text-success',
+  warning: 'bg-warning-fill/10 text-warning',
+  danger: 'bg-danger-fill/10 text-danger',
+  info: 'bg-primary-500/12 text-primary-text',
+  neutral: 'bg-neutral-fill/10 text-neutral',
   /** Solid lavender fill — skill tags on student cards. */
-  skill: 'bg-primary-100 text-primary-500',
+  skill: 'bg-primary-100 text-primary-text',
 }
 
 // Padding/gap are tuned so a skill tag ("UI/UX") renders at the reference 47x21

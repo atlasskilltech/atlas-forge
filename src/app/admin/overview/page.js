@@ -1,10 +1,12 @@
-import { AppShell, ShellPlaceholder } from '@/components/layout'
+import { AppShell } from '@/components/layout'
+import { OverviewView } from '@/components/admin'
+import { PageTitle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
   title: 'Platform Overview',
-  description: 'Super Admin read-only platform overview.',
+  description: 'Read-only visibility across the entire ATLAS Forge platform.',
   path: '/admin/overview',
   noIndex: true,
 })
@@ -12,10 +14,8 @@ export const metadata = buildMetadata({
 export default function AdminOverviewPage() {
   return (
     <AppShell role={ROLES.SUPER_ADMIN}>
-      <ShellPlaceholder
-        title="Platform Overview"
-        note="Super Admin content is built in the Super Admin module section."
-      />
+      <PageTitle className="mb-4 lg:mb-5">Platform Overview</PageTitle>
+      <OverviewView />
     </AppShell>
   )
 }

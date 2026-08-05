@@ -15,17 +15,21 @@ const VARIANTS = {
   /** Same shell as `secondary` but muted label, used beside dense content. */
   subtle:
     'bg-surface text-muted border border-line hover:bg-line-soft active:bg-line',
-  /** Tinted green — approval actions in every queue. */
-  approve: 'bg-success/12 text-success hover:bg-success/20 active:bg-success/25',
-  /** Tinted coral — rejection actions in every queue. */
-  reject: 'bg-danger/10 text-danger hover:bg-danger/18 active:bg-danger/25',
+  /** Tinted green — approval actions on mobile queues. */
+  approve: 'bg-success-fill/12 text-success hover:bg-success-fill/20 active:bg-success-fill/25',
+  /** Tinted coral — rejection actions on mobile queues. */
+  reject: 'bg-danger-fill/10 text-danger hover:bg-danger-fill/18 active:bg-danger-fill/25',
+  /** Solid green — desktop approval queues and "Yes, Approve" confirmations. */
+  success: 'bg-success-fill text-white shadow-card hover:brightness-95 active:brightness-90',
+  /** Solid coral — "Yes, Reject" confirmations. */
+  dangerSolid: 'bg-danger-fill text-white shadow-card hover:brightness-95 active:brightness-90',
   /** White with a coral outline — destructive but not tinted (e.g. Revoke Access). */
   danger:
-    'bg-surface text-danger border border-danger hover:bg-danger/8 active:bg-danger/12',
+    'bg-surface text-danger border border-danger-fill hover:bg-danger-fill/8 active:bg-danger-fill/12',
   /** Chrome-free text button. */
   ghost: 'bg-transparent text-muted hover:bg-line-soft hover:text-ink',
   /** Inline text link styled as a button for keyboard/tap targets. */
-  link: 'bg-transparent text-primary-500 hover:text-primary-600 hover:underline underline-offset-4 px-0',
+  link: 'bg-transparent text-primary-text hover:text-primary-700 hover:underline underline-offset-4 px-0',
 }
 
 const SIZES = {
@@ -39,7 +43,7 @@ const SIZES = {
  * The single button primitive for the whole platform.
  *
  * @param {object}   props
- * @param {'primary'|'secondary'|'subtle'|'approve'|'reject'|'danger'|'ghost'|'link'} [props.variant]
+ * @param {'primary'|'secondary'|'subtle'|'approve'|'reject'|'success'|'dangerSolid'|'danger'|'ghost'|'link'} [props.variant]
  * @param {'sm'|'md'|'lg'|'xl'} [props.size]
  * @param {boolean}  [props.fullWidth]  Stretch to the container (mobile CTAs).
  * @param {React.ReactNode} [props.leadingIcon]   Rendered before the label.

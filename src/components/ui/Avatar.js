@@ -11,18 +11,18 @@ import { cn, initials as toInitials } from '@/lib/utils'
 const TONES = {
   solid: {
     primary: 'bg-primary-500 text-white',
-    success: 'bg-success text-white',
-    warning: 'bg-warning text-white',
-    danger: 'bg-danger text-white',
-    neutral: 'bg-muted text-white',
+    success: 'bg-success-fill text-white',
+    warning: 'bg-warning-fill text-white',
+    danger: 'bg-danger-fill text-white',
+    neutral: 'bg-muted-fill text-white',
     dark: 'bg-navy-900 text-white',
   },
   soft: {
-    primary: 'bg-primary-100 text-primary-500',
-    success: 'bg-success/12 text-success',
-    warning: 'bg-warning/12 text-warning',
-    danger: 'bg-danger/10 text-danger',
-    neutral: 'bg-neutral/10 text-neutral',
+    primary: 'bg-primary-100 text-primary-text',
+    success: 'bg-success-fill/12 text-success',
+    warning: 'bg-warning-fill/12 text-warning',
+    danger: 'bg-danger-fill/10 text-danger',
+    neutral: 'bg-neutral-fill/10 text-neutral',
     dark: 'bg-navy-900/10 text-navy-900',
   },
 }

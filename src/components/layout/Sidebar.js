@@ -59,7 +59,7 @@ export default function Sidebar({ role, className }) {
                         aria-hidden="true"
                         className={cn(
                           'size-1.5 shrink-0 rounded-full',
-                          active ? 'bg-primary-500' : 'bg-navy-label'
+                          active ? 'bg-primary-500' : 'bg-navy-dot'
                         )}
                       />
                       <span className="min-w-0 flex-1">{item.label}</span>

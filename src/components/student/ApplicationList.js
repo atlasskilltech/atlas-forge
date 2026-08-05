@@ -57,7 +57,7 @@ export default function ApplicationList() {
               <hr className="my-3 border-0 border-t border-line" />
               <Link
                 href="/student/applications"
-                className="flex items-center justify-between gap-3 text-[13px] font-medium text-primary-500"
+                className="flex items-center justify-between gap-3 text-[13px] font-medium text-primary-text"
               >
                 View application details
                 <span aria-hidden="true" className="text-muted">

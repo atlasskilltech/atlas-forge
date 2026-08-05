@@ -119,7 +119,7 @@ export default function JobBrowser() {
               key={job.id}
               className={cn(
                 'rounded-card border p-4 shadow-card',
-                applied ? 'border-success/20 bg-success/8' : 'border-line bg-surface'
+                applied ? 'border-success-fill/20 bg-success-fill/8' : 'border-line bg-surface'
               )}
             >
               <div className="flex items-start justify-between gap-3">

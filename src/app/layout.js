@@ -33,14 +33,13 @@ export const metadata = {
     description: siteConfig.description,
     url: siteConfig.url,
     locale: siteConfig.locale,
-    images: [{ url: siteConfig.ogImage, width: 1200, height: 630, alt: siteConfig.name }],
+    // Card image comes from src/app/opengraph-image.png (file convention).
   },
   twitter: {
     card: 'summary_large_image',
     site: siteConfig.twitter,
     title: `${siteConfig.name} — ${siteConfig.tagline}`,
     description: siteConfig.description,
-    images: [siteConfig.ogImage],
   },
 }
 

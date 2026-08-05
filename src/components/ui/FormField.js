@@ -78,7 +78,7 @@ export default function FormField({
     className: cn(
       CONTROL_BASE,
       as !== 'textarea' && CONTROL_HEIGHT[size],
-      error && 'border-danger focus:border-danger',
+      error && 'border-danger-fill focus:border-danger-fill',
       className
     ),
     ...props,

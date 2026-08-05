@@ -27,7 +27,36 @@ export default function Modal({
 
   const handleKeyDown = useCallback(
     (event) => {
-      if (event.key === 'Escape') onClose?.()
+      if (event.key === 'Escape') {
+        onClose?.()
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      // Focus trap: keep Tab / Shift+Tab cycling inside the dialog so the
+      // page behind it can never be reached while it is open.
+      const panel = panelRef.current
+      if (!panel) return
+
+      const focusable = panel.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+      if (focusable.length === 0) {
+        event.preventDefault()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement
+
+      if (event.shiftKey && (active === first || active === panel)) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault()
+        first.focus()
+      }
     },
     [onClose]
   )
@@ -39,7 +68,13 @@ export default function Modal({
     const { overflow } = document.body.style
     document.body.style.overflow = 'hidden'
     document.addEventListener('keydown', handleKeyDown)
-    panelRef.current?.focus()
+
+    // Focus the first control if there is one, otherwise the panel itself.
+    const panel = panelRef.current
+    const firstFocusable = panel?.querySelector(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])'
+    )
+    ;(firstFocusable ?? panel)?.focus()
 
     return () => {
       document.body.style.overflow = overflow
@@ -111,14 +146,27 @@ export default function Modal({
   )
 }
 
-/** The green success mark used by every "submitted" confirmation. */
-export function SuccessMark() {
+const MARK_TONE = {
+  success: 'bg-success-fill/12 text-success',
+  danger: 'bg-danger-fill/10 text-danger',
+  primary: 'bg-primary-500/12 text-primary-text',
+  warning: 'bg-warning-fill/12 text-warning',
+}
+
+/**
+ * The tinted icon circle used by confirmations.
+ * Reference: /reference/mast ui/Overlay/*.png — green ✓, coral !, violet ✓.
+ */
+export function SuccessMark({ tone = 'success', glyph = '✓' }) {
   return (
     <div
       aria-hidden="true"
-      className="mx-auto flex size-[60px] items-center justify-center rounded-full bg-success/12 text-2xl text-success"
+      className={cn(
+        'mx-auto flex size-[60px] items-center justify-center rounded-full text-2xl',
+        MARK_TONE[tone]
+      )}
     >
-      ✓
+      {glyph}
     </div>
   )
 }
@@ -157,6 +205,54 @@ export function ConfirmDialog({
         ) : null}
         <Button fullWidth className="h-11" onClick={onPrimary ?? onClose}>
           {primaryLabel}
+        </Button>
+      </div>
+    </Modal>
+  )
+}
+
+const ACTION_BUTTON = {
+  success: 'success',
+  danger: 'dangerSolid',
+  primary: 'primary',
+  warning: 'primary',
+}
+
+/**
+ * Destructive/irreversible confirmation: tinted mark, Cancel + a solid
+ * tone-coloured confirm.
+ *
+ * Reference: /reference/mast ui/Overlay/FM Approval Queue {Approve,Reject} Confirm.png
+ *            /reference/mast ui/Overlay/FM Incubation Applications Grant Confirm.png
+ */
+export function ActionDialog({
+  open,
+  onClose,
+  tone = 'success',
+  glyph,
+  title,
+  description,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  onConfirm,
+}) {
+  return (
+    <Modal open={open} onClose={onClose} className="pt-8">
+      <SuccessMark tone={tone} glyph={glyph ?? (tone === 'danger' ? '!' : '✓')} />
+      <h2 className="mt-5 text-center text-xl font-bold text-ink">{title}</h2>
+      <p className="mt-2 text-center text-[13px] leading-[18px] text-muted">
+        {description}
+      </p>
+      <div className="mt-6 flex gap-3">
+        <Button variant="secondary" className="h-11 flex-[2]" onClick={onClose}>
+          {cancelLabel}
+        </Button>
+        <Button
+          variant={ACTION_BUTTON[tone]}
+          className="h-11 flex-[3]"
+          onClick={onConfirm}
+        >
+          {confirmLabel}
         </Button>
       </div>
     </Modal>
