@@ -1,0 +1,132 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   ATLAS Forge — Design Tokens
+   Every value below is sampled directly from the Figma reference exports in
+   /reference. Do not change a token without updating the reference mapping.
+   ========================================================================== */
+
+@theme {
+  /* ---- Brand violet (primary action, active nav, accents) ---------------- */
+  --color-primary-50: #f5f3ff;
+  --color-primary-100: #ebe7ff; /* SkillTag / soft chip fill */
+  --color-primary-200: #ddd8fe;
+  --color-primary-300: #cfc9fd;
+  --color-primary-400: #a59cfa;
+  --color-primary-500: #7c6ff7; /* core violet — buttons, badges, links */
+  --color-primary-600: #6c5df5;
+  --color-primary-700: #5b4bf0;
+
+  /* ---- Dark navy (sidebar, login panel, mobile top bar) ------------------ */
+  --color-navy-950: #171a29;
+  --color-navy-900: #1e2235; /* sidebar + dark panel background */
+  --color-navy-800: #22263b;
+  --color-navy-700: #2f3551;
+  --color-navy-active: #2d2e52; /* active sidebar item background */
+  --color-navy-label: #3d4466; /* sidebar group labels + inactive bullets */
+  --color-navy-item: #5b638c; /* sidebar inactive item label */
+  --color-navy-item-active: #afa7f7; /* sidebar active item label */
+  --color-navy-control: #303345; /* mobile top-bar icon button */
+  --color-handle: #c0c5d9; /* mobile tray drag handle */
+
+  /* ---- Neutrals / surfaces ---------------------------------------------- */
+  --color-ink: #1a1d2e; /* headings, primary text */
+  --color-ink-soft: #22263b;
+  --color-muted: #9097b8; /* secondary text, view-only, placeholders */
+  --color-canvas: #f7f8fc; /* app background + input fill */
+  --color-surface: #ffffff; /* cards, navbar */
+  --color-line: #ecedf4; /* default border */
+  --color-line-soft: #f5f6f9; /* subtle divider */
+  --color-search: #edeef5; /* navbar search field */
+
+  /* ---- Status accents ---------------------------------------------------- */
+  --color-success: #00c87a; /* Active / Live / Approved / Available */
+  --color-warning: #ffbe0b; /* Pending / In Review / Requested */
+  --color-danger: #ff7456; /* Rejected / Revoke */
+  --color-info: #7c6ff7; /* Applied / Interview / neutral-brand */
+  --color-neutral: #9097b8; /* View-only / Done */
+
+  /* ---- Radii ------------------------------------------------------------- */
+  --radius-control: 8px; /* buttons, chips-with-corners */
+  --radius-field: 10px; /* inputs, selects, textareas */
+  --radius-tile: 12px; /* stat tiles, list rows */
+  --radius-card: 14px; /* cards, panels */
+
+  /* ---- Elevation --------------------------------------------------------- */
+  --shadow-card: 0 1px 2px 0 rgb(26 29 46 / 0.04);
+  --shadow-raised: 0 2px 8px 0 rgb(26 29 46 / 0.06);
+  --shadow-tray: 0 -4px 24px 0 rgb(26 29 46 / 0.08);
+  --shadow-modal: 0 24px 48px -12px rgb(26 29 46 / 0.18);
+
+  /* ---- Layout metrics (measured from the reference frames) --------------- */
+  --spacing-navbar: 60px; /* desktop navbar height  (1440x60) */
+  --spacing-sidebar: 220px; /* desktop sidebar width  (220x840) */
+  --spacing-topbar: 56px; /* mobile top bar height  (390x56) */
+  --spacing-bottomnav: 83px; /* mobile bottom nav height (390x83) */
+
+  /* ---- Typography -------------------------------------------------------- */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, sans-serif;
+}
+
+/* ==========================================================================
+   Base layer — semantic element defaults only. No component styling here;
+   components carry their own Tailwind utilities.
+   ========================================================================== */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Visible, on-brand focus ring for keyboard users across the whole app. */
+  :focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::placeholder {
+    color: var(--color-muted);
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ==========================================================================
+   Utilities — only for things Tailwind cannot express declaratively.
+   ========================================================================== */
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Respects the iOS home-indicator inset under the mobile bottom navigation. */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
