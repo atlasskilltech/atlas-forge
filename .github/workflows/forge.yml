@@ -24,6 +24,12 @@ jobs:
             cd /home/ubuntu/atlas-forge
             git fetch origin main
             git reset --hard origin/main
-            npm ci --only=production
-            pm2 restart atlas-forge || pm2 start server.js --name atlas-forge
+            # Full install: devDependencies (Tailwind, eslint-config-next) are
+            # required to produce the production build.
+            npm ci
+            # Next.js needs a production build before `next start` will run.
+            npm run build
+            # This is a Next.js app (started via `next start`, i.e. `npm start`),
+            # not a bare Node server — there is no server.js to launch.
+            pm2 restart atlas-forge || pm2 start npm --name atlas-forge -- start
             pm2 save
