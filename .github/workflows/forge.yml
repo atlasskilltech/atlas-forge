@@ -29,7 +29,8 @@ jobs:
             npm ci
             # Next.js needs a production build before `next start` will run.
             npm run build
-            # This is a Next.js app (started via `next start`, i.e. `npm start`),
-            # not a bare Node server — there is no server.js to launch.
-            pm2 restart atlas-forge || pm2 start npm --name atlas-forge -- start
+            # Start (or reload, if already running) under pm2 using the
+            # committed ecosystem file. startOrReload is idempotent: it starts
+            # the app on first deploy and reloads it on subsequent deploys.
+            pm2 startOrReload ecosystem.config.js --update-env
             pm2 save
