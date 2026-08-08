@@ -2,6 +2,7 @@ import { AppShell } from '@/components/layout'
 import { AvailabilityPanel } from '@/components/student'
 import { PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as student from '@/lib/modules/student'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -15,10 +16,14 @@ export const metadata = buildMetadata({
  * Reference names this "My Concierge Profile" on desktop and
  * "Flag My Availability" on mobile — both titles are preserved.
  */
-export default function StudentAvailabilityPage() {
+export default async function StudentAvailabilityPage() {
+  const { userId, chromeUser } = await student.requireStudentPage('/student/availability')
+  const { profile } = await student.getAvailability(userId)
+
   return (
     <AppShell
       role={ROLES.STUDENT}
+      user={chromeUser}
       mobileTitle="Flag My Availability"
       backHref="/student/home"
     >
@@ -33,7 +38,7 @@ export default function StudentAvailabilityPage() {
           find collaborators.
         </span>
       </Subtle>
-      <AvailabilityPanel />
+      <AvailabilityPanel profile={profile} />
     </AppShell>
   )
 }

@@ -2,6 +2,7 @@ import { AppShell } from '@/components/layout'
 import { ApprovalQueue } from '@/components/forge'
 import { PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as forge from '@/lib/modules/forge'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -11,9 +12,12 @@ export const metadata = buildMetadata({
   noIndex: true,
 })
 
-export default function ForgeApprovalQueuePage() {
+export default async function ForgeApprovalQueuePage() {
+  const { chromeUser } = await forge.requireForgePage('/forge/approval-queue')
+  const { items, tabs } = await forge.getApprovalQueue()
+
   return (
-    <AppShell role={ROLES.FORGE_MANAGER}>
+    <AppShell role={ROLES.FORGE_MANAGER} user={chromeUser}>
       <PageTitle>
         <span className="lg:hidden">Approval Queue</span>
         <span className="hidden lg:inline">Job Approval Queue</span>
@@ -22,7 +26,7 @@ export default function ForgeApprovalQueuePage() {
         Review and approve or reject job and collab listings before they go live.
       </Subtle>
       <div className="mt-4 lg:mt-0">
-        <ApprovalQueue />
+        <ApprovalQueue items={items} tabs={tabs} />
       </div>
     </AppShell>
   )

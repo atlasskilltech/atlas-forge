@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useMemo, useState, useTransition } from 'react'
 import {
   Button,
   Card,
@@ -9,7 +10,7 @@ import {
   ProgressRing,
   SegmentedControl,
 } from '@/components/ui'
-import { incubationStages, readinessItems } from '@/data/student'
+import { api } from '@/lib/api/client'
 import { cn } from '@/lib/utils'
 
 /**
@@ -18,21 +19,49 @@ import { cn } from '@/lib/utils'
  *
  * The readiness ring on the right fills as each checklist field is completed —
  * "Fills as you provide each item on the left", per the reference caption.
+ *
+ * The percentage drawn here is a live preview. What gets stored is recomputed
+ * on the server from the evidence actually submitted, so the ring the Forge
+ * Manager sees cannot be inflated by the client.
  */
-export default function IncubationForm() {
-  const [stage, setStage] = useState(incubationStages[0])
+export default function IncubationForm({ stages = [], readinessItems = [] }) {
+  const router = useRouter()
+  const stageNames = stages.map((item) => item.name)
+  const [stage, setStage] = useState(stageNames[0])
   const [readiness, setReadiness] = useState({})
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+  const [, startTransition] = useTransition()
 
   const completed = useMemo(
     () => readinessItems.filter((item) => readiness[item.id]?.trim()).length,
-    [readiness]
+    [readiness, readinessItems]
   )
-  const percent = Math.round((completed / readinessItems.length) * 100)
+  const percent =
+    readinessItems.length === 0 ? 0 : Math.round((completed / readinessItems.length) * 100)
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
-    setSubmitted(true)
+    const form = new FormData(event.currentTarget)
+
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post('/api/student/incubation', {
+        ideaName: form.get('ideaName'),
+        problem: form.get('problem'),
+        stage: stages.find((item) => item.name === stage)?.slug ?? null,
+        team: form.get('team'),
+        readiness,
+      })
+      setSubmitted(true)
+      startTransition(() => router.refresh())
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -66,7 +95,7 @@ export default function IncubationForm() {
               <SegmentedControl
                 label="Current Stage"
                 tone="primary"
-                options={incubationStages}
+                options={stageNames}
                 value={stage}
                 onChange={setStage}
               />
@@ -131,9 +160,14 @@ export default function IncubationForm() {
               </div>
             </div>
 
-            <Button type="submit" size="xl" fullWidth className="lg:w-auto">
+            <Button type="submit" size="xl" fullWidth className="lg:w-auto" disabled={submitting}>
               Submit Application
             </Button>
+            {error ? (
+              <p role="alert" className="text-[13px] text-danger">
+                {error}
+              </p>
+            ) : null}
           </div>
         </Card>
 

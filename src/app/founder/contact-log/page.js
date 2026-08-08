@@ -2,7 +2,7 @@ import { AppShell } from '@/components/layout'
 import { ContactLogView } from '@/components/founder'
 import { Chip, PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
-import { contactLog } from '@/data/founder'
+import * as founder from '@/lib/modules/founder'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -12,13 +12,16 @@ export const metadata = buildMetadata({
   noIndex: true,
 })
 
-export default function FounderContactLogPage() {
+export default async function FounderContactLogPage() {
+  const { user, chromeUser } = await founder.requireFounderPage('/founder/contact-log')
+  const { contacts, stats } = await founder.getContactLog(user)
+
   return (
-    <AppShell role={ROLES.FOUNDER}>
+    <AppShell role={ROLES.FOUNDER} user={chromeUser}>
       <div className="flex items-start justify-between gap-4">
         <PageTitle>Contact Log</PageTitle>
         <Chip tone="info" size="lg" className="hidden h-[26px] lg:inline-flex">
-          {contactLog.length} contacts this month
+          {stats.thisWeek} contacts this week
         </Chip>
       </div>
       <Subtle className="mt-3 mb-4 text-sm lg:mb-[22px]">
@@ -28,7 +31,7 @@ export default function FounderContactLogPage() {
           every outreach.
         </span>
       </Subtle>
-      <ContactLogView />
+      <ContactLogView contacts={contacts} />
     </AppShell>
   )
 }

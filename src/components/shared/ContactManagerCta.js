@@ -2,21 +2,43 @@
 
 import { useState } from 'react'
 import { Button, ConfirmDialog, FormField, Modal } from '@/components/ui'
+import { api } from '@/lib/api/client'
 
 /**
  * Reference: dark CTA strip on /reference/mast ui/Student/My Profile.png (60px,
  * #1E2235) plus the /reference/mast ui/Overlay/Contact Forge Manager.png form.
  *
  * Shared by every role that can message the Forge Manager.
+ *
+ * The confirmation only appears once the message is stored. It previously
+ * showed unconditionally, telling students their message had been received
+ * when nothing had been written.
  */
 export default function ContactManagerCta() {
   const [formOpen, setFormOpen] = useState(false)
   const [sent, setSent] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
 
-  function handleSend(event) {
+  async function handleSend(event) {
     event.preventDefault()
-    setFormOpen(false)
-    setSent(true)
+    const form = new FormData(event.currentTarget)
+
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post('/api/messages', {
+        subject: form.get('subject'),
+        message: form.get('message'),
+      })
+      event.target.reset()
+      setFormOpen(false)
+      setSent(true)
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -55,9 +77,14 @@ export default function ContactManagerCta() {
             required
             requiredMark={false}
           />
-          <Button type="submit" fullWidth className="h-12">
+          <Button type="submit" fullWidth className="h-12" disabled={submitting}>
             Send Message
           </Button>
+          {error ? (
+            <p role="alert" className="text-xs text-danger">
+              {error}
+            </p>
+          ) : null}
         </form>
       </Modal>
 

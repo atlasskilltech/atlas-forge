@@ -2,6 +2,7 @@ import { AppShell } from '@/components/layout'
 import { ConciergePool } from '@/components/founder'
 import { Chip, PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as founder from '@/lib/modules/founder'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -14,9 +15,12 @@ export const metadata = buildMetadata({
 /**
  * Titled "Concierge" on desktop and "Student Pool" on mobile — both preserved.
  */
-export default function FounderConciergePage() {
+export default async function FounderConciergePage() {
+  const { user, chromeUser } = await founder.requireFounderPage('/founder/concierge')
+  const { students, filters, contactLog } = await founder.getConcierge(user)
+
   return (
-    <AppShell role={ROLES.FOUNDER}>
+    <AppShell role={ROLES.FOUNDER} user={chromeUser}>
       <div className="flex items-start justify-between gap-4">
         <PageTitle>
           <span className="lg:hidden">Student Pool</span>
@@ -30,7 +34,7 @@ export default function FounderConciergePage() {
         Contact students. Mihir Pawar is CC&apos;d on all outreach.
       </Subtle>
       <div className="lg:mt-[22px]">
-        <ConciergePool />
+        <ConciergePool students={students} filters={filters} contactLog={contactLog} />
       </div>
     </AppShell>
   )

@@ -1,7 +1,7 @@
 import { AppShell } from '@/components/layout'
 import { Avatar, Button, Card, Chip, PageTitle, SectionLabel, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
-import { applicants, listings } from '@/data/founder'
+import * as founder from '@/lib/modules/founder'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -16,9 +16,12 @@ export const metadata = buildMetadata({
  * panel inside /reference/mast ui/Founder/Hiring.png. This page reuses that exact
  * row treatment, grouped per listing — no new visual language is introduced.
  */
-export default function FounderApplicantsPage() {
+export default async function FounderApplicantsPage() {
+  const { user, chromeUser } = await founder.requireFounderPage('/founder/applicants')
+  const { listings } = await founder.getApplicants(user)
+
   return (
-    <AppShell role={ROLES.FOUNDER}>
+    <AppShell role={ROLES.FOUNDER} user={chromeUser}>
       <PageTitle>Applicants</PageTitle>
       <Subtle className="mt-3 mb-4 text-sm lg:mb-[22px]">
         Students who have applied to your open roles. Mihir Pawar is CC&apos;d on every
@@ -26,7 +29,7 @@ export default function FounderApplicantsPage() {
       </Subtle>
 
       <div className="space-y-4">
-        {listings.slice(0, 2).map((listing) => (
+        {listings.map((listing) => (
           <Card key={listing.id} padding="lg" className="lg:px-6 lg:py-5">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -36,9 +39,11 @@ export default function FounderApplicantsPage() {
               <Chip tone={listing.tone}>{listing.status}</Chip>
             </div>
 
-            <SectionLabel className="mt-4">Applicants ({applicants.length})</SectionLabel>
+            <SectionLabel className="mt-4">
+              Applicants ({listing.applicants.length})
+            </SectionLabel>
             <ul className="mt-2.5 space-y-2">
-              {applicants.map((applicant) => (
+              {listing.applicants.map((applicant) => (
                 <li
                   key={`${listing.id}-${applicant.id}`}
                   className="flex items-center gap-3.5 rounded-tile border border-line-soft px-3.5 py-3"
@@ -58,6 +63,8 @@ export default function FounderApplicantsPage() {
                   <Button
                     variant="subtle"
                     size="md"
+                    disabled
+                    title="No detail screen exists yet"
                     className="shrink-0 border-0 bg-primary-100 text-primary-text"
                   >
                     View Profile

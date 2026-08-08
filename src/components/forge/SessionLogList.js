@@ -1,12 +1,11 @@
 import { Card, Chip } from '@/components/ui'
-import { sessionLog } from '@/data/forge'
 
 /**
  * Reference: the "SESSION LOG" panel inside
  * /reference/mast ui/FM/Assign Mentors.png — reused verbatim for the standalone
  * Session Log route, which has no frame of its own.
  */
-export default function SessionLogList() {
+export default function SessionLogList({ sessions: sessionLog = [] }) {
   return (
     <>
       <Card padding="lg" className="hidden lg:block lg:px-6 lg:py-5">

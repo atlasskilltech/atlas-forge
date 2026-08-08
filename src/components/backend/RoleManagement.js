@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import {
   ActionDialog,
   Avatar,
@@ -9,29 +10,60 @@ import {
   ConfirmDialog,
   SectionLabel,
 } from '@/components/ui'
-import { foundersWithAccess, matchedStudent, mobileRoleAssignments } from '@/data/backend'
+import { api } from '@/lib/api/client'
 
 /**
  * Reference: /reference/mast ui/BM/Role Management.png
  *            /reference/mast phone ui/BM/Role Management.png
  *            /reference/mast ui/Overlay/BM Role Management {Grant,Revoke} {Confirm,Complete}.png
  *
+ * The search runs on the server: an administrator looking up one account is
+ * never handed the whole directory to filter in the browser.
+ *
  * @param {'grant'|'revoke'|'both'} [focus]  Which action the page leads with —
  *   the sidebar has separate Grant Founder Access and Revoke Access entries.
  */
-export default function RoleManagement({ focus = 'both' }) {
-  const [query, setQuery] = useState('')
-  const [searched, setSearched] = useState(false)
+export default function RoleManagement({
+  focus = 'both',
+  query: initialQuery = '',
+  searched: initialSearched = false,
+  matched: matchedStudent = null,
+  grants: foundersWithAccess = [],
+  assignments: mobileRoleAssignments = [],
+}) {
+  const router = useRouter()
+  const [query, setQuery] = useState(initialQuery)
   const [pending, setPending] = useState(null)
   const [done, setDone] = useState(null)
-  const [revoked, setRevoked] = useState({})
+  const [submitting, setSubmitting] = useState(false)
+  const [, startTransition] = useTransition()
 
-  function confirm() {
-    if (pending.action === 'revoke') {
-      setRevoked((prev) => ({ ...prev, [pending.target.id ?? 'matched']: true }))
+  const searched = initialSearched
+
+  function search(event) {
+    event.preventDefault()
+    const term = query.trim()
+    router.push(term ? `?q=${encodeURIComponent(term)}` : '?')
+  }
+
+  async function confirm() {
+    setSubmitting(true)
+    try {
+      if (pending.action === 'grant') {
+        await api.post('/api/backend/access', { userId: pending.target.userId })
+      } else {
+        await api.delete('/api/backend/access', {
+          body: pending.target.grantId
+            ? { grantId: pending.target.grantId }
+            : { userId: pending.target.userId },
+        })
+      }
+      setDone(pending)
+      setPending(null)
+      startTransition(() => router.refresh())
+    } finally {
+      setSubmitting(false)
     }
-    setDone(pending)
-    setPending(null)
   }
 
   return (
@@ -49,10 +81,7 @@ export default function RoleManagement({ focus = 'both' }) {
           </p>
           <form
             className="mt-4 flex gap-3"
-            onSubmit={(event) => {
-              event.preventDefault()
-              setSearched(true)
-            }}
+            onSubmit={search}
           >
             <label htmlFor="role-search" className="sr-only">
               Search by name or App ID
@@ -71,7 +100,7 @@ export default function RoleManagement({ focus = 'both' }) {
           </form>
         </Card>
 
-        {searched || focus !== 'revoke' ? (
+        {matchedStudent ? (
           <>
             <SectionLabel className="mt-5">Matched Student</SectionLabel>
             <Card padding="lg" className="mt-3 px-6 py-5">
@@ -89,13 +118,15 @@ export default function RoleManagement({ focus = 'both' }) {
                 </div>
                 <Button
                   size="xl"
+                  disabled={matchedStudent.hasAccess}
                   onClick={() => setPending({ action: 'grant', target: matchedStudent })}
                 >
-                  Grant Founder Access
+                  {matchedStudent.hasAccess ? 'Access Granted' : 'Grant Founder Access'}
                 </Button>
                 <Button
                   variant="danger"
                   size="xl"
+                  disabled={!matchedStudent.hasAccess}
                   onClick={() => setPending({ action: 'revoke', target: matchedStudent })}
                 >
                   Revoke Access
@@ -138,10 +169,10 @@ export default function RoleManagement({ focus = 'both' }) {
                 <Button
                   variant="reject"
                   size="sm"
-                  disabled={Boolean(revoked[founder.id])}
+                  disabled={founder.revoked}
                   onClick={() => setPending({ action: 'revoke', target: founder })}
                 >
-                  {revoked[founder.id] ? 'Revoked' : 'Revoke'}
+                  {founder.revoked ? 'Revoked' : 'Revoke'}
                 </Button>
               </li>
             ))}
@@ -171,6 +202,7 @@ export default function RoleManagement({ focus = 'both' }) {
         title="Grant Founder Access?"
         description="This applicant gains Founder access immediately — Hiring, Concierge, and startup listing management unlock. Their incubation application will be marked approved."
         confirmLabel="Yes, Grant Access"
+        confirmDisabled={submitting}
         onConfirm={confirm}
       />
 
@@ -181,6 +213,7 @@ export default function RoleManagement({ focus = 'both' }) {
         title="Revoke Founder Access?"
         description="This founder will immediately lose access to Hiring, Concierge, and their startup listing, and revert to Standard Student. They'll need to re-apply for incubation to regain access."
         confirmLabel="Yes, Revoke Access"
+        confirmDisabled={submitting}
         onConfirm={confirm}
       />
 

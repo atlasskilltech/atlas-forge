@@ -1,5 +1,4 @@
 import { Card, Chip, SectionLabel, StatCard, Subtle } from '@/components/ui'
-import { mobileEvents, platformEvents, reportRange, reportStats } from '@/data/admin'
 import { cn } from '@/lib/utils'
 
 const DOT = {
@@ -17,7 +16,12 @@ const DOT = {
  * matching the equivalent activity lists on the Student, Founder and Forge
  * Manager frames — see the section notes.
  */
-export default function ActivityReport() {
+export default function ActivityReport({
+  stats: reportStats = [],
+  events: platformEvents = [],
+  mobileEvents = [],
+  range: reportRange = '',
+}) {
   return (
     <>
       {/* ---- Desktop ----------------------------------------------------- */}

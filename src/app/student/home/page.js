@@ -1,16 +1,9 @@
 import Link from 'next/link'
 import { AppShell } from '@/components/layout'
 import { ActivityList } from '@/components/student'
-import { Button, Card, PageTitle, SectionLabel, StatCard, Subtle } from '@/components/ui'
+import { Button, PageTitle, SectionLabel, StatCard, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
-import {
-  homeQuickActions,
-  homeStats,
-  mobileHomeActions,
-  mobileHomeStats,
-  recentActivity,
-  studentProfile,
-} from '@/data/student'
+import * as student from '@/lib/modules/student'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -27,18 +20,27 @@ export const metadata = buildMetadata({
  * The two frames differ in content, not just density: desktop leads with quick
  * actions and a recent-activity panel; mobile leads with three task cards and
  * a compact stat row.
+ *
+ * A Server Component reads through the Student module, which reads through the
+ * service layer. No page or component touches the pool: the first paint is
+ * rendered on the server from MySQL, and every later write goes through the
+ * Route Handlers under /api/student.
  */
-export default function StudentHomePage() {
-  const firstName = studentProfile.name.split(' ')[0]
+export default async function StudentHomePage() {
+  const { userId, chromeUser } = await student.requireStudentPage('/student/home')
+  const { profile, stats, mobileStats, activity, quickActions, mobileActions } =
+    await student.getHome(userId)
+
+  const firstName = profile.name.split(' ')[0]
 
   return (
-    <AppShell role={ROLES.STUDENT}>
+    <AppShell role={ROLES.STUDENT} user={chromeUser}>
       {/* ---- Desktop ----------------------------------------------------- */}
       <div className="hidden lg:block">
         <PageTitle>Welcome, {firstName} 👋</PageTitle>
 
         <div className="mt-[22px] flex flex-wrap gap-3">
-          {homeQuickActions.map((action) => (
+          {quickActions.map((action) => (
             <Button
               key={action.label}
               as={Link}
@@ -52,13 +54,13 @@ export default function StudentHomePage() {
         </div>
 
         <div className="mt-[22px] flex flex-wrap gap-3">
-          {homeStats.map((stat) => (
+          {stats.map((stat) => (
             <StatCard key={stat.label} {...stat} className="min-w-[142px]" />
           ))}
         </div>
 
         <div className="mt-6">
-          <ActivityList items={recentActivity} />
+          <ActivityList items={activity} />
         </div>
       </div>
 
@@ -68,7 +70,7 @@ export default function StudentHomePage() {
         <Subtle className="mt-3">What would you like to do today?</Subtle>
 
         <ul className="mt-4 space-y-3">
-          {mobileHomeActions.map((action) => (
+          {mobileActions.map((action) => (
             <li key={action.label}>
               <Link
                 href={action.href}
@@ -83,7 +85,7 @@ export default function StudentHomePage() {
 
         <SectionLabel className="mt-5">My Activity</SectionLabel>
         <div className="mt-2.5 flex flex-wrap gap-2.5">
-          {mobileHomeStats.map((stat) => (
+          {mobileStats.map((stat) => (
             <StatCard key={stat.label} {...stat} compact />
           ))}
         </div>

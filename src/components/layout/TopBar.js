@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { BrandLogo } from '@/components/ui'
 import { getRole } from '@/config/roles'
+import { useLogout } from '@/hooks/useLogout'
 import { cn } from '@/lib/utils'
 
 /**
@@ -55,6 +56,7 @@ function IconButton({ children, label, ...props }) {
  */
 export default function TopBar({ role, title, backHref, onLogout }) {
   const router = useRouter()
+  const logout = useLogout()
   const roleConfig = getRole(role)
   const showBack = Boolean(title)
 
@@ -102,7 +104,7 @@ export default function TopBar({ role, title, backHref, onLogout }) {
       )}
 
       <div className={cn('flex items-center', showBack ? 'ml-3' : 'ml-2')}>
-        <IconButton label="Log out" onClick={onLogout ?? (() => router.push('/login'))}>
+        <IconButton label="Log out" onClick={onLogout ?? logout}>
           ↩
         </IconButton>
       </div>

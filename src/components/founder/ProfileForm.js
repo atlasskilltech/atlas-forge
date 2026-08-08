@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import {
   Avatar,
   Button,
@@ -10,7 +11,7 @@ import {
   FormField,
   SectionLabel,
 } from '@/components/ui'
-import { founderProfile } from '@/data/founder'
+import { api } from '@/lib/api/client'
 
 /**
  * Reference: /reference/mast ui/Founder/My Profile.png
@@ -20,12 +21,35 @@ import { founderProfile } from '@/data/founder'
  * Mobile shows read-only detail cards with an "Edit Profile" affordance above;
  * desktop shows the same values as an editable form.
  */
-export default function ProfileForm() {
+export default function ProfileForm({ profile }) {
+  const router = useRouter()
+  const founderProfile = profile
   const [saved, setSaved] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+  const [, startTransition] = useTransition()
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
-    setSaved(true)
+    const form = new FormData(event.currentTarget)
+
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.patch('/api/founder/profile', {
+        // The reference shows the current values as placeholders rather than
+        // as values, so an untouched field means "leave this as it is".
+        name: form.get('fullName')?.trim() || profile.raw.name,
+        email: form.get('email')?.trim() || profile.raw.email,
+        bio: form.get('bio')?.trim() || profile.raw.bio,
+      })
+      setSaved(true)
+      startTransition(() => router.refresh())
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -57,7 +81,7 @@ export default function ProfileForm() {
         </div>
       </Card>
 
-      <Button variant="subtle" fullWidth className="mt-4 h-11 lg:hidden">
+      <Button variant="subtle" fullWidth disabled title="Profile editing has no screen yet" className="mt-4 h-11 lg:hidden">
         Edit Profile
       </Button>
 
@@ -83,7 +107,11 @@ export default function ProfileForm() {
         ))}
       </ul>
 
-      <Button fullWidth className="mt-4 h-12 lg:hidden" onClick={() => setSaved(true)}>
+      {/* The mobile frames draw read-only detail cards above this button —
+          there is no field to edit and so nothing to submit. It stays visible
+          and disabled until an edit screen is designed, rather than reporting a
+          save that never happened. */}
+      <Button fullWidth className="mt-4 h-12 lg:hidden" disabled>
         Save Changes
       </Button>
 
@@ -116,9 +144,14 @@ export default function ProfileForm() {
             rows={3}
             placeholder={founderProfile.bio}
           />
-          <Button type="submit" size="xl">
+          <Button type="submit" size="xl" disabled={submitting}>
             Save Changes
           </Button>
+          {error ? (
+            <p role="alert" className="text-[13px] text-danger">
+              {error}
+            </p>
+          ) : null}
         </form>
       </Card>
 

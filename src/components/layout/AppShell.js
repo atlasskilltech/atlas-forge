@@ -20,6 +20,7 @@ import TopBar from './TopBar'
  * @param {string}  props.role
  * @param {string}  [props.mobileTitle]   Renders the back-arrow top bar on mobile.
  * @param {string}  [props.backHref]
+ * @param {object}  [props.user]          Signed-in identity for the navbar avatar.
  * @param {boolean} [props.viewOnlyBanner] Defaults to the role's view-only flag.
  * @param {boolean} [props.padded]        Set false for screens that manage their own padding.
  */
@@ -28,6 +29,7 @@ export default function AppShell({
   children,
   mobileTitle,
   backHref,
+  user,
   viewOnlyBanner,
   padded = true,
   className,
@@ -37,7 +39,7 @@ export default function AppShell({
 
   return (
     <div className="min-h-dvh bg-canvas">
-      <Navbar role={role} />
+      <Navbar role={role} user={user} />
       <Sidebar role={role} />
       <TopBar role={role} title={mobileTitle} backHref={backHref} />
 

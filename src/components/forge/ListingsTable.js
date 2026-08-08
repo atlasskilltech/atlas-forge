@@ -2,14 +2,13 @@
 
 import { useMemo, useState } from 'react'
 import { Button, Card, Chip, DataTable, FilterTabs } from '@/components/ui'
-import { allListings, listingFilters } from '@/data/forge'
 
 /**
  * Reference: /reference/mast ui/FM/All Listings.png — 7-column table with a
  * per-row View action. No mobile frame exists, so below `lg` the same rows
  * render as cards using the established card pattern.
  */
-export default function ListingsTable() {
+export default function ListingsTable({ rows: allListings = [], filters = ['All'] }) {
   const [filter, setFilter] = useState('All')
 
   const visible = useMemo(() => {
@@ -17,14 +16,12 @@ export default function ListingsTable() {
     if (filter === 'Pending Approval') {
       return allListings.filter((row) => row.status === 'Pending')
     }
-    if (filter === 'Job Listing') {
-      return allListings.filter((row) => row.type !== 'Collab')
-    }
-    if (filter === 'Collab Post') {
-      return allListings.filter((row) => row.type === 'Collab')
-    }
+    // Filtering on the listing's own kind, not its label — "Collab / No Pay"
+    // is a listing type a job could in principle also carry.
+    if (filter === 'Job Listing') return allListings.filter((row) => row.kind === 'job')
+    if (filter === 'Collab Post') return allListings.filter((row) => row.kind === 'collab')
     return allListings.filter((row) => row.status === filter)
-  }, [filter])
+  }, [filter, allListings])
 
   const columns = [
     { key: 'title', label: 'Title' },
@@ -45,7 +42,13 @@ export default function ListingsTable() {
     date: row.date,
     status: <Chip tone={row.tone}>{row.status}</Chip>,
     actions: (
-      <Button variant="subtle" size="sm" className="border-0 bg-primary-100 text-primary-text">
+      <Button
+        variant="subtle"
+        size="sm"
+        disabled
+        title="No detail screen exists yet"
+        className="border-0 bg-primary-100 text-primary-text"
+      >
         View
       </Button>
     ),
@@ -55,7 +58,7 @@ export default function ListingsTable() {
     <>
       <FilterTabs
         label="Filter listings"
-        options={listingFilters}
+        options={filters}
         value={filter}
         onChange={setFilter}
       />

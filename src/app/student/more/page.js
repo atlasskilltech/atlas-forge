@@ -1,5 +1,6 @@
 import { AppShell, MoreTray } from '@/components/layout'
 import { ROLES } from '@/config/roles'
+import * as student from '@/lib/modules/student'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -9,9 +10,11 @@ export const metadata = buildMetadata({
   noIndex: true,
 })
 
-export default function StudentMorePage() {
+export default async function StudentMorePage() {
+  const { chromeUser } = await student.requireStudentPage('/student/more')
+
   return (
-    <AppShell role={ROLES.STUDENT}>
+    <AppShell role={ROLES.STUDENT} user={chromeUser}>
       <MoreTray role={ROLES.STUDENT} />
     </AppShell>
   )

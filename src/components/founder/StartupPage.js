@@ -1,12 +1,14 @@
 import Link from 'next/link'
 import { Avatar, Button, Card, Chip, SectionLabel, StatCard } from '@/components/ui'
-import { myStartup } from '@/data/founder'
 
 /**
  * Reference: /reference/mast ui/Founder/My Startup Page.png
  *            /reference/mast phone ui/Founder/My Startup Page.png
  */
-export default function StartupPage() {
+export default function StartupPage({ startup }) {
+  if (!startup) return null
+  const myStartup = startup
+
   return (
     <>
       <Card padding="lg" className="lg:px-7 lg:py-7">
@@ -77,6 +79,8 @@ export default function StartupPage() {
         <Button
           variant="subtle"
           size="lg"
+          disabled
+          title="Adding a team member needs a form, which is not designed yet"
           className="mt-4 border-0 bg-primary-100 text-primary-text"
         >
           + Add Team Member (App ID)

@@ -1,12 +1,15 @@
 import Link from 'next/link'
 import { Avatar, Card, Chip } from '@/components/ui'
-import { applications, mobileApplications } from '@/data/student'
 
 /**
  * Reference: /reference/mast ui/Student/My Applications.png       (avatar rows)
  *            /reference/mast phone ui/Student/My Applications.png (stacked cards)
+ *
+ * The two frames were drawn with different sample rows. Both now render the
+ * same real applications — one student cannot have two different sets of
+ * applications depending on screen width — each in its own layout.
  */
-export default function ApplicationList() {
+export default function ApplicationList({ applications = [] }) {
   return (
     <>
       {/* ---- Desktop rows ------------------------------------------------ */}
@@ -31,10 +34,14 @@ export default function ApplicationList() {
               <Chip tone={application.statusTone} size="lg">
                 {application.status}
               </Chip>
+              {/* `GET /api/student/applications/:id` now returns the status
+                  history, but the reference draws no expanded row to show it in. */}
               <button
                 type="button"
+                disabled
+                title="No expanded view yet"
                 aria-label={`Show details for ${application.role}`}
-                className="flex size-6 shrink-0 items-center justify-center rounded-control bg-canvas text-[11px] text-muted"
+                className="flex size-6 shrink-0 items-center justify-center rounded-control bg-canvas text-[11px] text-muted disabled:cursor-not-allowed disabled:opacity-50"
               >
                 ⌄
               </button>
@@ -45,7 +52,7 @@ export default function ApplicationList() {
 
       {/* ---- Mobile cards ------------------------------------------------ */}
       <ul className="space-y-3 lg:hidden">
-        {mobileApplications.map((application) => (
+        {applications.map((application) => (
           <li key={application.id}>
             <Card padding="none" className="px-4 py-4">
               <div className="flex items-center justify-between gap-3">

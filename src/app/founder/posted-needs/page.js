@@ -1,7 +1,7 @@
 import { AppShell } from '@/components/layout'
 import { Card, Chip, PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
-import { conciergeContactLog } from '@/data/founder'
+import * as founder from '@/lib/modules/founder'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -16,9 +16,12 @@ export const metadata = buildMetadata({
  * assembled purely from existing design-system pieces and the Concierge data —
  * it should be replaced once a design is supplied.
  */
-export default function FounderPostedNeedsPage() {
+export default async function FounderPostedNeedsPage() {
+  const { user, chromeUser } = await founder.requireFounderPage('/founder/posted-needs')
+  const { needs } = await founder.getPostedNeeds(user)
+
   return (
-    <AppShell role={ROLES.FOUNDER}>
+    <AppShell role={ROLES.FOUNDER} user={chromeUser}>
       <PageTitle>My Posted Needs</PageTitle>
       <Subtle className="mt-3 mb-4 text-sm lg:mb-[22px]">
         Talent needs you&apos;ve posted through Concierge. Mihir Pawar is CC&apos;d on
@@ -26,7 +29,7 @@ export default function FounderPostedNeedsPage() {
       </Subtle>
 
       <ul className="space-y-3">
-        {conciergeContactLog.map((need) => (
+        {needs.map((need) => (
           <li key={need.id}>
             <Card padding="lg">
               <div className="flex items-start justify-between gap-3">

@@ -6,37 +6,36 @@ import {
   Button,
   Card,
   Chip,
-  ConfirmDialog,
   FilterTabs,
   SectionLabel,
   StatCard,
 } from '@/components/ui'
-import { poolFilters, students } from '@/data/forge'
 import { cn } from '@/lib/utils'
 
 /**
  * Reference: /reference/mast ui/FM/Student Pool.png       (list + detail + 3 actions)
  *            /reference/mast phone ui/FM/Student Pool.png (compact rows)
  */
-export default function StudentPoolBrowser() {
+export default function StudentPoolBrowser({ students = [], filters = ['All'] }) {
   const [filter, setFilter] = useState('All')
-  const [selectedId, setSelectedId] = useState(students[0].id)
-  const [contacted, setContacted] = useState(null)
+  const [selectedId, setSelectedId] = useState(students[0]?.id ?? null)
 
   const visible = useMemo(() => {
     if (filter === 'All') return students
     if (filter === 'Available Now') return students.filter((s) => s.available)
     return students.filter((s) => s.track === filter)
-  }, [filter])
+  }, [filter, students])
 
   const selected =
-    students.find((student) => student.id === selectedId) ?? visible[0] ?? students[0]
+    students.find((student) => student.id === selectedId) ?? visible[0] ?? students[0] ?? null
+
+  if (students.length === 0) return null
 
   return (
     <>
       <FilterTabs
         label="Filter the student pool"
-        options={poolFilters}
+        options={filters}
         value={filter}
         onChange={setFilter}
         className="hidden lg:flex"
@@ -116,13 +115,23 @@ export default function StudentPoolBrowser() {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2.5">
-            <Button size="lg" onClick={() => setContacted(selected)}>
+            {/* Concierge outreach is a Founder action: `concierge.contact` is
+                granted to Founder and Backend Manager, and this role holds only
+                `concierge.search` and `concierge.view_all_logs`. The control is
+                drawn in the reference, so it stays visible and disabled rather
+                than reporting a message it has no permission to send. */}
+            <Button size="lg" disabled title="Concierge outreach is sent by founders">
               Contact Student
             </Button>
-            <Button variant="secondary" size="lg">
+            <Button variant="secondary" size="lg" disabled title="No detail screen exists yet">
               View Full Profile
             </Button>
-            <Button variant="secondary" size="lg">
+            <Button
+              variant="secondary"
+              size="lg"
+              disabled
+              title="Assigning a student to a project is not built yet"
+            >
               Assign to Project
             </Button>
           </div>
@@ -130,7 +139,7 @@ export default function StudentPoolBrowser() {
       </div>
 
       <ul className="space-y-3 lg:hidden">
-        {students.map((student) => (
+        {visible.map((student) => (
           <li key={student.id}>
             <Card padding="lg" className="flex items-center gap-3.5">
               <Avatar
@@ -148,14 +157,6 @@ export default function StudentPoolBrowser() {
         ))}
       </ul>
 
-      <ConfirmDialog
-        open={Boolean(contacted)}
-        onClose={() => setContacted(null)}
-        title="Contact Sent!"
-        description={
-          contacted ? `Your message to ${contacted.name} has been sent.` : ''
-        }
-      />
     </>
   )
 }

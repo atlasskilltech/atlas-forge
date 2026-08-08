@@ -2,6 +2,7 @@ import { AppShell } from '@/components/layout'
 import { RoleManagement } from '@/components/backend'
 import { PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as backend from '@/lib/modules/backend'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -11,9 +12,13 @@ export const metadata = buildMetadata({
   noIndex: true,
 })
 
-export default function BackendRoleAssignmentsPage() {
+export default async function BackendRoleAssignmentsPage({ searchParams }) {
+  const { user, chromeUser } = await backend.requireBackendPage('/backend/role-assignments')
+  const { q } = await searchParams
+  const roles = await backend.getRoleManagement(q)
+
   return (
-    <AppShell role={ROLES.BACKEND_MANAGER}>
+    <AppShell role={ROLES.BACKEND_MANAGER} user={chromeUser}>
       <PageTitle>
         <span className="lg:hidden">Role Assignments</span>
         <span className="hidden lg:inline">Role Management</span>
@@ -23,7 +28,7 @@ export default function BackendRoleAssignmentsPage() {
         manage their startup listing.
       </Subtle>
       <div className="mt-4 lg:hidden" />
-      <RoleManagement />
+      <RoleManagement {...roles} />
     </AppShell>
   )
 }

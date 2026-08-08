@@ -1,47 +1,63 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useMemo, useState, useTransition } from 'react'
 import { ActionDialog, Avatar, Button, Card, Chip, FilterTabs } from '@/components/ui'
-import { approvalQueue, approvalTabs } from '@/data/forge'
+import { api } from '@/lib/api/client'
 
 /**
  * Reference: /reference/mast ui/FM/Approval Queue.png       (solid green Approve)
  *            /reference/mast phone ui/FM/Approval Queue.png (tinted Approve)
  *            /reference/mast ui/Overlay/FM Approval Queue {Approve,Reject} Confirm.png
+ *
+ * A decision is a real write: it records the verdict against this role, moves
+ * the listing and notifies the founder in one transaction. `decision` is the
+ * Forge Manager's own recorded verdict, which is not always the listing's
+ * status — a Backend Manager override can leave a listing live that was
+ * rejected here.
  */
-export default function ApprovalQueue() {
-  const [tab, setTab] = useState(approvalTabs[0])
-  const [decisions, setDecisions] = useState({})
+export default function ApprovalQueue({ items = [], tabs = [] }) {
+  const router = useRouter()
+  const [tab, setTab] = useState(tabs[0])
   const [pending, setPending] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [, startTransition] = useTransition()
 
   const visible = useMemo(() => {
-    if (tab === approvalTabs[0]) return approvalQueue
-    if (tab === 'Approved') {
-      return approvalQueue.filter((item) => decisions[item.id] === 'approved')
-    }
-    if (tab === 'Rejected') {
-      return approvalQueue.filter((item) => decisions[item.id] === 'rejected')
-    }
-    return approvalQueue.filter((item) => item.kind === tab)
-  }, [tab, decisions])
+    if (tab === 'Approved') return items.filter((item) => item.decision === 'approved')
+    if (tab === 'Rejected') return items.filter((item) => item.decision === 'rejected')
 
-  function confirm() {
-    setDecisions((prev) => ({ ...prev, [pending.item.id]: pending.action }))
-    setPending(null)
+    const undecided = items.filter((item) => !item.decision)
+    if (tab?.startsWith('Job Listings')) return undecided.filter((item) => item.kind === 'job')
+    if (tab?.startsWith('Collab Posts')) return undecided.filter((item) => item.kind === 'collab')
+    return undecided
+  }, [tab, items])
+
+  async function confirm() {
+    setSubmitting(true)
+    try {
+      await api.post('/api/forge/approvals', {
+        listingId: pending.item.listingId,
+        decision: pending.action,
+      })
+      setPending(null)
+      startTransition(() => router.refresh())
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   function statusFor(item) {
-    const decision = decisions[item.id]
-    if (decision === 'approved') return { label: 'Approved', tone: 'success' }
-    if (decision === 'rejected') return { label: 'Rejected', tone: 'danger' }
-    return { label: item.status, tone: item.status === 'Approved' ? 'success' : 'warning' }
+    if (item.decision === 'approved') return { label: 'Approved', tone: 'success' }
+    if (item.decision === 'rejected') return { label: 'Rejected', tone: 'danger' }
+    return { label: item.status, tone: item.statusTone }
   }
 
   return (
     <>
       <FilterTabs
         label="Filter the approval queue"
-        options={approvalTabs}
+        options={tabs}
         value={tab}
         onChange={setTab}
         className="hidden lg:flex"
@@ -50,7 +66,7 @@ export default function ApprovalQueue() {
       {/* ---- Desktop rows ------------------------------------------------ */}
       <ul className="mt-[22px] hidden space-y-3 lg:block">
         {visible.map((item) => {
-          const decided = Boolean(decisions[item.id])
+          const decided = Boolean(item.decision)
           return (
             <li key={item.id}>
               <Card className="flex items-center gap-4 px-5 py-4">
@@ -97,8 +113,10 @@ export default function ApprovalQueue() {
                 )}
                 <button
                   type="button"
+                  disabled
+                  title="No row menu yet"
                   aria-label={`More options for ${item.title}`}
-                  className="flex size-6 shrink-0 items-center justify-center rounded-control bg-canvas text-[11px] text-muted"
+                  className="flex size-6 shrink-0 items-center justify-center rounded-control bg-canvas text-[11px] text-muted disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   ⌄
                 </button>
@@ -110,7 +128,7 @@ export default function ApprovalQueue() {
 
       {/* ---- Mobile cards ------------------------------------------------- */}
       <ul className="space-y-3 lg:hidden">
-        {approvalQueue.map((item) => {
+        {visible.map((item) => {
           const status = statusFor(item)
           return (
             <li key={item.id}>
@@ -122,6 +140,7 @@ export default function ApprovalQueue() {
                   <Chip tone={status.tone}>{status.label}</Chip>
                 </div>
                 <p className="mt-2.5 text-[13px] text-muted">{item.mobileMeta}</p>
+                {item.decision ? null : (
                 <div className="mt-3 flex gap-2.5">
                   <Button
                     variant="approve"
@@ -138,6 +157,7 @@ export default function ApprovalQueue() {
                     Reject
                   </Button>
                 </div>
+                )}
               </Card>
             </li>
           )
@@ -151,6 +171,7 @@ export default function ApprovalQueue() {
         title="Approve This Listing?"
         description="This makes the listing live immediately and notifies the founder."
         confirmLabel="Yes, Approve"
+        confirmDisabled={submitting}
         onConfirm={confirm}
       />
 
@@ -161,6 +182,7 @@ export default function ApprovalQueue() {
         title="Reject This Listing?"
         description="This removes the listing from consideration and notifies the founder."
         confirmLabel="Yes, Reject"
+        confirmDisabled={submitting}
         onConfirm={confirm}
       />
     </>

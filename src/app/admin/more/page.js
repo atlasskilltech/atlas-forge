@@ -1,5 +1,6 @@
 import { AppShell, MoreTray } from '@/components/layout'
 import { ROLES } from '@/config/roles'
+import * as admin from '@/lib/modules/admin'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -9,9 +10,11 @@ export const metadata = buildMetadata({
   noIndex: true,
 })
 
-export default function AdminMorePage() {
+export default async function AdminMorePage() {
+  const { chromeUser } = await admin.requireAdminPage('/admin/more')
+
   return (
-    <AppShell role={ROLES.SUPER_ADMIN} viewOnlyBanner={false}>
+    <AppShell role={ROLES.SUPER_ADMIN} user={chromeUser} viewOnlyBanner={false}>
       <MoreTray role={ROLES.SUPER_ADMIN} />
     </AppShell>
   )

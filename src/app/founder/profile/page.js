@@ -2,6 +2,7 @@ import { AppShell } from '@/components/layout'
 import { ProfileForm } from '@/components/founder'
 import { PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as founder from '@/lib/modules/founder'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -11,15 +12,18 @@ export const metadata = buildMetadata({
   noIndex: true,
 })
 
-export default function FounderProfilePage() {
+export default async function FounderProfilePage() {
+  const { user, chromeUser } = await founder.requireFounderPage('/founder/profile')
+  const { profile } = await founder.getProfile(user)
+
   return (
-    <AppShell role={ROLES.FOUNDER}>
+    <AppShell role={ROLES.FOUNDER} user={chromeUser}>
       <PageTitle className="mb-4">My Profile</PageTitle>
       <Subtle className="mt-4 mb-[22px] hidden text-sm lg:block">
         Your profile is visible to the Forge Manager. Update your details and manage your
         account.
       </Subtle>
-      <ProfileForm />
+      <ProfileForm profile={profile} />
     </AppShell>
   )
 }

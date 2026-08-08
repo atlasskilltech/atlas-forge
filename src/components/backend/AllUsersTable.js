@@ -1,14 +1,14 @@
 'use client'
 
+import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { Avatar, Button, Card, Chip, DataTable, FilterTabs } from '@/components/ui'
-import { allUsers, userFilters } from '@/data/backend'
 
 /**
  * Reference: /reference/mast ui/BM/All Users.png       (7 columns incl. Startup / Last Active)
  *            /reference/mast phone ui/BM/All Users.png (avatar cards)
  */
-export default function AllUsersTable() {
+export default function AllUsersTable({ users: allUsers = [], filters: userFilters = ['All'] }) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('All')
 
@@ -25,7 +25,7 @@ export default function AllUsersTable() {
           ? user.name.toLowerCase().includes(term) || user.appId.toLowerCase().includes(term)
           : true
       )
-  }, [filter, query])
+  }, [filter, query, allUsers])
 
   const columns = [
     { key: 'name', label: 'Name' },
@@ -50,8 +50,16 @@ export default function AllUsersTable() {
     startup: user.startup,
     status: <Chip tone={user.statusTone}>{user.status}</Chip>,
     lastActive: user.lastActive,
+    // Role Management is the screen that manages an account, and its search
+    // runs from the query string, so this opens it already looking at this row.
     actions: (
-      <Button variant="subtle" size="sm" className="border-0 bg-primary-100 text-primary-text">
+      <Button
+        as={Link}
+        href={`/backend/role-assignments?q=${encodeURIComponent(user.appId)}`}
+        variant="subtle"
+        size="sm"
+        className="border-0 bg-primary-100 text-primary-text"
+      >
         Manage
       </Button>
     ),

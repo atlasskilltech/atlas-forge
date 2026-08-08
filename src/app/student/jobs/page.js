@@ -2,6 +2,7 @@ import { AppShell } from '@/components/layout'
 import { JobBrowser } from '@/components/student'
 import { PageTitle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as student from '@/lib/modules/student'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -11,14 +12,17 @@ export const metadata = buildMetadata({
   noIndex: true,
 })
 
-export default function StudentJobsPage() {
+export default async function StudentJobsPage() {
+  const { userId, chromeUser } = await student.requireStudentPage('/student/jobs')
+  const { jobs, filters } = await student.getJobs(userId)
+
   return (
-    <AppShell role={ROLES.STUDENT}>
+    <AppShell role={ROLES.STUDENT} user={chromeUser}>
       <PageTitle className="mb-4 lg:mb-[22px]">
         <span className="lg:hidden">Browse Jobs</span>
         <span className="hidden lg:inline">Browse Jobs &amp; Collabs</span>
       </PageTitle>
-      <JobBrowser />
+      <JobBrowser jobs={jobs} filters={filters} />
     </AppShell>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import {
   Button,
   Card,
@@ -10,8 +10,7 @@ import {
   ProgressRing,
   SegmentedControl,
 } from '@/components/ui'
-import { hiringStatuses, industries, stages } from '@/data/founder'
-import { readinessItems } from '@/data/student'
+import { api } from '@/lib/api/client'
 import { cn } from '@/lib/utils'
 
 /**
@@ -19,24 +18,71 @@ import { cn } from '@/lib/utils'
  *            /reference/mast ui/Founder/Startup Profile Setup.png
  *
  * Those two frames are the identical form — only the heading and the confirmation
- * differ — so one component serves both routes via the `mode` prop.
+ * differ — so one component serves both routes via the `mode` prop, and both
+ * post to the same endpoint: it creates the startup when the founder has none
+ * and updates it otherwise.
+ *
+ * The ring is a live preview. What is stored is recomputed on the server from
+ * the evidence actually submitted, so the ring the Forge Manager sees cannot
+ * be inflated from here.
  */
-export default function StartupListingForm({ mode = 'edit' }) {
+export default function StartupListingForm({
+  mode = 'edit',
+  industries = [],
+  stages = [],
+  hiringStatuses = [],
+  readinessItems = [],
+  values = {},
+}) {
   const router = useRouter()
-  const [industry, setIndustry] = useState(industries[0])
-  const [stage, setStage] = useState(stages[0])
-  const [hiring, setHiring] = useState(hiringStatuses[0])
-  const [readiness, setReadiness] = useState({})
+  const industryNames = industries.map((item) => item.name)
+  const stageNames = stages.map((item) => item.name)
+
+  const [industry, setIndustry] = useState(
+    industries.find((item) => item.slug === values.industrySlug)?.name ?? industryNames[0]
+  )
+  const [stage, setStage] = useState(
+    stages.find((item) => item.slug === values.stageSlug)?.name ?? stageNames[0]
+  )
+  const [hiring, setHiring] = useState(
+    values.isHiring ? hiringStatuses[0] : (hiringStatuses[1] ?? hiringStatuses[0])
+  )
+  const [readiness, setReadiness] = useState(values.readiness ?? {})
   const [saved, setSaved] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+  const [, startTransition] = useTransition()
 
   const percent = useMemo(() => {
+    if (readinessItems.length === 0) return 0
     const done = readinessItems.filter((item) => readiness[item.id]?.trim()).length
     return Math.round((done / readinessItems.length) * 100)
-  }, [readiness])
+  }, [readiness, readinessItems])
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
-    setSaved(true)
+    const form = new FormData(event.currentTarget)
+
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.put('/api/founder/startup', {
+        name: form.get('ideaName')?.trim() || values.name,
+        tagline: form.get('tagline')?.trim() || values.tagline,
+        problemStatement: form.get('problem')?.trim() || values.problemStatement,
+        industrySlug: industries.find((item) => item.name === industry)?.slug ?? null,
+        stageSlug: stages.find((item) => item.name === stage)?.slug ?? null,
+        isHiring: hiring === hiringStatuses[0],
+        openRoles: form.get('openRoles')?.trim() || values.openRoles,
+        readiness,
+      })
+      setSaved(true)
+      startTransition(() => router.refresh())
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -50,6 +96,7 @@ export default function StartupListingForm({ mode = 'edit' }) {
             <FormField
               label="Idea / Project Name"
               name="ideaName"
+              defaultValue={values.name ?? ''}
               placeholder="e.g. NovaMed — AI health monitoring"
               size="responsive"
               required
@@ -58,12 +105,14 @@ export default function StartupListingForm({ mode = 'edit' }) {
             <FormField
               label="Tagline"
               name="tagline"
+              defaultValue={values.tagline ?? ''}
               placeholder="One line describing what you do — shown on your startup page"
               size="responsive"
             />
             <FormField
               label="Problem Statement"
               name="problem"
+              defaultValue={values.problemStatement ?? ''}
               as="textarea"
               rows={3}
               placeholder="What problem are you solving and for whom?"
@@ -74,7 +123,7 @@ export default function StartupListingForm({ mode = 'edit' }) {
               <SegmentedControl
                 label="Industry"
                 tone="primary"
-                options={industries}
+                options={industryNames}
                 value={industry}
                 onChange={setIndustry}
               />
@@ -85,7 +134,7 @@ export default function StartupListingForm({ mode = 'edit' }) {
               <SegmentedControl
                 label="Current Stage"
                 tone="primary"
-                options={stages}
+                options={stageNames}
                 value={stage}
                 onChange={setStage}
               />
@@ -105,6 +154,7 @@ export default function StartupListingForm({ mode = 'edit' }) {
             <FormField
               label="Open roles"
               name="openRoles"
+              defaultValue={values.openRoles ?? ''}
               placeholder="e.g. 3"
               size="responsive"
               containerClassName="max-w-[240px]"
@@ -168,9 +218,14 @@ export default function StartupListingForm({ mode = 'edit' }) {
               </div>
             </div>
 
-            <Button type="submit" size="xl" fullWidth className="lg:w-auto">
+            <Button type="submit" size="xl" fullWidth className="lg:w-auto" disabled={submitting}>
               {mode === 'edit' ? 'Save Changes' : 'Save Startup Profile'}
             </Button>
+            {error ? (
+              <p role="alert" className="text-[13px] text-danger">
+                {error}
+              </p>
+            ) : null}
           </div>
         </Card>
 
@@ -213,7 +268,7 @@ export default function StartupListingForm({ mode = 'edit' }) {
         title={mode === 'edit' ? 'Listing Updated' : 'Startup Profile Saved'}
         description={
           mode === 'edit'
-            ? 'Your changes are live on the NovaMed startup page.'
+            ? `Your changes are live on the ${values.name ?? 'startup'} page.`
             : 'Your startup details are saved. Your Founder dashboard is now unlocked.'
         }
         primaryLabel={mode === 'edit' ? 'View Startup Page' : 'Done'}

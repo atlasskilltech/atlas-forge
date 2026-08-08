@@ -1,5 +1,4 @@
 import { Avatar, Card, Chip, DataTable } from '@/components/ui'
-import { contactLog } from '@/data/founder'
 
 /**
  * Reference: /reference/mast ui/Founder/Contact Log.png       (6-column table)
@@ -15,8 +14,8 @@ const COLUMNS = [
   { key: 'status', label: 'Status' },
 ]
 
-export default function ContactLogView() {
-  const rows = contactLog.map((entry) => ({
+export default function ContactLogView({ contacts = [] }) {
+  const rows = contacts.map((entry) => ({
     id: entry.id,
     student: entry.student,
     appId: entry.appId,
@@ -37,7 +36,7 @@ export default function ContactLogView() {
       </div>
 
       <ul className="space-y-3 lg:hidden">
-        {contactLog.map((entry) => (
+        {contacts.map((entry) => (
           <li key={entry.id}>
             <Card padding="lg">
               <div className="flex items-center gap-3">

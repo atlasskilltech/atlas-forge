@@ -12,10 +12,15 @@ export default function SkillTagRow({ skills = [], onAdd }) {
           {skill}
         </Chip>
       ))}
+      {/* `PUT /api/student/skills` exists, but choosing a skill needs a picker
+          the reference does not draw. Disabled when no handler is supplied
+          rather than looking clickable and doing nothing. */}
       <button
         type="button"
         onClick={onAdd}
-        className="inline-flex h-6 items-center rounded-full bg-canvas px-3 text-xs font-semibold text-muted transition-colors hover:text-ink"
+        disabled={!onAdd}
+        title={onAdd ? undefined : 'Adding a skill needs a picker, which is not designed yet'}
+        className="inline-flex h-6 items-center rounded-full bg-canvas px-3 text-xs font-semibold text-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
       >
         + Add Skill
       </button>

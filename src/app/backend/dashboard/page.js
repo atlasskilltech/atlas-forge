@@ -2,13 +2,7 @@ import Link from 'next/link'
 import { AppShell } from '@/components/layout'
 import { Button, Card, PageTitle, SectionLabel, StatCard, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
-import {
-  dashboardStats,
-  mobileDashboardStats,
-  mobileQuickActions,
-  platformActivity,
-  quickAccessControls,
-} from '@/data/backend'
+import * as backend from '@/lib/modules/backend'
 import { buildMetadata } from '@/lib/seo'
 import { cn } from '@/lib/utils'
 
@@ -30,9 +24,13 @@ const DOT = {
  * Reference: /reference/mast ui/BM/Platform Dashboard.png
  *            /reference/mast phone ui/BM/Platform Dashboard.png
  */
-export default function BackendDashboardPage() {
+export default async function BackendDashboardPage() {
+  const { user, chromeUser } = await backend.requireBackendPage('/backend/dashboard')
+  const { stats, mobileStats, activity, quickAccessControls, quickActions } =
+    await backend.getDashboard()
+
   return (
-    <AppShell role={ROLES.BACKEND_MANAGER}>
+    <AppShell role={ROLES.BACKEND_MANAGER} user={chromeUser}>
       <PageTitle>
         <span className="lg:hidden">Dashboard</span>
         <span className="hidden lg:inline">Platform Dashboard</span>
@@ -44,7 +42,7 @@ export default function BackendDashboardPage() {
       {/* ---- Desktop ----------------------------------------------------- */}
       <div className="hidden lg:block">
         <div className="mt-[22px] flex flex-wrap gap-3">
-          {dashboardStats.map((stat) => (
+          {stats.map((stat) => (
             <StatCard key={stat.label} {...stat} className="min-w-[118px]" />
           ))}
         </div>
@@ -67,11 +65,11 @@ export default function BackendDashboardPage() {
         <SectionLabel className="mt-6">Recent Platform Activity</SectionLabel>
         <Card padding="lg" className="mt-3 px-6 py-5">
           <ul>
-            {platformActivity.map((item, index) => (
+            {activity.map((item, index) => (
               <li
                 key={item.id}
                 className={
-                  index < platformActivity.length - 1
+                  index < activity.length - 1
                     ? 'flex items-center gap-3.5 border-b border-line py-3.5 first:pt-0'
                     : 'flex items-center gap-3.5 pt-3.5'
                 }
@@ -93,14 +91,14 @@ export default function BackendDashboardPage() {
       {/* ---- Mobile ------------------------------------------------------ */}
       <div className="lg:hidden">
         <div className="mt-4 flex flex-wrap gap-2.5">
-          {mobileDashboardStats.map((stat) => (
+          {mobileStats.map((stat) => (
             <StatCard key={stat.label} {...stat} compact />
           ))}
         </div>
 
         <SectionLabel className="mt-5">Quick Actions</SectionLabel>
         <div className="mt-2.5 flex flex-wrap gap-2.5">
-          {mobileQuickActions.map((action) => (
+          {quickActions.map((action) => (
             <Button
               key={action.label}
               as={Link}

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import {
   Avatar,
   Button,
@@ -12,23 +13,50 @@ import {
   SectionLabel,
   SegmentedControl,
 } from '@/components/ui'
-import { assignedMentor, mentorSessions, mentorTypes } from '@/data/student'
+import { api } from '@/lib/api/client'
+import { cn } from '@/lib/utils'
 
 /**
  * Reference: /reference/mast ui/Student/Mentorship.png
  *            /reference/mast phone ui/Student/Mentorship.png
  *            /reference/mast ui/Overlay/Request Mentorship Form.png
  *            /reference/mast ui/Overlay/Student Request Mentorship Sent.png
+ *
+ * `mentorTypes` carries a slug alongside each label; the segmented control
+ * shows the label and the request sends the slug, so the mentor type the
+ * student picked resolves to the same row the Forge Manager assigns from.
  */
-export default function MentorshipPanel() {
+export default function MentorshipPanel({ sessions = [], assignedMentor, mentorTypes = [] }) {
+  const router = useRouter()
+  const typeNames = mentorTypes.map((type) => type.name)
   const [formOpen, setFormOpen] = useState(false)
   const [sent, setSent] = useState(false)
-  const [mentorType, setMentorType] = useState(mentorTypes[0])
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+  const [mentorType, setMentorType] = useState(typeNames[0])
+  const [, startTransition] = useTransition()
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
-    setFormOpen(false)
-    setSent(true)
+    const form = new FormData(event.currentTarget)
+
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post('/api/student/mentorship', {
+        topic: form.get('topic'),
+        context: form.get('context'),
+        mentorType: mentorTypes.find((type) => type.name === mentorType)?.slug ?? null,
+        timing: form.get('timing'),
+      })
+      setFormOpen(false)
+      setSent(true)
+      startTransition(() => router.refresh())
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -41,7 +69,7 @@ export default function MentorshipPanel() {
       <div className="hidden lg:block">
         <SectionLabel className="mt-6">My Sessions</SectionLabel>
         <div className="mt-3 grid gap-[18px] lg:grid-cols-3">
-          {mentorSessions.map((session) => (
+          {sessions.map((session) => (
             <Card key={session.id} padding="lg" className="self-start px-5 py-5">
               <div className="flex items-start justify-between gap-3">
                 <p className="text-[13px] text-muted">{session.when}</p>
@@ -56,21 +84,23 @@ export default function MentorshipPanel() {
 
       {/* ---- Mobile: assigned mentor + request --------------------------- */}
       <div className="lg:hidden">
-        <Card padding="lg">
-          <div className="flex items-center gap-3.5">
-            <Avatar
-              initials={assignedMentor.initials}
-              tone="warning"
-              shape="square"
-              size="xl"
-              className="bg-warning-fill text-white"
-            />
-            <div className="min-w-0">
-              <p className="text-[15px] font-bold text-ink">{assignedMentor.name}</p>
-              <p className="text-[13px] text-muted">{assignedMentor.role}</p>
+        {assignedMentor ? (
+          <Card padding="lg">
+            <div className="flex items-center gap-3.5">
+              <Avatar
+                initials={assignedMentor.initials}
+                tone="warning"
+                shape="square"
+                size="xl"
+                className="bg-warning-fill text-white"
+              />
+              <div className="min-w-0">
+                <p className="text-[15px] font-bold text-ink">{assignedMentor.name}</p>
+                <p className="text-[13px] text-muted">{assignedMentor.role}</p>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        ) : null}
 
         <Button fullWidth className="mt-4 h-12" onClick={() => setFormOpen(true)}>
           Request Session
@@ -107,7 +137,7 @@ export default function MentorshipPanel() {
             <SegmentedControl
               label="Preferred mentor type"
               tone="primary"
-              options={mentorTypes}
+              options={typeNames}
               value={mentorType}
               onChange={setMentorType}
             />
@@ -117,12 +147,14 @@ export default function MentorshipPanel() {
             name="timing"
             placeholder="e.g. Weekday evenings, or Thu 3–5 PM"
           />
-          <Button type="submit" fullWidth className="h-12">
+          <Button type="submit" fullWidth className="h-12" disabled={submitting}>
             Send Request
           </Button>
-          <p className="text-xs text-muted">
-            Mihir Pawar will review your request and confirm a mentor and time.
-            You&apos;ll be notified once scheduled.
+          {/* The reference's footnote slot also carries the failure message, so
+              an error never adds an element the design does not have. */}
+          <p className={cn('text-xs', error ? 'text-danger' : 'text-muted')} role={error ? 'alert' : undefined}>
+            {error ??
+              "Mihir Pawar will review your request and confirm a mentor and time. You'll be notified once scheduled."}
           </p>
         </form>
       </Modal>

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import {
   Avatar,
   Button,
@@ -10,7 +11,7 @@ import {
   FormField,
   SectionLabel,
 } from '@/components/ui'
-import { sharedProfile } from '@/data/backend'
+import { api } from '@/lib/api/client'
 
 /**
  * Reference: /reference/mast ui/Shared/My Profile.png
@@ -23,12 +24,36 @@ import { sharedProfile } from '@/data/backend'
  * SUPPORT sidebar. It renders inside the current role's shell here, so the
  * role's navigation stays consistent — see the section notes.
  */
-export default function SharedProfile() {
+/**
+ * @param {object} props.profile
+ * @param {string} [props.endpoint]  Where edits are saved. Omitted for the
+ *   view-only Super Admin, whose Save is disabled rather than silently inert.
+ */
+export default function SharedProfile({ profile: sharedProfile, endpoint }) {
+  const router = useRouter()
   const [saved, setSaved] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [, startTransition] = useTransition()
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
-    setSaved(true)
+    if (!endpoint) return
+    const form = new FormData(event.currentTarget)
+
+    setSubmitting(true)
+    try {
+      // The reference shows current values as placeholders rather than values,
+      // so an untouched field means "leave this as it is".
+      await api.patch(endpoint, {
+        name: form.get('fullName')?.trim() || sharedProfile.raw.name,
+        email: form.get('email')?.trim() || sharedProfile.raw.email,
+        bio: form.get('bio')?.trim() || sharedProfile.raw.bio,
+      })
+      setSaved(true)
+      startTransition(() => router.refresh())
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -62,13 +87,19 @@ export default function SharedProfile() {
               </div>
             </div>
           </div>
-          <Button variant="secondary" size="lg" className="hidden shrink-0 lg:inline-flex">
+          <Button
+            variant="secondary"
+            size="lg"
+            disabled
+            title="Use the Personal Details form below"
+            className="hidden shrink-0 lg:inline-flex"
+          >
             Edit Profile
           </Button>
         </div>
       </Card>
 
-      <Button variant="subtle" fullWidth className="mt-4 h-11 lg:hidden">
+      <Button variant="subtle" fullWidth disabled title="Profile editing has no screen yet" className="mt-4 h-11 lg:hidden">
         Edit Profile
       </Button>
 
@@ -93,7 +124,11 @@ export default function SharedProfile() {
         ))}
       </ul>
 
-      <Button fullWidth className="mt-4 h-12 lg:hidden" onClick={() => setSaved(true)}>
+      {/* The mobile frames draw read-only detail cards above this button —
+          there is no field to edit and so nothing to submit. It stays visible
+          and disabled until an edit screen is designed, rather than reporting a
+          save that never happened. */}
+      <Button fullWidth className="mt-4 h-12 lg:hidden" disabled>
         Save Changes
       </Button>
 
@@ -115,7 +150,7 @@ export default function SharedProfile() {
             rows={3}
             placeholder="A brief description visible to founders and mentors"
           />
-          <Button type="submit" size="xl">
+          <Button type="submit" size="xl" disabled={submitting || !endpoint}>
             Save Changes
           </Button>
         </form>

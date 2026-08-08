@@ -234,6 +234,7 @@ export function ActionDialog({
   description,
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
+  confirmDisabled = false,
   onConfirm,
 }) {
   return (
@@ -250,6 +251,7 @@ export function ActionDialog({
         <Button
           variant={ACTION_BUTTON[tone]}
           className="h-11 flex-[3]"
+          disabled={confirmDisabled}
           onClick={onConfirm}
         >
           {confirmLabel}

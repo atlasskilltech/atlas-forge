@@ -11,14 +11,7 @@ import {
   StatCard,
 } from '@/components/ui'
 import { ROLES } from '@/config/roles'
-import {
-  dashboardContacts,
-  dashboardQueue,
-  dashboardStats,
-  mobileDashboardStats,
-  mobilePending,
-  mobileQuickActions,
-} from '@/data/forge'
+import * as forge from '@/lib/modules/forge'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -31,10 +24,18 @@ export const metadata = buildMetadata({
 /**
  * Reference: /reference/mast ui/FM/Dashboard.png
  *            /reference/mast phone ui/FM/Dashboard.png
+ *
+ * The Approval Queue panel previews two queues at once — listings awaiting a
+ * decision and mentorship requests awaiting a mentor — interleaved newest
+ * first, which is why its rows carry a kind monogram rather than an avatar.
  */
-export default function ForgeDashboardPage() {
+export default async function ForgeDashboardPage() {
+  const { chromeUser } = await forge.requireForgePage('/forge/dashboard')
+  const { stats, mobileStats, queue, contacts, mobilePending, quickActions } =
+    await forge.getDashboard()
+
   return (
-    <AppShell role={ROLES.FORGE_MANAGER}>
+    <AppShell role={ROLES.FORGE_MANAGER} user={chromeUser}>
       <PageTitle>
         <span className="lg:hidden">Dashboard</span>
         <span className="hidden lg:inline">Forge Manager Dashboard</span>
@@ -43,7 +44,7 @@ export default function ForgeDashboardPage() {
       {/* ---- Desktop ----------------------------------------------------- */}
       <div className="hidden lg:block">
         <div className="mt-[22px] flex flex-wrap gap-3">
-          {dashboardStats.map((stat) => (
+          {stats.map((stat) => (
             <StatCard key={stat.label} {...stat} className="min-w-[118px]" />
           ))}
         </div>
@@ -52,7 +53,7 @@ export default function ForgeDashboardPage() {
           <Card padding="lg" className="px-6 py-5">
             <CardHeader title="Approval Queue" />
             <ul className="mt-3 space-y-2">
-              {dashboardQueue.map((item) => (
+              {queue.map((item) => (
                 <li key={item.id}>
                   <Link
                     href="/forge/approval-queue"
@@ -82,11 +83,11 @@ export default function ForgeDashboardPage() {
           <Card padding="lg" className="px-6 py-5">
             <CardHeader title="Contact Log — All Founders" />
             <ul className="mt-3">
-              {dashboardContacts.map((contact, index) => (
+              {contacts.map((contact, index) => (
                 <li
                   key={contact.id}
                   className={
-                    index < dashboardContacts.length - 1
+                    index < contacts.length - 1
                       ? 'flex items-center gap-4 border-b border-line py-3.5 first:pt-0'
                       : 'flex items-center gap-4 pt-3.5'
                   }
@@ -106,14 +107,14 @@ export default function ForgeDashboardPage() {
       {/* ---- Mobile ------------------------------------------------------ */}
       <div className="lg:hidden">
         <div className="mt-4 flex flex-wrap gap-2.5">
-          {mobileDashboardStats.map((stat) => (
+          {mobileStats.map((stat) => (
             <StatCard key={stat.label} {...stat} compact />
           ))}
         </div>
 
         <SectionLabel className="mt-5">Quick Actions</SectionLabel>
         <div className="mt-2.5 flex flex-wrap gap-2.5">
-          {mobileQuickActions.map((action) => (
+          {quickActions.map((action) => (
             <Button
               key={action.label}
               as={Link}

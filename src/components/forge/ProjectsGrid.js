@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Avatar, Button, Card, Chip, FilterTabs } from '@/components/ui'
-import { allProjects, projectFilters } from '@/data/forge'
+import { api } from '@/lib/api/client'
 
 /**
  * Reference: /reference/mast ui/FM/All Projects.png       (3-up manage cards)
@@ -11,14 +12,30 @@ import { allProjects, projectFilters } from '@/data/forge'
  * @param {string} [only]  Pre-filter to 'featured' or 'active' for the
  *   Featured / Active Startups routes, which share this screen's design.
  */
-export default function ProjectsGrid({ only }) {
+export default function ProjectsGrid({ only, projects: allProjects = [], filters = ['All'] }) {
+  const router = useRouter()
   const [filter, setFilter] = useState('All')
+  const [pendingId, setPendingId] = useState(null)
+  const [, startTransition] = useTransition()
 
   const base = useMemo(() => {
     if (only === 'featured') return allProjects.filter((p) => p.featured)
     if (only === 'active') return allProjects.filter((p) => p.status === 'Active')
     return allProjects
-  }, [only])
+  }, [only, allProjects])
+
+  async function toggleFeatured(project) {
+    setPendingId(project.id)
+    try {
+      await api.patch('/api/forge/projects', {
+        startupId: project.startupId,
+        featured: !project.featured,
+      })
+      startTransition(() => router.refresh())
+    } finally {
+      setPendingId(null)
+    }
+  }
 
   const visible = useMemo(() => {
     if (filter === 'All') return base
@@ -31,7 +48,7 @@ export default function ProjectsGrid({ only }) {
     <>
       <FilterTabs
         label="Filter projects"
-        options={projectFilters}
+        options={filters}
         value={filter}
         onChange={setFilter}
         className="hidden lg:flex"
@@ -63,11 +80,17 @@ export default function ProjectsGrid({ only }) {
               Team: {project.team} · Open Roles: {project.openRoles}
             </p>
             <div className="mt-3.5 flex flex-wrap gap-2.5">
-              <Button variant="secondary" size="lg">
+              <Button variant="secondary" size="lg" disabled title="No detail screen exists yet">
                 View Page
               </Button>
-              <Button variant="secondary" size="lg" leadingIcon="⭐">
-                Feature
+              <Button
+                variant="secondary"
+                size="lg"
+                leadingIcon="⭐"
+                disabled={pendingId === project.id}
+                onClick={() => toggleFeatured(project)}
+              >
+                {project.featured ? 'Unfeature' : 'Feature'}
               </Button>
             </div>
           </Card>

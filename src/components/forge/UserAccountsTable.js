@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react'
 import { Avatar, Button, Card, Chip, DataTable, FilterTabs } from '@/components/ui'
-import { userAccounts, userFilters } from '@/data/forge'
 
 /**
  * Reference: /reference/mast ui/FM/User Accounts.png       (search + spaced table)
@@ -11,13 +10,17 @@ import { userAccounts, userFilters } from '@/data/forge'
  * @param {string[]} [groups]  Restrict to certain role groups, for the
  *   All Students / All Founders / Role Assignments routes.
  */
-export default function UserAccountsTable({ groups }) {
+export default function UserAccountsTable({
+  groups,
+  accounts: userAccounts = [],
+  filters: userFilters = ['All'],
+}) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('All')
 
   const base = useMemo(
     () => (groups ? userAccounts.filter((user) => groups.includes(user.group)) : userAccounts),
-    [groups]
+    [groups, userAccounts]
   )
 
   const visible = useMemo(() => {
@@ -51,7 +54,13 @@ export default function UserAccountsTable({ groups }) {
     role: <span className="text-primary-text">{user.role}</span>,
     status: <Chip tone={user.tone2}>{user.status}</Chip>,
     actions: (
-      <Button variant="subtle" size="sm" className="border-0 bg-primary-100 text-primary-text">
+      <Button
+        variant="subtle"
+        size="sm"
+        disabled
+        title="Account management is a Backend Manager action"
+        className="border-0 bg-primary-100 text-primary-text"
+      >
         Manage
       </Button>
     ),

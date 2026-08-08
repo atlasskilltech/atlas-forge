@@ -2,6 +2,7 @@ import { AppShell } from '@/components/layout'
 import { StartupListingForm } from '@/components/founder'
 import { PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as founder from '@/lib/modules/founder'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -15,10 +16,14 @@ export const metadata = buildMetadata({
  * Reference: /reference/mast ui/Founder/Startup Profile Setup.png — the same
  * field set as Edit Listing, with the setup heading and confirmation.
  */
-export default function FounderIncubationPage() {
+export default async function FounderIncubationPage() {
+  const { user, chromeUser } = await founder.requireFounderPage('/founder/incubation')
+  const form = await founder.getStartupForm(user)
+
   return (
     <AppShell
       role={ROLES.FOUNDER}
+      user={chromeUser}
       mobileTitle="Apply for Incubation"
       backHref="/founder/home"
     >
@@ -35,7 +40,7 @@ export default function FounderIncubationPage() {
           any time.
         </span>
       </Subtle>
-      <StartupListingForm mode="setup" />
+      <StartupListingForm mode="setup" {...form} />
     </AppShell>
   )
 }

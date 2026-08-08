@@ -2,6 +2,7 @@ import { AppShell } from '@/components/layout'
 import { ContactManagerCta } from '@/components/shared'
 import { PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as founder from '@/lib/modules/founder'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -16,10 +17,13 @@ export const metadata = buildMetadata({
  * (/reference/mast ui/Overlay/Contact Forge Manager.png), so the route is a thin
  * page hosting the same CTA and dialog rather than an invented screen.
  */
-export default function FounderContactManagerPage() {
+export default async function FounderContactManagerPage() {
+  const { chromeUser } = await founder.requireFounderPage('/founder/contact-manager')
+
   return (
     <AppShell
       role={ROLES.FOUNDER}
+      user={chromeUser}
       mobileTitle="Contact Forge Manager"
       backHref="/founder/home"
     >

@@ -1,9 +1,11 @@
 import { Button, Card, Chip, DataTable, StatCard } from '@/components/ui'
-import { allContacts, contactStats } from '@/data/forge'
 
 /**
  * Reference: /reference/mast ui/FM/Contact Log.png       (4 stats + 7-column table)
  *            /reference/mast phone ui/FM/Contact Log.png (cards)
+ *
+ * Shared by Contact Log and Contract Log — the same columns describe outreach
+ * and the engagements that came out of it, so each route supplies its own rows.
  */
 
 const COLUMNS = [
@@ -16,8 +18,8 @@ const COLUMNS = [
   { key: 'action', label: 'Action' },
 ]
 
-export default function AllContactsView() {
-  const rows = allContacts.map((entry) => ({
+export default function AllContactsView({ contacts = [], stats = [], caption }) {
+  const rows = contacts.map((entry) => ({
     id: entry.id,
     founder: entry.founder,
     student: <span className="text-primary-text">{entry.student}</span>,
@@ -26,7 +28,13 @@ export default function AllContactsView() {
     ccd: <span className="text-primary-text">{entry.ccd}</span>,
     status: <Chip tone={entry.tone}>{entry.status}</Chip>,
     action: (
-      <Button variant="subtle" size="sm" className="border-0 bg-primary-100 text-primary-text">
+      <Button
+        variant="subtle"
+        size="sm"
+        disabled
+        title="No detail screen exists yet"
+        className="border-0 bg-primary-100 text-primary-text"
+      >
         View
       </Button>
     ),
@@ -35,7 +43,7 @@ export default function AllContactsView() {
   return (
     <>
       <div className="flex flex-wrap gap-2.5 lg:gap-3">
-        {contactStats.map((stat) => (
+        {stats.map((stat) => (
           <StatCard key={stat.label} {...stat} className="min-w-[110px] lg:min-w-[120px]" />
         ))}
       </div>
@@ -44,12 +52,12 @@ export default function AllContactsView() {
         <DataTable
           columns={COLUMNS}
           rows={rows}
-          caption="Every contact made by founders through Concierge"
+          caption={caption ?? 'Every contact made by founders through Concierge'}
         />
       </div>
 
       <ul className="mt-4 space-y-3 lg:hidden">
-        {allContacts.map((entry) => (
+        {contacts.map((entry) => (
           <li key={entry.id}>
             <Card padding="lg">
               <div className="flex items-start justify-between gap-3">

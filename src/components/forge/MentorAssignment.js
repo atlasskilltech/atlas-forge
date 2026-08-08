@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import {
   Avatar,
   Button,
@@ -10,32 +11,50 @@ import {
   Modal,
   SectionLabel,
 } from '@/components/ui'
-import { mentorRequests, mentors, mobileMentorAssignments, sessionLog } from '@/data/forge'
+import { api } from '@/lib/api/client'
 
 /**
  * Reference: /reference/mast ui/FM/Assign Mentors.png
  *            /reference/mast phone ui/FM/Assign Mentors.png
  *            /reference/mast ui/Overlay/FM Assign Mentors Pick Mentor.png
+ *
+ * Selecting a mentor closes the request, gives its placeholder session a
+ * mentor and notifies the student in one transaction.
  */
-export default function MentorAssignment() {
+export default function MentorAssignment({
+  requests = [],
+  mentors = [],
+  sessionLog = [],
+  mobileAssignments = [],
+}) {
+  const router = useRouter()
   const [picking, setPicking] = useState(null)
-  const [assigned, setAssigned] = useState({})
   const [confirmed, setConfirmed] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [, startTransition] = useTransition()
 
-  function selectMentor(mentor) {
-    setAssigned((prev) => ({ ...prev, [picking.id]: mentor }))
-    setConfirmed({ request: picking, mentor })
-    setPicking(null)
+  async function selectMentor(mentor) {
+    setSubmitting(true)
+    try {
+      await api.post('/api/forge/mentorship', {
+        requestId: picking.requestId,
+        mentorId: mentor.mentorId,
+      })
+      setConfirmed({ request: picking, mentor })
+      setPicking(null)
+      startTransition(() => router.refresh())
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
     <>
       {/* ---- Desktop: pending requests + session log --------------------- */}
       <div className="hidden lg:block">
-        <SectionLabel>Pending Requests ({mentorRequests.length})</SectionLabel>
+        <SectionLabel>Pending Requests ({requests.length})</SectionLabel>
         <ul className="mt-3 space-y-3">
-          {mentorRequests.map((request) => {
-            const mentor = assigned[request.id]
+          {requests.map((request) => {
             return (
               <li key={request.id}>
                 <Card className="flex items-center gap-4 px-5 py-4">
@@ -54,19 +73,15 @@ export default function MentorAssignment() {
                   <Chip tone={request.kindTone} size="lg">
                     {request.kind}
                   </Chip>
-                  {mentor ? (
-                    <Chip tone="success" size="lg">
-                      ✓ {mentor.name}
-                    </Chip>
-                  ) : (
-                    <Button size="lg" onClick={() => setPicking(request)}>
-                      Assign Mentor
-                    </Button>
-                  )}
+                  <Button size="lg" onClick={() => setPicking(request)}>
+                    Assign Mentor
+                  </Button>
                   <button
                     type="button"
+                    disabled
+                    title="No row menu yet"
                     aria-label={`More options for ${request.title}`}
-                    className="flex size-6 shrink-0 items-center justify-center rounded-control bg-canvas text-[11px] text-muted"
+                    className="flex size-6 shrink-0 items-center justify-center rounded-control bg-canvas text-[11px] text-muted disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     ⌄
                   </button>
@@ -106,7 +121,7 @@ export default function MentorAssignment() {
       {/* ---- Mobile: assignment cards ------------------------------------ */}
       <div className="lg:hidden">
         <ul className="space-y-3">
-          {mobileMentorAssignments.map((row) => (
+          {mobileAssignments.map((row) => (
             <li key={row.id}>
               <Card padding="lg" className="text-center">
                 <div className="flex items-center justify-center gap-3">
@@ -143,7 +158,8 @@ export default function MentorAssignment() {
         <Button
           fullWidth
           className="mt-4 h-12"
-          onClick={() => setPicking(mentorRequests[0])}
+          disabled={requests.length === 0}
+          onClick={() => setPicking(requests[0])}
         >
           Assign Student to Startup
         </Button>
@@ -187,6 +203,7 @@ export default function MentorAssignment() {
                 <Button
                   fullWidth
                   className="mt-3 h-10"
+                  disabled={submitting}
                   onClick={() => selectMentor(mentor)}
                 >
                   Select {mentor.short}

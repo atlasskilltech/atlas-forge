@@ -2,6 +2,7 @@ import { AppShell } from '@/components/layout'
 import { HelpTopics } from '@/components/shared'
 import { PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as founder from '@/lib/modules/founder'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -39,9 +40,16 @@ const TOPICS = [
   },
 ]
 
-export default function FounderHelpPage() {
+export default async function FounderHelpPage() {
+  const { chromeUser } = await founder.requireFounderPage('/founder/help')
+
   return (
-    <AppShell role={ROLES.FOUNDER} mobileTitle="Help" backHref="/founder/home">
+    <AppShell
+      role={ROLES.FOUNDER}
+      user={chromeUser}
+      mobileTitle="Help"
+      backHref="/founder/home"
+    >
       <PageTitle className="mb-4">Help</PageTitle>
       <Subtle className="mt-3 mb-[22px] text-sm">
         Common questions about running your startup on ATLAS Forge.

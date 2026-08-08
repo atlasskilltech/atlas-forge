@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useMemo, useState, useTransition } from 'react'
 import {
   Avatar,
   Banner,
@@ -12,26 +13,46 @@ import {
   FilterTabs,
   StatCard,
 } from '@/components/ui'
-import { conciergeContactLog, poolFilters, studentPool } from '@/data/founder'
+import { api } from '@/lib/api/client'
 import { cn } from '@/lib/utils'
 
 /**
  * Reference: /reference/mast ui/Founder/Concierge.png       (list + detail + stats + log)
  *            /reference/mast phone ui/Founder/Concierge.png ("Student Pool" rows)
+ *
+ * "Contact Student" is a real write: it records the outreach against the
+ * founder and the student and CCs the Forge Manager, which is what the banner
+ * on this screen promises.
  */
-export default function ConciergePool() {
+export default function ConciergePool({ students = [], filters = ['All'], contactLog = [] }) {
+  const router = useRouter()
   const [filter, setFilter] = useState('All')
-  const [selectedId, setSelectedId] = useState(studentPool[0].id)
+  const [selectedId, setSelectedId] = useState(students[0]?.id ?? null)
   const [contacted, setContacted] = useState(null)
+  const [pendingId, setPendingId] = useState(null)
+  const [, startTransition] = useTransition()
 
   const visible = useMemo(() => {
-    if (filter === 'All') return studentPool
-    if (filter === 'Available Now') return studentPool.filter((s) => s.available)
-    return studentPool.filter((s) => s.track === filter)
-  }, [filter])
+    if (filter === 'All') return students
+    if (filter === 'Available Now') return students.filter((s) => s.available)
+    return students.filter((s) => s.track === filter)
+  }, [filter, students])
 
   const selected =
-    studentPool.find((student) => student.id === selectedId) ?? visible[0] ?? studentPool[0]
+    students.find((student) => student.id === selectedId) ?? visible[0] ?? students[0] ?? null
+
+  async function contact(student) {
+    setPendingId(student.id)
+    try {
+      await api.post('/api/founder/contacts', { studentId: student.userId })
+      setContacted(student)
+      startTransition(() => router.refresh())
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  if (students.length === 0) return null
 
   return (
     <>
@@ -42,7 +63,7 @@ export default function ConciergePool() {
 
       <FilterTabs
         label="Filter the student pool"
-        options={poolFilters}
+        options={filters}
         value={filter}
         onChange={setFilter}
         className="mt-[22px] hidden lg:flex"
@@ -116,10 +137,14 @@ export default function ConciergePool() {
                 </div>
               </div>
               <div className="flex shrink-0 flex-col gap-2.5">
-                <Button size="lg" onClick={() => setContacted(selected)}>
+                <Button
+                  size="lg"
+                  disabled={pendingId === selected.id}
+                  onClick={() => contact(selected)}
+                >
                   Contact Student
                 </Button>
-                <Button variant="subtle" size="lg">
+                <Button variant="subtle" size="lg" disabled title="No detail screen exists yet">
                   View Full Profile
                 </Button>
               </div>
@@ -135,7 +160,7 @@ export default function ConciergePool() {
           <Card padding="lg" className="px-6 py-5">
             <CardHeader title="Contact Log" />
             <ul className="mt-3 space-y-2">
-              {conciergeContactLog.map((entry) => (
+              {contactLog.map((entry) => (
                 <li
                   key={entry.id}
                   className="flex items-center gap-3.5 rounded-tile border border-line-soft px-3.5 py-3"
@@ -161,7 +186,7 @@ export default function ConciergePool() {
 
       {/* ---- Mobile: contact rows ---------------------------------------- */}
       <ul className="space-y-3 lg:hidden">
-        {studentPool.map((student) => (
+        {students.map((student) => (
           <li
             key={student.id}
             className="flex items-center gap-3.5 rounded-card border border-line bg-surface p-4 shadow-card"
@@ -180,7 +205,8 @@ export default function ConciergePool() {
               variant="subtle"
               size="md"
               className="shrink-0 border-0 bg-primary-100 text-primary-text"
-              onClick={() => setContacted(student)}
+              disabled={pendingId === student.id}
+              onClick={() => contact(student)}
             >
               Contact
             </Button>

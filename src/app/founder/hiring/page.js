@@ -3,6 +3,7 @@ import { AppShell } from '@/components/layout'
 import { HiringPanel } from '@/components/founder'
 import { Button, PageTitle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as founder from '@/lib/modules/founder'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -12,9 +13,12 @@ export const metadata = buildMetadata({
   noIndex: true,
 })
 
-export default function FounderHiringPage() {
+export default async function FounderHiringPage() {
+  const { user, chromeUser } = await founder.requireFounderPage('/founder/hiring')
+  const { tabs, listingsByTab, applicantsByListing } = await founder.getHiring(user)
+
   return (
-    <AppShell role={ROLES.FOUNDER}>
+    <AppShell role={ROLES.FOUNDER} user={chromeUser}>
       <div className="mb-4 flex items-start justify-between gap-4 lg:mb-[22px]">
         <PageTitle>
           <span className="lg:hidden">My Listings</span>
@@ -29,7 +33,11 @@ export default function FounderHiringPage() {
           + Post a Job
         </Button>
       </div>
-      <HiringPanel />
+      <HiringPanel
+        tabs={tabs}
+        listingsByTab={listingsByTab}
+        applicantsByListing={applicantsByListing}
+      />
     </AppShell>
   )
 }

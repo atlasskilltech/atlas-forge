@@ -1,23 +1,53 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import { Button, Card, ConfirmDialog, FormField, SegmentedControl } from '@/components/ui'
-import { contractTypes } from '@/data/founder'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { api } from '@/lib/api/client'
+import { cn } from '@/lib/utils'
 
 /**
  * Reference: /reference/mast ui/Founder/Post a Job.png
  *            /reference/mast phone ui/Founder/Post a Job.png (trimmed field set)
  *            /reference/mast ui/Overlay/Founder Post a Job Submitted.png
  */
-export default function PostJobForm() {
+export default function PostJobForm({ contractTypes = [] }) {
+  const router = useRouter()
   const isDesktop = useIsDesktop()
-  const [contract, setContract] = useState(contractTypes[0])
+  const contractNames = contractTypes.map((type) => type.name)
+  const [contract, setContract] = useState(contractNames[0])
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+  const [, startTransition] = useTransition()
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
-    setSubmitted(true)
+    const form = new FormData(event.currentTarget)
+
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post('/api/founder/listings', {
+        title: form.get('title'),
+        description: form.get('description'),
+        // Sent as typed. The server accepts either a slug or a label, so the
+        // free-text role-type field resolves the same way the segmented
+        // control does.
+        roleType: form.get('roleType'),
+        contractType: contractTypes.find((type) => type.name === contract)?.slug ?? null,
+        compensation: form.get('compensation'),
+        skills: form.get('skills'),
+      })
+      event.target.reset()
+      setSubmitted(true)
+      startTransition(() => router.refresh())
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -80,24 +110,29 @@ export default function PostJobForm() {
             <p className="text-[13px] leading-4 font-semibold text-ink">Contract Type</p>
             <SegmentedControl
               label="Contract Type"
-              options={contractTypes}
+              options={contractNames}
               value={contract}
               onChange={setContract}
             />
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button type="submit" size="xl" fullWidth className="sm:w-auto">
+            <Button type="submit" size="xl" fullWidth className="sm:w-auto" disabled={submitting}>
               Submit for Approval
             </Button>
-            <Button variant="secondary" size="xl" className="hidden lg:inline-flex">
+            <Button variant="secondary" size="xl" disabled title="Listings have no draft state yet" className="hidden lg:inline-flex">
               Save as Draft
             </Button>
           </div>
 
-          <p className="hidden text-[13px] text-muted lg:block">
-            Once submitted, Mihir Pawar will review and approve before it goes live.
-            You&apos;ll be notified once live.
+          {/* The reference footnote slot doubles as the error slot, so a
+              failure never adds an element the design does not have. */}
+          <p
+            className={cn('text-[13px] lg:block', error ? 'text-danger' : 'hidden text-muted')}
+            role={error ? 'alert' : undefined}
+          >
+            {error ??
+              "Once submitted, Mihir Pawar will review and approve before it goes live. You'll be notified once live."}
           </p>
         </form>
       </Card>

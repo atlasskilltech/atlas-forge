@@ -2,6 +2,7 @@ import { AppShell } from '@/components/layout'
 import { ProjectsGrid } from '@/components/forge'
 import { Button, PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as forge from '@/lib/modules/forge'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -11,15 +12,26 @@ export const metadata = buildMetadata({
   noIndex: true,
 })
 
-export default function ForgeProjectsPage() {
+export default async function ForgeProjectsPage() {
+  const { chromeUser } = await forge.requireForgePage('/forge/projects')
+  const { projects, filters } = await forge.getProjects()
+
   return (
-    <AppShell role={ROLES.FORGE_MANAGER}>
+    <AppShell role={ROLES.FORGE_MANAGER} user={chromeUser}>
       <div className="flex items-start justify-between gap-4">
         <PageTitle>
           <span className="lg:hidden">All Projects</span>
           <span className="hidden lg:inline">All Projects Under Forge</span>
         </PageTitle>
-        <Button variant="secondary" size="lg" className="hidden shrink-0 lg:inline-flex">
+        {/* Featuring is done per card, where the Feature button writes. This
+            header shortcut would need a picker, which is not designed. */}
+        <Button
+          variant="secondary"
+          size="lg"
+          disabled
+          title="Use the Feature button on a project card"
+          className="hidden shrink-0 lg:inline-flex"
+        >
           + Feature a Project
         </Button>
       </div>
@@ -28,7 +40,7 @@ export default function ForgeProjectsPage() {
         featured status.
       </Subtle>
       <div className="mt-4 lg:mt-0">
-        <ProjectsGrid />
+        <ProjectsGrid projects={projects} filters={filters} />
       </div>
     </AppShell>
   )

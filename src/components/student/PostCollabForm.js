@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import { Button, Card, ConfirmDialog, FormField, SegmentedControl } from '@/components/ui'
-import { engagementTypes } from '@/data/student'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { api } from '@/lib/api/client'
+import { cn } from '@/lib/utils'
 
 /**
  * Reference: /reference/mast ui/Student/Post a Collab.png
@@ -13,14 +15,38 @@ import { useIsDesktop } from '@/hooks/useMediaQuery'
  * The mobile reference drops the engagement-type control and the draft action;
  * both are desktop-only here, matching the two frames.
  */
-export default function PostCollabForm() {
+export default function PostCollabForm({ engagementTypes = [] }) {
+  const router = useRouter()
   const isDesktop = useIsDesktop()
-  const [engagement, setEngagement] = useState(engagementTypes[0])
+  const typeNames = engagementTypes.map((type) => type.name)
+  const [engagement, setEngagement] = useState(typeNames[0])
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+  const [, startTransition] = useTransition()
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
-    setSubmitted(true)
+    const form = new FormData(event.currentTarget)
+
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.post('/api/student/collabs', {
+        title: form.get('title'),
+        summary: form.get('summary'),
+        collaborator: form.get('collaborator'),
+        skills: form.get('skills'),
+        engagement: engagementTypes.find((type) => type.name === engagement)?.slug ?? null,
+      })
+      event.target.reset()
+      setSubmitted(true)
+      startTransition(() => router.refresh())
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -67,24 +93,34 @@ export default function PostCollabForm() {
             <p className="text-[13px] leading-4 font-semibold text-ink">Engagement Type</p>
             <SegmentedControl
               label="Engagement Type"
-              options={engagementTypes}
+              options={typeNames}
               value={engagement}
               onChange={setEngagement}
             />
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button type="submit" size="xl" fullWidth className="sm:w-auto">
+            <Button type="submit" size="xl" fullWidth className="sm:w-auto" disabled={submitting}>
               Submit for Approval
             </Button>
-            <Button variant="secondary" size="xl" className="hidden lg:inline-flex">
+            <Button variant="secondary" size="xl" disabled title="Listings have no draft state yet" className="hidden lg:inline-flex">
               Save as Draft
             </Button>
           </div>
 
-          <p className="hidden text-[13px] text-muted lg:block">
-            Collab posts are reviewed by Mihir Pawar before going live. Lightweight
-            form — no contract required unless both parties agree.
+          {/* Desktop keeps the reference footnote; a failure replaces its text
+              rather than introducing an element the design does not have. On
+              mobile, where the footnote is not drawn, the message appears only
+              when there is one to show. */}
+          <p
+            className={cn(
+              'text-[13px] lg:block',
+              error ? 'text-danger' : 'hidden text-muted'
+            )}
+            role={error ? 'alert' : undefined}
+          >
+            {error ??
+              'Collab posts are reviewed by Mihir Pawar before going live. Lightweight form — no contract required unless both parties agree.'}
           </p>
         </form>
       </Card>

@@ -1,5 +1,4 @@
 import { Card, Chip, DataTable, SectionLabel, StatCard } from '@/components/ui'
-import { mobileOverviewStats, overviewStartups, overviewStats } from '@/data/admin'
 
 /**
  * Reference: /reference/mast ui/SA/Platform Overview.png       (5 stats + table)
@@ -14,7 +13,11 @@ const COLUMNS = [
   { key: 'mentor', label: 'Mentor' },
 ]
 
-export default function OverviewView() {
+export default function OverviewView({
+  stats: overviewStats = [],
+  mobileStats: mobileOverviewStats = [],
+  startups: overviewStartups = [],
+}) {
   const rows = overviewStartups.map((startup) => ({
     id: startup.id,
     name: startup.name,

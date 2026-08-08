@@ -1,34 +1,43 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import { ActionDialog, Button, Card, Chip, ConfirmDialog } from '@/components/ui'
-import { incubationApplications } from '@/data/forge'
+import { api } from '@/lib/api/client'
 
 /**
  * Reference: /reference/mast ui/FM/Incubation Applications.png
  *            /reference/mast ui/Overlay/FM Incubation Applications Grant Confirm.png
  *            /reference/mast ui/Overlay/FM Incubation Applications Granted.png
  */
-export default function IncubationApplications() {
+export default function IncubationApplications({ applications = [] }) {
+  const router = useRouter()
   const [pending, setPending] = useState(null)
   const [granted, setGranted] = useState(null)
-  const [unlocked, setUnlocked] = useState({})
+  const [submitting, setSubmitting] = useState(false)
+  const [, startTransition] = useTransition()
 
-  function confirmGrant() {
-    setUnlocked((prev) => ({ ...prev, [pending.id]: true }))
-    setGranted(pending)
-    setPending(null)
+  async function confirmGrant() {
+    setSubmitting(true)
+    try {
+      await api.post('/api/forge/incubation', { applicationId: pending.applicationId })
+      setGranted(pending)
+      setPending(null)
+      startTransition(() => router.refresh())
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
     <>
       <div className="grid gap-[18px] lg:grid-cols-3">
-        {incubationApplications.map((application) => (
+        {applications.map((application) => (
           <Card key={application.id} padding="lg" className="self-start lg:px-5 lg:py-5">
             <div className="flex items-start justify-between gap-3">
               <h2 className="text-lg font-bold text-ink">{application.name}</h2>
-              <Chip tone={unlocked[application.id] ? 'success' : application.tone}>
-                {unlocked[application.id] ? 'Approved' : application.status}
+              <Chip tone={application.granted ? 'success' : application.tone}>
+                {application.granted ? 'Approved' : application.status}
               </Chip>
             </div>
             <p className="mt-3.5 text-[13px] text-muted">Founder: {application.founder}</p>
@@ -36,12 +45,12 @@ export default function IncubationApplications() {
             <div className="mt-3.5 flex flex-wrap gap-2.5">
               <Button
                 size="lg"
-                disabled={Boolean(unlocked[application.id])}
+                disabled={application.granted}
                 onClick={() => setPending(application)}
               >
-                {unlocked[application.id] ? 'Access Granted' : 'Grant Founder Access'}
+                {application.granted ? 'Access Granted' : 'Grant Founder Access'}
               </Button>
-              <Button variant="secondary" size="lg">
+              <Button variant="secondary" size="lg" disabled title="No detail screen exists yet">
                 View Details
               </Button>
             </div>
@@ -56,6 +65,7 @@ export default function IncubationApplications() {
         title="Grant Founder Access?"
         description="This applicant gains Founder access immediately — Hiring, Concierge, and startup listing management unlock. Their incubation application will be marked approved."
         confirmLabel="Yes, Grant Access"
+        confirmDisabled={submitting}
         onConfirm={confirmGrant}
       />
 

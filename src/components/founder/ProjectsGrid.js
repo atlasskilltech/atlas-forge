@@ -2,27 +2,31 @@
 
 import { useMemo, useState } from 'react'
 import { Avatar, Card, Chip, FilterTabs } from '@/components/ui'
-import { forgeProjects, projectFilters } from '@/data/founder'
 import { cn } from '@/lib/utils'
 
 /**
  * Reference: /reference/mast ui/Founder/Projects.png       (3-up cards, own startup outlined)
  *            /reference/mast phone ui/Founder/Projects.png (compact rows)
+ *
+ * "Featured" now means the startup the Forge Manager has actually featured,
+ * and "New This Month" filters on the creation date. The mock could answer
+ * neither, so Featured stood in for "mine" and New returned everything.
  */
-export default function ProjectsGrid() {
+export default function ProjectsGrid({ projects = [], filters = ['All'] }) {
   const [filter, setFilter] = useState('All')
 
   const visible = useMemo(() => {
-    if (filter === 'Hiring') return forgeProjects.filter((project) => project.hiring)
-    if (filter === 'Featured') return forgeProjects.filter((project) => project.mine)
-    return forgeProjects
-  }, [filter])
+    if (filter === 'Hiring') return projects.filter((project) => project.hiring)
+    if (filter === 'Featured') return projects.filter((project) => project.featured)
+    if (filter === 'New This Month') return projects.filter((project) => project.isNew)
+    return projects
+  }, [filter, projects])
 
   return (
     <>
       <FilterTabs
         label="Filter projects"
-        options={projectFilters}
+        options={filters}
         value={filter}
         onChange={setFilter}
         className="hidden lg:flex"
@@ -68,7 +72,7 @@ export default function ProjectsGrid() {
       </div>
 
       <ul className="space-y-3 lg:hidden">
-        {forgeProjects.map((project) => (
+        {visible.map((project) => (
           <li key={project.id}>
             <Card padding="lg">
               <div className="flex items-center gap-3">

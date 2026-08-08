@@ -13,16 +13,7 @@ import {
   Subtle,
 } from '@/components/ui'
 import { ROLES } from '@/config/roles'
-import {
-  founderProfile,
-  homeDate,
-  homeQuickActions,
-  homeStats,
-  mobileActivity,
-  mobileHomeActions,
-  mobileHomeStats,
-  recentActivity,
-} from '@/data/founder'
+import * as founder from '@/lib/modules/founder'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -35,28 +26,44 @@ export const metadata = buildMetadata({
 /**
  * Reference: /reference/mast ui/Founder/Home Feed.png
  *            /reference/mast phone ui/Founder/Home Feed.png
+ *
+ * Both feeds are the same rows from `activity_logs`: everything that has
+ * happened to this startup, whoever did it. Desktop leads with what happened,
+ * mobile leads with who did it.
  */
-export default function FounderHomePage() {
+export default async function FounderHomePage() {
+  const { user, chromeUser } = await founder.requireFounderPage('/founder/home')
+  const {
+    profile,
+    date,
+    stats,
+    mobileStats,
+    activity,
+    mobileActivity,
+    quickActions,
+    mobileActions,
+  } = await founder.getHome(user)
+
   return (
-    <AppShell role={ROLES.FOUNDER}>
+    <AppShell role={ROLES.FOUNDER} user={chromeUser}>
       {/* ---- Desktop ----------------------------------------------------- */}
       <div className="hidden lg:block">
         <div className="flex items-start justify-between gap-4">
-          <PageTitle>Welcome back, {founderProfile.shortName}</PageTitle>
+          <PageTitle>Welcome back, {profile.shortName}</PageTitle>
           <Chip tone="neutral" size="lg" className="h-[26px] bg-surface text-muted">
-            {homeDate}
+            {date}
           </Chip>
         </div>
 
         <div className="mt-[22px] flex flex-wrap gap-3">
-          {homeStats.map((stat) => (
+          {stats.map((stat) => (
             <StatCard key={stat.label} {...stat} className="min-w-[130px]" />
           ))}
         </div>
 
         <SectionTitle className="mt-7">Quick Actions</SectionTitle>
         <div className="mt-3.5 flex flex-wrap gap-3">
-          {homeQuickActions.map((action) => (
+          {quickActions.map((action) => (
             <Button
               key={action.label}
               as={Link}
@@ -71,24 +78,24 @@ export default function FounderHomePage() {
 
         <SectionTitle className="mt-7">Recent Activity</SectionTitle>
         <div className="mt-3.5">
-          <ActivityList title="Recent Activity" items={recentActivity} />
+          <ActivityList title="Recent Activity" items={activity} />
         </div>
       </div>
 
       {/* ---- Mobile ------------------------------------------------------ */}
       <div className="lg:hidden">
-        <PageTitle>Good morning, {founderProfile.initials} 👋</PageTitle>
+        <PageTitle>Good morning, {profile.initials} 👋</PageTitle>
         <Subtle className="mt-3">Your startup overview for today.</Subtle>
 
         <div className="mt-4 flex flex-wrap gap-2.5">
-          {mobileHomeStats.map((stat) => (
+          {mobileStats.map((stat) => (
             <StatCard key={stat.label} {...stat} compact />
           ))}
         </div>
 
         <SectionLabel className="mt-5">Quick Actions</SectionLabel>
         <div className="mt-2.5 flex flex-wrap gap-2.5">
-          {mobileHomeActions.map((action) => (
+          {mobileActions.map((action) => (
             <Button
               key={action.label}
               as={Link}

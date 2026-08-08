@@ -2,6 +2,7 @@ import { AppShell } from '@/components/layout'
 import { PlatformSettings } from '@/components/backend'
 import { PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as backend from '@/lib/modules/backend'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -11,15 +12,18 @@ export const metadata = buildMetadata({
   noIndex: true,
 })
 
-export default function BackendSettingsPage() {
+export default async function BackendSettingsPage() {
+  const { user, chromeUser } = await backend.requireBackendPage('/backend/settings')
+  const { groups, mobile } = await backend.getSettings()
+
   return (
-    <AppShell role={ROLES.BACKEND_MANAGER}>
+    <AppShell role={ROLES.BACKEND_MANAGER} user={chromeUser}>
       <PageTitle>Platform Settings</PageTitle>
       <Subtle className="mt-4 mb-4 hidden text-sm lg:block lg:mb-[22px]">
         Backend Manager only. Changes here affect all users across the platform.
       </Subtle>
       <div className="mt-4 lg:hidden" />
-      <PlatformSettings />
+      <PlatformSettings groups={groups} mobile={mobile} />
     </AppShell>
   )
 }

@@ -1,12 +1,12 @@
 import { Button, Card, Chip, DataTable } from '@/components/ui'
-import { platformLogs } from '@/data/backend'
 
 /**
  * Reference: /reference/mast ui/BM/Platform Logs.png       (5-column audit trail)
  *            /reference/mast phone ui/BM/Platform Logs.png (cards)
  *
- * @param {string[]} [modules]  Restrict to certain modules, for the Error Logs
- *   and Activity Log routes which have no frames of their own.
+ * Shared by Platform Logs, Activity Log and Error Logs. Error rows come from
+ * `error_logs` rather than from activity filtered by module — the mock stood
+ * in for a table that had not been built yet.
  */
 const COLUMNS = [
   { key: 'time', label: 'Timestamp' },
@@ -17,11 +17,7 @@ const COLUMNS = [
   { key: 'more', label: '' },
 ]
 
-export default function PlatformLogsTable({ modules }) {
-  const entries = modules
-    ? platformLogs.filter((log) => modules.includes(log.module))
-    : platformLogs
-
+export default function PlatformLogsTable({ rows: entries = [], caption }) {
   const rows = entries.map((log) => ({
     id: log.id,
     time: <span className="font-normal text-muted">{log.time}</span>,
@@ -33,6 +29,8 @@ export default function PlatformLogsTable({ modules }) {
       <Button
         variant="subtle"
         size="sm"
+        disabled
+        title="No expanded view yet"
         aria-label={`More detail for ${log.action}`}
         className="size-6 border-0 bg-canvas p-0 text-[11px]"
       >
@@ -44,7 +42,7 @@ export default function PlatformLogsTable({ modules }) {
   return (
     <>
       <div className="hidden lg:block">
-        <DataTable columns={COLUMNS} rows={rows} caption="Platform audit trail" />
+        <DataTable columns={COLUMNS} rows={rows} caption={caption ?? 'Platform audit trail'} />
       </div>
 
       <ul className="space-y-3 lg:hidden">

@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react'
 import { Avatar, Card, Chip, DataTable, FilterTabs } from '@/components/ui'
-import { userFilters, users } from '@/data/admin'
 
 /**
  * Reference: /reference/mast ui/SA/All Users.png       (6 columns, no Actions)
@@ -20,12 +19,12 @@ const COLUMNS = [
   { key: 'lastActive', label: 'Last Active' },
 ]
 
-export default function UsersView() {
+export default function UsersView({ users = [], filters: userFilters = ['All'] }) {
   const [filter, setFilter] = useState('All')
 
   const visible = useMemo(
     () => (filter === 'All' ? users : users.filter((user) => user.group === filter)),
-    [filter]
+    [filter, users]
   )
 
   const rows = visible.map((user) => ({

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Button, FormField } from '@/components/ui'
+import { api } from '@/lib/api/client'
 
 /**
  * Sign-in form shared by the mobile card and the desktop panel.
@@ -10,8 +11,9 @@ import { Button, FormField } from '@/components/ui'
  * Reference: /reference/mast ui/Login Screen.png (input 560x48, button 560x52)
  *            /reference/mast phone ui/Login Screen.png (input 310x44, button 310x48)
  *
- * Frontend-only for now: it validates the two fields and routes to role
- * selection. The real credential check arrives with the API section.
+ * Credentials are checked by POST /api/auth/login, which sets an httpOnly
+ * session cookie. The password never leaves this component except in that one
+ * request body, and no part of the identity is stored in the browser.
  */
 export default function LoginForm() {
   const router = useRouter()
@@ -26,7 +28,7 @@ export default function LoginForm() {
     }
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
 
     const nextErrors = {}
@@ -36,7 +38,28 @@ export default function LoginForm() {
     if (Object.keys(nextErrors).length > 0) return
 
     setSubmitting(true)
-    router.push('/select-role')
+    try {
+      await api.post('/api/auth/login', {
+        appId: values.appId.trim(),
+        password: values.password,
+      })
+
+      // Read at submit time rather than with useSearchParams, which would opt
+      // the whole login page out of static rendering for a value only ever
+      // needed once, in the browser, on this click.
+      const next = new URLSearchParams(window.location.search).get('next')
+      // Honour ?next= only when it is a path on this site, so the parameter
+      // cannot be used to bounce a signed-in user to another domain.
+      const destination =
+        next && next.startsWith('/') && !next.startsWith('//') ? next : '/select-role'
+
+      router.replace(destination)
+      router.refresh()
+    } catch (error) {
+      // The server deliberately does not say which field was wrong.
+      setErrors({ password: error.message })
+      setSubmitting(false)
+    }
   }
 
   return (

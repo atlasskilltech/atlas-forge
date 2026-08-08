@@ -2,27 +2,29 @@
 
 import { useMemo, useState } from 'react'
 import { Avatar, Button, Card, Chip, FilterTabs } from '@/components/ui'
-import { projectFilters, startups } from '@/data/student'
 
 /**
  * Reference: /reference/mast ui/Student/Browse Projects.png       (3-up card grid)
  *            /reference/mast phone ui/Student/Browse Projects.png (rows + See Roles)
+ *
+ * "New This Month" now filters on the startup's creation date. The mock data
+ * had no date behind it, so that tab previously returned everything.
  */
-export default function ProjectBrowser() {
+export default function ProjectBrowser({ projects = [], filters = ['All'] }) {
   const [filter, setFilter] = useState('All')
 
   const visible = useMemo(() => {
-    if (filter === 'All') return startups
-    if (filter === 'Actively Hiring') return startups.filter((s) => s.hiring)
-    if (filter === 'New This Month') return startups
-    return startups.filter((s) => s.sector === filter)
-  }, [filter])
+    if (filter === 'All') return projects
+    if (filter === 'Actively Hiring') return projects.filter((project) => project.hiring)
+    if (filter === 'New This Month') return projects.filter((project) => project.isNew)
+    return projects.filter((project) => project.sector === filter)
+  }, [filter, projects])
 
   return (
     <>
       <FilterTabs
         label="Filter startups"
-        options={projectFilters}
+        options={filters}
         value={filter}
         onChange={setFilter}
         className="hidden lg:flex"
@@ -57,10 +59,14 @@ export default function ProjectBrowser() {
               </p>
             ) : null}
             <div className="mt-3.5 flex flex-wrap gap-2">
-              <Button variant="secondary" size="lg">
+              <Button variant="secondary" size="lg" disabled title="No detail screen exists yet">
                 View Startup
               </Button>
-              {startup.openRoles > 0 ? <Button size="lg">See Roles</Button> : null}
+              {startup.openRoles > 0 ? (
+                <Button size="lg" disabled title="Browse Jobs cannot yet filter by startup">
+                  See Roles
+                </Button>
+              ) : null}
             </div>
           </Card>
         ))}
@@ -68,7 +74,7 @@ export default function ProjectBrowser() {
 
       {/* ---- Mobile rows -------------------------------------------------- */}
       <ul className="space-y-3 lg:hidden">
-        {startups.map((startup) => (
+        {visible.map((startup) => (
           <li
             key={startup.id}
             className="flex items-center gap-3 rounded-card border border-line bg-surface p-4 shadow-card"
@@ -87,7 +93,13 @@ export default function ProjectBrowser() {
                 {startup.openRoles > 0 ? `${startup.openRoles} open roles` : 'Collab only'}
               </p>
             </div>
-            <Button variant="secondary" size="md" className="shrink-0">
+            <Button
+              variant="secondary"
+              size="md"
+              disabled
+              title="Browse Jobs cannot yet filter by startup"
+              className="shrink-0"
+            >
               See Roles
             </Button>
           </li>

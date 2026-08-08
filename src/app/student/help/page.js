@@ -2,6 +2,7 @@ import { AppShell } from '@/components/layout'
 import { HelpTopics } from '@/components/shared'
 import { PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as student from '@/lib/modules/student'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -39,9 +40,16 @@ const TOPICS = [
   },
 ]
 
-export default function StudentHelpPage() {
+export default async function StudentHelpPage() {
+  const { chromeUser } = await student.requireStudentPage('/student/help')
+
   return (
-    <AppShell role={ROLES.STUDENT} mobileTitle="Help" backHref="/student/home">
+    <AppShell
+      role={ROLES.STUDENT}
+      user={chromeUser}
+      mobileTitle="Help"
+      backHref="/student/home"
+    >
       <PageTitle className="mb-4">Help</PageTitle>
       <Subtle className="mt-3 mb-[22px] text-sm">
         Common questions about using ATLAS Forge as a student.

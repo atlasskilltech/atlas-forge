@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { Avatar, BrandLogo } from '@/components/ui'
 import { NAVBAR_NAV, ROLE_HOME } from '@/config/navigation'
 import { siteConfig } from '@/config/site'
+import { useLogout } from '@/hooks/useLogout'
 import { cn } from '@/lib/utils'
 
 /**
@@ -17,8 +18,10 @@ import { cn } from '@/lib/utils'
  *   Log out pill sits 92px from the right edge — consistent across all five screens.
  */
 /**
- * Signed-in identity drawn in each reference frame: student and founder screens
- * show SG, all three manager screens show MP. Overridable via the `user` prop.
+ * Fallback identity, drawn from the reference frames: student and founder
+ * screens show SG, all three manager screens show MP. Used only on screens
+ * that have not yet been wired to the session — once `user` is supplied it is
+ * the real signed-in account.
  */
 const DEFAULT_USER = {
   member: { name: 'Shantanu Ghuriani', initials: 'SG' },
@@ -27,7 +30,7 @@ const DEFAULT_USER = {
 
 export default function Navbar({ role, user, notificationLabel = 'N', onLogout }) {
   const pathname = usePathname()
-  const router = useRouter()
+  const logout = useLogout()
   const links = NAVBAR_NAV[role] || []
   const isManager = links.some((link) => link.key === 'manage')
   const identity = user ?? DEFAULT_USER[isManager ? 'manager' : 'member']
@@ -74,15 +77,23 @@ export default function Navbar({ role, user, notificationLabel = 'N', onLogout }
           <label htmlFor="global-search" className="sr-only">
             Search {siteConfig.name}
           </label>
+          {/* There is no search backend, so the field is disabled rather than
+              accepting input it will never act on. */}
           <input
             id="global-search"
             type="search"
+            disabled
+            title="Search is not available yet"
             placeholder="Search..."
-            className="hidden h-[30px] w-20 rounded-control bg-canvas px-2.5 text-[13px] text-ink placeholder:text-[#c0c5d9] focus:outline-none xl:block"
+            className="hidden h-[30px] w-20 rounded-control bg-canvas px-2.5 text-[13px] text-ink placeholder:text-[#c0c5d9] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 xl:block"
           />
+          {/* `GET /api/notifications` exists, but the reference draws no
+              dropdown or inbox to open. */}
           <button
             type="button"
-            className="flex size-[34px] items-center justify-center rounded-control bg-canvas text-[13px] font-semibold text-muted transition-colors hover:text-ink"
+            disabled
+            title="Notifications have no inbox screen yet"
+            className="flex size-[34px] items-center justify-center rounded-control bg-canvas text-[13px] font-semibold text-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Notifications"
           >
             {notificationLabel}
@@ -98,7 +109,7 @@ export default function Navbar({ role, user, notificationLabel = 'N', onLogout }
 
         <button
           type="button"
-          onClick={onLogout ?? (() => router.push('/login'))}
+          onClick={onLogout ?? logout}
           className="ml-auto inline-flex h-[29px] shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3.5 text-[13px] font-semibold text-muted transition-colors hover:text-ink"
         >
           <span aria-hidden="true">↩</span>

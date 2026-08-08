@@ -1,9 +1,9 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { Button, Card, Chip, ConfirmDialog, FilterTabs } from '@/components/ui'
-import { jobFilters, jobs, mobileJobs } from '@/data/student'
+import { api } from '@/lib/api/client'
 import { cn } from '@/lib/utils'
 
 /**
@@ -14,34 +14,52 @@ import { cn } from '@/lib/utils'
  * Note: in the mobile reference each card's Apply button is clipped by a
  * fixed-height frame. Cards here hug their content so the button is fully
  * visible; every element drawn is preserved.
+ *
+ * The mobile frame was drawn with a different sample list; both breakpoints
+ * now show the same live listings.
  */
-export default function JobBrowser() {
+export default function JobBrowser({ jobs = [], filters = ['All'] }) {
   const router = useRouter()
   const [filter, setFilter] = useState('All')
-  const [selectedId, setSelectedId] = useState(jobs[0].id)
+  const [selectedId, setSelectedId] = useState(jobs[0]?.id ?? null)
   const [appliedIds, setAppliedIds] = useState(
     () => new Set(jobs.filter((job) => job.applied).map((job) => job.id))
   )
+  const [pendingId, setPendingId] = useState(null)
   const [confirmed, setConfirmed] = useState(null)
+  const [, startTransition] = useTransition()
 
   const visibleJobs = useMemo(
     () => (filter === 'All' ? jobs : jobs.filter((job) => job.type === filter)),
-    [filter]
+    [filter, jobs]
   )
 
-  const selected = jobs.find((job) => job.id === selectedId) ?? visibleJobs[0] ?? jobs[0]
-  const isApplied = appliedIds.has(selected.id)
+  const selected = jobs.find((job) => job.id === selectedId) ?? visibleJobs[0] ?? jobs[0] ?? null
+  const isApplied = selected ? appliedIds.has(selected.id) : false
 
-  function apply(job) {
-    setAppliedIds((prev) => new Set(prev).add(job.id))
-    setConfirmed(job)
+  async function apply(job) {
+    setPendingId(job.id)
+    try {
+      await api.post('/api/student/applications', { listingId: job.listingId })
+      setAppliedIds((previous) => new Set(previous).add(job.id))
+      setConfirmed(job)
+      startTransition(() => router.refresh())
+    } catch (error) {
+      // A duplicate means the application already exists, so the button should
+      // still settle into its applied state rather than invite a retry.
+      if (error.isConflict) setAppliedIds((previous) => new Set(previous).add(job.id))
+    } finally {
+      setPendingId(null)
+    }
   }
+
+  if (jobs.length === 0) return null
 
   return (
     <>
       <FilterTabs
         label="Filter jobs by type"
-        options={jobFilters}
+        options={filters}
         value={filter}
         onChange={setFilter}
         className="hidden lg:flex"
@@ -102,7 +120,7 @@ export default function JobBrowser() {
           <Button
             size="xl"
             className="mt-5"
-            disabled={isApplied}
+            disabled={isApplied || pendingId === selected.id}
             onClick={() => apply(selected)}
           >
             {isApplied ? 'Applied ✓' : 'Apply for this Role'}
@@ -112,7 +130,7 @@ export default function JobBrowser() {
 
       {/* ---- Mobile: stacked list --------------------------------------- */}
       <ul className="space-y-3 lg:hidden">
-        {mobileJobs.map((job) => {
+        {jobs.map((job) => {
           const applied = appliedIds.has(job.id) || job.applied
           return (
             <li
@@ -139,7 +157,12 @@ export default function JobBrowser() {
               {applied ? (
                 <p className="mt-3 text-[13px] font-semibold text-success">Applied ✓</p>
               ) : (
-                <Button size="sm" className="mt-3" onClick={() => apply(job)}>
+                <Button
+                  size="sm"
+                  className="mt-3"
+                  disabled={pendingId === job.id}
+                  onClick={() => apply(job)}
+                >
                   Apply
                 </Button>
               )}

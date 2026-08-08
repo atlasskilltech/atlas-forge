@@ -1,38 +1,53 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useMemo, useState, useTransition } from 'react'
 import { ActionDialog, Button, Card, Chip, DataTable, FilterTabs } from '@/components/ui'
-import { jobQueue, queueTabs } from '@/data/backend'
+import { api } from '@/lib/api/client'
 
 /**
  * Reference: /reference/mast ui/BM/Job Approval Queue.png (7-column override table)
  *            /reference/mast ui/Overlay/BM Job Approval Queue {Approve,Reject} Confirm.png
  *
- * Backend Manager decisions override the Forge Manager's, so the FM Decision
- * column stays visible even after this role acts.
+ * Backend Manager decisions sit alongside the Forge Manager's rather than
+ * replacing them, so the FM Decision column stays visible after this role acts
+ * and `override` carries what this role decided.
  */
-export default function JobQueueTable() {
+export default function JobQueueTable({ rows: jobQueue = [], tabs: queueTabs = [] }) {
+  const router = useRouter()
   const [tab, setTab] = useState(queueTabs[0])
-  const [decisions, setDecisions] = useState({})
   const [pending, setPending] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [, startTransition] = useTransition()
 
   const visible = useMemo(() => {
     if (tab === 'All Pending') return jobQueue
     if (tab === 'Job Listings') return jobQueue.filter((row) => row.kind === 'Job')
     if (tab === 'Collab Posts') return jobQueue.filter((row) => row.kind === 'Collab')
+    // Approved and Rejected read this role's own verdict where it has one, and
+    // fall back to the Forge Manager's where it has not.
     if (tab === 'Approved') {
-      return jobQueue.filter(
-        (row) => decisions[row.id] === 'approved' || row.decision === 'Approved'
+      return jobQueue.filter((row) =>
+        row.override ? row.override === 'approved' : row.decision === 'Approved'
       )
     }
-    return jobQueue.filter(
-      (row) => decisions[row.id] === 'rejected' || row.decision === 'Rejected'
+    return jobQueue.filter((row) =>
+      row.override ? row.override === 'rejected' : row.decision === 'Rejected'
     )
-  }, [tab, decisions])
+  }, [tab, jobQueue])
 
-  function confirm() {
-    setDecisions((prev) => ({ ...prev, [pending.row.id]: pending.action }))
-    setPending(null)
+  async function confirm() {
+    setSubmitting(true)
+    try {
+      await api.post('/api/backend/job-queue', {
+        listingId: pending.row.listingId,
+        decision: pending.action,
+      })
+      setPending(null)
+      startTransition(() => router.refresh())
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const columns = [
@@ -46,7 +61,7 @@ export default function JobQueueTable() {
   ]
 
   const rows = visible.map((row) => {
-    const decided = decisions[row.id]
+    const decided = row.override
     return {
       id: row.id,
       kind: (
@@ -97,7 +112,7 @@ export default function JobQueueTable() {
 
       <ul className="mt-4 space-y-3 lg:hidden">
         {visible.map((row) => {
-          const decided = decisions[row.id]
+          const decided = row.override
           return (
             <li key={row.id}>
               <Card padding="lg">
@@ -141,6 +156,7 @@ export default function JobQueueTable() {
         title="Approve This Listing?"
         description="This makes the listing live immediately and notifies the founder. This overrides the Forge Manager's decision."
         confirmLabel="Yes, Approve"
+        confirmDisabled={submitting}
         onConfirm={confirm}
       />
 
@@ -151,6 +167,7 @@ export default function JobQueueTable() {
         title="Reject This Listing?"
         description="This removes the listing from consideration and notifies the founder. This overrides the Forge Manager's decision."
         confirmLabel="Yes, Reject"
+        confirmDisabled={submitting}
         onConfirm={confirm}
       />
     </>

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import {
   ActionDialog,
   Button,
@@ -11,7 +12,7 @@ import {
   SectionLabel,
   Toggle,
 } from '@/components/ui'
-import { mobileSettings, settingsGroups } from '@/data/backend'
+import { api } from '@/lib/api/client'
 
 /**
  * Reference: /reference/mast ui/BM/Platform Settings.png
@@ -23,7 +24,9 @@ import { mobileSettings, settingsGroups } from '@/data/backend'
  * pill switch used on desktop for the same settings. The pill Toggle is used at
  * both sizes — a ring reads as decoration, not a control.
  */
-export default function PlatformSettings() {
+export default function PlatformSettings({ groups: settingsGroups = [], mobile: mobileSettings = [] }) {
+  const router = useRouter()
+
   const initial = Object.fromEntries(
     settingsGroups.flatMap((group) =>
       group.items.filter((item) => item.control === 'toggle').map((item) => [item.id, item.on])
@@ -31,20 +34,58 @@ export default function PlatformSettings() {
   )
 
   const [values, setValues] = useState(initial)
-  const [platformName, setPlatformName] = useState('ATLAS Forge')
+  const [platformName, setPlatformName] = useState(
+    settingsGroups.flatMap((group) => group.items).find((item) => item.id === 'platform_name')
+      ?.value ?? ''
+  )
   const [nameOpen, setNameOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
   const [resetDone, setResetDone] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [, startTransition] = useTransition()
 
-  function set(id, next) {
+  /**
+   * A switch writes straight away — the reference gives this screen no Save
+   * button. If the request fails the switch returns to where it was rather
+   * than showing a state the platform does not hold.
+   */
+  async function set(id, next) {
+    const previous = values[id]
     setValues((prev) => ({ ...prev, [id]: next }))
+    try {
+      await api.patch('/api/backend/settings', { key: id, value: next })
+      startTransition(() => router.refresh())
+    } catch {
+      setValues((prev) => ({ ...prev, [id]: previous }))
+    }
   }
 
-  function saveName(event) {
+  async function saveName(event) {
     event.preventDefault()
-    const value = new FormData(event.currentTarget).get('platformName')
-    if (value) setPlatformName(String(value))
+    const value = String(new FormData(event.currentTarget).get('platformName') ?? '').trim()
+    if (!value) return
+
+    const previous = platformName
+    setPlatformName(value)
     setNameOpen(false)
+    try {
+      await api.patch('/api/backend/settings', { key: 'platform_name', value })
+      startTransition(() => router.refresh())
+    } catch {
+      setPlatformName(previous)
+    }
+  }
+
+  async function resetPlatform() {
+    setBusy(true)
+    try {
+      await api.post('/api/backend/reset', { confirm: 'RESET' })
+      setResetOpen(false)
+      setResetDone(true)
+      startTransition(() => router.refresh())
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -68,7 +109,7 @@ export default function PlatformSettings() {
                     <div className="min-w-0 flex-1">
                       <p className="text-[15px] font-semibold text-ink">{item.title}</p>
                       <p className="mt-0.5 text-[13px] text-muted">
-                        {item.id === 'platform-name' ? platformName : item.detail}
+                        {item.id === 'platform_name' ? platformName : item.detail}
                       </p>
                     </div>
                     {item.control === 'toggle' ? (
@@ -168,10 +209,8 @@ export default function PlatformSettings() {
         title="Reset Platform Data?"
         description="This clears all non-user data across the platform — job listings, applications, contact logs, and activity records. User accounts and roles are not affected. This cannot be undone."
         confirmLabel="Yes, Reset Platform"
-        onConfirm={() => {
-          setResetOpen(false)
-          setResetDone(true)
-        }}
+        confirmDisabled={busy}
+        onConfirm={resetPlatform}
       />
 
       <ConfirmDialog

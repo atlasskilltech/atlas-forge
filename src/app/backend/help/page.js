@@ -2,6 +2,7 @@ import { AppShell } from '@/components/layout'
 import { HelpTopics } from '@/components/shared'
 import { PageTitle, Subtle } from '@/components/ui'
 import { ROLES } from '@/config/roles'
+import * as backend from '@/lib/modules/backend'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -39,9 +40,16 @@ const TOPICS = [
   },
 ]
 
-export default function BackendHelpPage() {
+export default async function BackendHelpPage() {
+  const { chromeUser } = await backend.requireBackendPage('/backend/help')
+
   return (
-    <AppShell role={ROLES.BACKEND_MANAGER} mobileTitle="Help" backHref="/backend/dashboard">
+    <AppShell
+      role={ROLES.BACKEND_MANAGER}
+      user={chromeUser}
+      mobileTitle="Help"
+      backHref="/backend/dashboard"
+    >
       <PageTitle className="mb-4">Help</PageTitle>
       <Subtle className="mt-3 mb-[22px] text-sm">
         Common questions about administering ATLAS Forge.

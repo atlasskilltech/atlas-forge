@@ -3,24 +3,38 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { Avatar, Button, Card, Chip, FilterTabs, SectionLabel } from '@/components/ui'
-import { applicants, hiringTabs, listings, mobileListings } from '@/data/founder'
 import { cn } from '@/lib/utils'
 
 /**
  * Reference: /reference/mast ui/Founder/Hiring.png       (tabs + list + detail + applicants)
  *            /reference/mast phone ui/Founder/Hiring.png ("My Listings" cards)
+ *
+ * The four tabs were inert in the mock; each now selects a real set, resolved
+ * on the server. Applicants are only ever available for the founder's own
+ * listings, so the panel shows that section only when there are any.
+ *
+ * The mobile frame lists the founder's own roles, which is what
+ * /founder/listings shows at both sizes via `defaultTab`.
  */
-export default function HiringPanel() {
-  const [tab, setTab] = useState(hiringTabs[0])
-  const [selectedId, setSelectedId] = useState(listings[0].id)
+export default function HiringPanel({
+  tabs = [],
+  listingsByTab = {},
+  applicantsByListing = {},
+  defaultTab,
+}) {
+  const [tab, setTab] = useState(defaultTab ?? tabs[0])
+  const [selectedId, setSelectedId] = useState(null)
 
-  const selected = listings.find((listing) => listing.id === selectedId) ?? listings[0]
+  const listings = listingsByTab[tab] ?? []
+  const ownListings = listingsByTab['My Listings'] ?? []
+  const selected = listings.find((listing) => listing.id === selectedId) ?? listings[0] ?? null
+  const applicants = selected ? (applicantsByListing[selected.id] ?? []) : []
 
   return (
     <>
       <FilterTabs
         label="Hiring views"
-        options={hiringTabs}
+        options={tabs}
         value={tab}
         onChange={setTab}
         className="hidden lg:flex"
@@ -62,6 +76,10 @@ export default function HiringPanel() {
           })}
         </ul>
 
+        {/* A tab can legitimately be empty — "My Applications" before the
+            founder has applied to anything — so the detail pane is omitted
+            rather than rendered against a missing listing. */}
+        {selected ? (
         <Card padding="none" className="p-6">
           <h2 className="text-[22px] font-bold text-ink">{selected.title}</h2>
           <p className="mt-2.5 text-sm text-muted">{selected.detailMeta}</p>
@@ -76,40 +94,51 @@ export default function HiringPanel() {
             ))}
           </div>
 
-          <SectionLabel className="mt-6">Applicants ({applicants.length})</SectionLabel>
-          <ul className="mt-3 space-y-2">
-            {applicants.map((applicant) => (
-              <li
-                key={applicant.id}
-                className="flex items-center gap-3.5 rounded-tile border border-line-soft px-3.5 py-3"
-              >
-                <Avatar
-                  initials={applicant.initials}
-                  tone={applicant.tone}
-                  shape="square"
-                  size="sm"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-ink">{applicant.name}</p>
-                  <p className="text-[13px] text-muted">{applicant.meta}</p>
-                </div>
-                <Button variant="subtle" size="md" className="border-0 bg-primary-100 text-primary-text">
-                  View Profile
-                </Button>
-              </li>
-            ))}
-          </ul>
+          {applicants.length > 0 ? (
+            <>
+              <SectionLabel className="mt-6">Applicants ({applicants.length})</SectionLabel>
+              <ul className="mt-3 space-y-2">
+                {applicants.map((applicant) => (
+                  <li
+                    key={applicant.id}
+                    className="flex items-center gap-3.5 rounded-tile border border-line-soft px-3.5 py-3"
+                  >
+                    <Avatar
+                      initials={applicant.initials}
+                      tone={applicant.tone}
+                      shape="square"
+                      size="sm"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-ink">{applicant.name}</p>
+                      <p className="text-[13px] text-muted">{applicant.meta}</p>
+                    </div>
+                    <Button
+                      variant="subtle"
+                      size="md"
+                      disabled
+                      title="No detail screen exists yet"
+                      className="border-0 bg-primary-100 text-primary-text"
+                    >
+                      View Profile
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
         </Card>
+        ) : null}
       </div>
 
       {/* ---- Mobile: my listings ----------------------------------------- */}
       <ul className="space-y-3 lg:hidden">
-        {mobileListings.map((listing) => (
+        {ownListings.map((listing) => (
           <li key={listing.id}>
             <Card padding="lg">
               <div className="flex items-start justify-between gap-3">
                 <h2 className="text-[15px] font-bold text-ink">{listing.title}</h2>
-                <Chip tone={listing.tone}>{listing.status}</Chip>
+                <Chip tone={listing.tone}>{listing.shortStatus}</Chip>
               </div>
               <p className="mt-3 text-[13px] text-muted">{listing.meta}</p>
             </Card>

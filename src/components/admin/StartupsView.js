@@ -1,5 +1,4 @@
 import { Avatar, Card, Chip, DataTable, SectionLabel, StatCard } from '@/components/ui'
-import { startupStats, startups } from '@/data/admin'
 import ReadOnlyNote from './ReadOnlyNote'
 
 /**
@@ -17,7 +16,7 @@ const COLUMNS = [
   { key: 'mentor', label: 'Mentor' },
 ]
 
-export default function StartupsView() {
+export default function StartupsView({ startups = [], stats: startupStats = [] }) {
   const rows = startups.map((startup) => ({
     id: startup.id,
     name: (
