@@ -11,7 +11,7 @@ export const metadata = buildMetadata({
 
 /** Reference: /reference/mast ui/Login Screen.png — left dark panel value props. */
 const HIGHLIGHTS = [
-  { icon: '🔍', label: 'Find talent through Concierge' },
+  { icon: '🔍', label: 'Find talent through Service' },
   { icon: '💼', label: 'Post jobs and build your team' },
   { icon: '🤝', label: 'Connect with mentors' },
   { icon: '🚀', label: 'Apply for ATLAS Forge incubation' },

@@ -7,7 +7,7 @@ import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
   title: 'Contact Log',
-  description: 'Every student you have contacted through Concierge.',
+  description: 'Every student you have contacted through Service.',
   path: '/founder/contact-log',
   noIndex: true,
 })
@@ -25,9 +25,9 @@ export default async function FounderContactLogPage() {
         </Chip>
       </div>
       <Subtle className="mt-3 mb-4 text-sm lg:mb-[22px]">
-        <span className="lg:hidden">All contacts made via Concierge. Mihir is CC&apos;d.</span>
+        <span className="lg:hidden">All contacts made via Service. Mihir is CC&apos;d.</span>
         <span className="hidden lg:inline">
-          All contacts you&apos;ve made through Concierge. Mihir Pawar is CC&apos;d on
+          All contacts you&apos;ve made through Service. Mihir Pawar is CC&apos;d on
           every outreach.
         </span>
       </Subtle>

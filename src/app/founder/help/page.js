@@ -15,7 +15,7 @@ export const metadata = buildMetadata({
 /** See HelpTopics — no Help screen exists in the reference set. */
 const TOPICS = [
   {
-    title: 'Finding talent through Concierge',
+    title: 'Finding talent through Service',
     detail:
       'Search the student pool by skill and availability. Mihir Pawar is CC’d on every outreach.',
     href: '/founder/concierge',

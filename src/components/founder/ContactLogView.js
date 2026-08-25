@@ -31,7 +31,7 @@ export default function ContactLogView({ contacts = [] }) {
         <DataTable
           columns={COLUMNS}
           rows={rows}
-          caption="Students contacted through Concierge"
+          caption="Students contacted through Service"
         />
       </div>
 

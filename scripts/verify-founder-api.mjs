@@ -186,7 +186,7 @@ const contacted = await call('/api/founder/contacts', {
   cookies: shantanu,
 })
 const contactedBody = await json(contacted)
-check('POST a Concierge contact is 201', contacted.status === 201, String(contacted.status))
+check('POST a Service contact is 201', contacted.status === 201, String(contacted.status))
 
 const afterContact = await json(await call('/api/founder/contacts', { cookies: shantanu }))
 check('the contact appears in the log immediately', afterContact.data.contacts.length === 4)
@@ -359,7 +359,7 @@ if (contactedBody?.data?.contactId) {
   ])
 }
 await connection.execute("DELETE FROM activity_logs WHERE action LIKE '%__api_probe__%'")
-await connection.execute("DELETE FROM activity_logs WHERE action = 'Contacted Anjali Rao via Concierge'")
+await connection.execute("DELETE FROM activity_logs WHERE action = 'Contacted Anjali Rao via Service'")
 
 // The pipeline moves: return the application to the status the seed set, and
 // drop the history, notifications and audit rows those moves produced.

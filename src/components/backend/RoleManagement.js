@@ -200,7 +200,7 @@ export default function RoleManagement({
         onClose={() => setPending(null)}
         tone="primary"
         title="Grant Founder Access?"
-        description="This applicant gains Founder access immediately — Hiring, Concierge, and startup listing management unlock. Their incubation application will be marked approved."
+        description="This applicant gains Founder access immediately — Hiring, Service, and startup listing management unlock. Their incubation application will be marked approved."
         confirmLabel="Yes, Grant Access"
         confirmDisabled={submitting}
         onConfirm={confirm}
@@ -211,7 +211,7 @@ export default function RoleManagement({
         onClose={() => setPending(null)}
         tone="danger"
         title="Revoke Founder Access?"
-        description="This founder will immediately lose access to Hiring, Concierge, and their startup listing, and revert to Standard Student. They'll need to re-apply for incubation to regain access."
+        description="This founder will immediately lose access to Hiring, Service, and their startup listing, and revert to Standard Student. They'll need to re-apply for incubation to regain access."
         confirmLabel="Yes, Revoke Access"
         confirmDisabled={submitting}
         onConfirm={confirm}

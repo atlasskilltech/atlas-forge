@@ -57,8 +57,8 @@ export async function contactStudent({
     await platform.logActivity(
       {
         actorUserId: founderId,
-        action: `Contacted ${student.name} via Concierge`,
-        module: 'Concierge',
+        action: `Contacted ${student.name} via Service`,
+        module: 'Service',
         entityType: 'concierge_contact',
         entityId: contactId,
         status: 'logged',
@@ -102,7 +102,7 @@ export async function postNeed({ founderId, startupId = null, title, description
       {
         actorUserId: founderId,
         action: `Posted a talent need: ${title.trim()}`,
-        module: 'Concierge',
+        module: 'Service',
         entityType: 'posted_need',
         entityId: needId,
         status: 'logged',

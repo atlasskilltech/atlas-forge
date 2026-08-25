@@ -7,14 +7,14 @@ import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
   title: 'My Skills Profile',
-  description: 'Manage the skills founders see when they search the Concierge pool.',
+  description: 'Manage the skills founders see when they search the Service pool.',
   path: '/student/skills',
   noIndex: true,
 })
 
 /**
  * The sidebar lists "Flag My Availability" and "My Skills Profile" separately,
- * but the reference draws a single screen ("My Concierge Profile") containing
+ * but the reference draws a single screen ("My Service Profile") containing
  * both. This route renders that same screen so either entry point works and the
  * sidebar highlights correctly.
  */

@@ -7,7 +7,7 @@ import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
   title: 'Posted Needs',
-  description: 'Talent needs posted by founders through Concierge.',
+  description: 'Talent needs posted by founders through Service.',
   path: '/forge/posted-needs',
   noIndex: true,
 })
@@ -22,7 +22,7 @@ export default async function ForgePostedNeedsPage() {
   return (
     <AppShell role={ROLES.FORGE_MANAGER} user={chromeUser}>
       <PageTitle>Posted Needs</PageTitle>
-      <Subtle className="mt-3 mb-4 text-sm lg:mb-[22px]">Talent needs posted by founders through Concierge.</Subtle>
+      <Subtle className="mt-3 mb-4 text-sm lg:mb-[22px]">Talent needs posted by founders through Service.</Subtle>
       <SimpleLogList items={needs} />
     </AppShell>
   )

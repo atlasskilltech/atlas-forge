@@ -17,7 +17,7 @@ const TOPICS = [
   {
     title: 'Flagging your availability',
     detail:
-      'Set your hours and work types so founders searching the Concierge pool can find you.',
+      'Set your hours and work types so founders searching the Service pool can find you.',
     href: '/student/availability',
   },
   {

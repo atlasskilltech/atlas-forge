@@ -20,7 +20,7 @@ export default async function StudentProfilePage() {
     <AppShell role={ROLES.STUDENT} user={chromeUser}>
       <PageTitle className="mb-4">My Profile</PageTitle>
       <Subtle className="mt-4 mb-[22px] hidden text-sm lg:block">
-        Your profile is visible to Founders searching the Concierge pool and to the
+        Your profile is visible to Founders searching the Service pool and to the
         Forge Manager.
       </Subtle>
       <ProfilePanel profile={profile} stats={stats} />

@@ -37,7 +37,7 @@ export const SIDEBAR_NAV = {
   [ROLES.STUDENT]: [
     { label: 'Platform', items: [{ label: 'Home', href: '/student/home' }] },
     {
-      label: 'Concierge',
+      label: 'Service',
       items: [
         { label: 'Flag My Availability', href: '/student/availability' },
         { label: 'My Skills Profile', href: '/student/skills' },
@@ -76,7 +76,7 @@ export const SIDEBAR_NAV = {
       label: 'Platform',
       items: [
         { label: 'Home', href: '/founder/home' },
-        { label: 'Concierge', href: '/founder/concierge' },
+        { label: 'Service', href: '/founder/concierge' },
         { label: 'Search Student Pool', href: '/founder/student-pool' },
         { label: 'My Posted Needs', href: '/founder/posted-needs' },
         { label: 'Contact Log', href: '/founder/contact-log' },
@@ -127,7 +127,7 @@ export const SIDEBAR_NAV = {
       ],
     },
     {
-      label: 'Concierge',
+      label: 'Service',
       items: [
         { label: 'Student Pool', href: '/forge/student-pool' },
         { label: 'Contact Log', href: '/forge/contact-log', badge: 3 },
@@ -257,7 +257,7 @@ export const SIDEBAR_NAV = {
 
 /** Students and founders share one link set; the three manager roles add "Manage". */
 const BASE_NAVBAR_LINKS = [
-  { label: 'Concierge', key: 'concierge' },
+  { label: 'Service', key: 'concierge' },
   { label: 'Projects', key: 'projects' },
   { label: 'Mentorship', key: 'mentorship' },
   { label: 'Hiring', key: 'hiring' },
@@ -430,7 +430,7 @@ export const BOTTOM_NAV = {
   ],
   [ROLES.FOUNDER]: [
     { label: 'Home', icon: '🏠', href: '/founder/home' },
-    { label: 'Concierge', icon: '👥', href: '/founder/concierge' },
+    { label: 'Service', icon: '👥', href: '/founder/concierge' },
     { label: 'Projects', icon: '🚀', href: '/founder/projects' },
     { label: 'Jobs', icon: '💼', href: '/founder/hiring' },
     { label: 'More', icon: 'more', href: '/founder/more' },

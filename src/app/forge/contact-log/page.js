@@ -7,7 +7,7 @@ import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
   title: 'Contact Log',
-  description: 'Every contact made by founders through Concierge.',
+  description: 'Every contact made by founders through Service.',
   path: '/forge/contact-log',
   noIndex: true,
 })
@@ -28,7 +28,7 @@ export default async function ForgeContactLogPage() {
         </Chip>
       </div>
       <Subtle className="mt-4 mb-4 hidden text-sm lg:block lg:mb-[22px]">
-        Every contact made by Founders through Concierge. You are auto CC&apos;d on all
+        Every contact made by Founders through Service. You are auto CC&apos;d on all
         outreach emails.
       </Subtle>
       <div className="mt-4 lg:mt-0">

@@ -7,13 +7,13 @@ import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
   title: 'Flag My Availability',
-  description: 'Control your availability and skills profile in the Concierge pool.',
+  description: 'Control your availability and skills profile in the Service pool.',
   path: '/student/availability',
   noIndex: true,
 })
 
 /**
- * Reference names this "My Concierge Profile" on desktop and
+ * Reference names this "My Service Profile" on desktop and
  * "Flag My Availability" on mobile — both titles are preserved.
  */
 export default async function StudentAvailabilityPage() {
@@ -29,7 +29,7 @@ export default async function StudentAvailabilityPage() {
     >
       <PageTitle>
         <span className="lg:hidden">Flag My Availability</span>
-        <span className="hidden lg:inline">My Concierge Profile</span>
+        <span className="hidden lg:inline">My Service Profile</span>
       </PageTitle>
       <Subtle className="mt-3 mb-4 text-sm lg:mb-[22px]">
         <span className="lg:hidden">Let founders know you&apos;re open to work.</span>

@@ -52,7 +52,7 @@ export default function AllContactsView({ contacts = [], stats = [], caption }) 
         <DataTable
           columns={COLUMNS}
           rows={rows}
-          caption={caption ?? 'Every contact made by founders through Concierge'}
+          caption={caption ?? 'Every contact made by founders through Service'}
         />
       </div>
 

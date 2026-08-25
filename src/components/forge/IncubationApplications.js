@@ -63,7 +63,7 @@ export default function IncubationApplications({ applications = [] }) {
         onClose={() => setPending(null)}
         tone="primary"
         title="Grant Founder Access?"
-        description="This applicant gains Founder access immediately — Hiring, Concierge, and startup listing management unlock. Their incubation application will be marked approved."
+        description="This applicant gains Founder access immediately — Hiring, Service, and startup listing management unlock. Their incubation application will be marked approved."
         confirmLabel="Yes, Grant Access"
         confirmDisabled={submitting}
         onConfirm={confirmGrant}

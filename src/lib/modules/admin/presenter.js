@@ -155,7 +155,7 @@ export function toReportStats({ contacts, liveListings, listingsThisWeek, sessio
   return [
     {
       value: String(contacts.total),
-      label: 'Concierge Contacts',
+      label: 'Service Contacts',
       caption: `+${contacts.thisWeek} this week`,
       tone: 'primary',
     },

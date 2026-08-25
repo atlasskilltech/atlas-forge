@@ -191,7 +191,7 @@ with sync_playwright() as p:
     page.wait_for_timeout(400)
     page.get_by_role("link", name="Edit Skills & Availability", exact=True).click()
     page.wait_for_url("**/student/availability**", timeout=15000)
-    check("Edit Skills & Availability opens the Concierge profile",
+    check("Edit Skills & Availability opens the Service profile",
           "/student/availability" in page.url, page.url)
 
     # ---- availability toggle --------------------------------------------

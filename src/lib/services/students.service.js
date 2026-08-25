@@ -59,7 +59,7 @@ export async function updateAvailability(userId, data) {
       {
         actorUserId: userId,
         action: `Flagged availability: ${data.hoursPerWeek ?? 0} hrs/week`,
-        module: 'Concierge',
+        module: 'Service',
         entityType: 'student_profile',
         entityId: userId,
         status: 'success',

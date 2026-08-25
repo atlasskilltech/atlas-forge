@@ -447,15 +447,15 @@ WHERE NOT EXISTS (SELECT 1 FROM contracts c WHERE c.title = x.title AND c.founde
 INSERT INTO activity_logs (actor_user_id, action, module, entity_type, status, created_at)
 SELECT u.id, x.action, x.module, x.entity, x.status, DATE_SUB(NOW(), INTERVAL x.mins MINUTE)
 FROM (
-  SELECT 'ATL-2022-0012' app_id,'Contacted Riya Kapoor via Concierge' action,'Concierge' module,'concierge_contact' entity,'logged' status,30 mins UNION ALL
+  SELECT 'ATL-2022-0012' app_id,'Contacted Riya Kapoor via Service' action,'Service' module,'concierge_contact' entity,'logged' status,30 mins UNION ALL
   SELECT 'ATL-2020-0001','Granted Founder access: Shantanu Ghuriani','Access','founder_access_grant','success',180 UNION ALL
   SELECT 'ATL-2020-0001','Rejected Job Listing: ''Off-topic role''','Hiring','listing','action',200 UNION ALL
   SELECT 'ATL-2021-0119','Submitted incubation application: GreenGrid','Incubation','incubation_application','pending',1500 UNION ALL
   SELECT 'ATL-2020-0001','Approved Job Listing: UI/UX Designer','Hiring','listing','success',1600 UNION ALL
   SELECT 'ATL-2024-0871','Applied for UI/UX Designer at NovaMed','Hiring','application','pending',45 UNION ALL
-  SELECT 'ATL-2024-0871','Flagged availability: 10 hrs/week','Concierge','student_profile','success',1200 UNION ALL
+  SELECT 'ATL-2024-0871','Flagged availability: 10 hrs/week','Service','student_profile','success',1200 UNION ALL
   SELECT 'ATL-2024-0871','Requested mentorship session','Mentorship','mentorship_request','pending',3000 UNION ALL
-  SELECT 'ATL-2022-0012','Contacted Priya Shah via Concierge','Concierge','concierge_contact','logged',4000 UNION ALL
+  SELECT 'ATL-2022-0012','Contacted Priya Shah via Service','Service','concierge_contact','logged',4000 UNION ALL
   SELECT 'ATL-2022-0012','Posted Job: Frontend Developer','Hiring','listing','pending',5000
 ) x JOIN users u ON u.app_id = x.app_id
 WHERE NOT EXISTS (SELECT 1 FROM activity_logs al WHERE al.action = x.action);
@@ -487,7 +487,7 @@ UPDATE activity_logs a
   JOIN users s ON s.id = c.student_user_id
    SET a.entity_id = c.id
  WHERE a.entity_type = 'concierge_contact'
-   AND a.action = CONCAT('Contacted ', s.full_name, ' via Concierge')
+   AND a.action = CONCAT('Contacted ', s.full_name, ' via Service')
    AND a.entity_id IS NULL;
 
 UPDATE activity_logs a

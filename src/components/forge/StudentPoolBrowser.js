@@ -115,12 +115,12 @@ export default function StudentPoolBrowser({ students = [], filters = ['All'] })
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2.5">
-            {/* Concierge outreach is a Founder action: `concierge.contact` is
+            {/* Service outreach is a Founder action: `concierge.contact` is
                 granted to Founder and Backend Manager, and this role holds only
                 `concierge.search` and `concierge.view_all_logs`. The control is
                 drawn in the reference, so it stays visible and disabled rather
                 than reporting a message it has no permission to send. */}
-            <Button size="lg" disabled title="Concierge outreach is sent by founders">
+            <Button size="lg" disabled title="Service outreach is sent by founders">
               Contact Student
             </Button>
             <Button variant="secondary" size="lg" disabled title="No detail screen exists yet">

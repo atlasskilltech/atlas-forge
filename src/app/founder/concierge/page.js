@@ -6,14 +6,14 @@ import * as founder from '@/lib/modules/founder'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
-  title: 'Concierge',
+  title: 'Service',
   description: 'Search the ATLAS Forge student pool and contact students.',
   path: '/founder/concierge',
   noIndex: true,
 })
 
 /**
- * Titled "Concierge" on desktop and "Student Pool" on mobile — both preserved.
+ * Titled "Service" on desktop and "Student Pool" on mobile — both preserved.
  */
 export default async function FounderConciergePage() {
   const { user, chromeUser } = await founder.requireFounderPage('/founder/concierge')
@@ -24,7 +24,7 @@ export default async function FounderConciergePage() {
       <div className="flex items-start justify-between gap-4">
         <PageTitle>
           <span className="lg:hidden">Student Pool</span>
-          <span className="hidden lg:inline">Concierge</span>
+          <span className="hidden lg:inline">Service</span>
         </PageTitle>
         <Chip tone="info" size="lg" className="hidden h-[26px] lg:inline-flex">
           Founder View

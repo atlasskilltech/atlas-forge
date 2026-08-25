@@ -211,7 +211,7 @@ for (const [path, needle] of [
   ['/student/jobs', 'UI/UX Designer'],
   ['/student/projects', 'NovaMed'],
   ['/student/mentorship', 'Pending Assignment'],
-  ['/student/availability', 'Concierge pool'],
+  ['/student/availability', 'Service pool'],
   ['/student/incubation', 'Pitch Deck or Concept Note'],
   ['/student/post-collab', 'Collaboration / No Pay'],
 ]) {

@@ -11,7 +11,7 @@ import { api } from '@/lib/api/client'
  *            /reference/mast phone ui/Student/Concierge.png  ("Flag My Availability")
  *
  * The toggle writes immediately — it is the switch that puts a student in or
- * out of the Concierge pool, and the reference gives it no Save button. If the
+ * out of the Service pool, and the reference gives it no Save button. If the
  * request fails the switch returns to its previous position rather than
  * showing a state the database does not hold.
  */
@@ -56,7 +56,7 @@ export default function AvailabilityPanel({ profile }) {
             <Toggle
               checked={available}
               onChange={save}
-              label="Visible to founders in the Concierge pool"
+              label="Visible to founders in the Service pool"
             />
           </div>
         </Card>
@@ -117,7 +117,7 @@ export default function AvailabilityPanel({ profile }) {
         open={saved}
         onClose={() => setSaved(false)}
         title="Availability Updated"
-        description="Founders searching the Concierge pool will now see your latest availability."
+        description="Founders searching the Service pool will now see your latest availability."
       />
     </>
   )

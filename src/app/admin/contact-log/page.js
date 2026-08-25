@@ -8,7 +8,7 @@ import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
   title: 'Contact Log',
-  description: 'Every contact made by founders through Concierge.',
+  description: 'Every contact made by founders through Service.',
   path: '/admin/contact-log',
   noIndex: true,
 })
@@ -23,7 +23,7 @@ export default async function AdminContactLogPage() {
   return (
     <AppShell role={ROLES.SUPER_ADMIN} user={chromeUser}>
       <PageTitle>Contact Log</PageTitle>
-      <Subtle className="mt-3 mb-4 text-sm lg:mb-5">Every contact made by founders through Concierge.</Subtle>
+      <Subtle className="mt-3 mb-4 text-sm lg:mb-5">Every contact made by founders through Service.</Subtle>
       <AllContactsView contacts={rows} stats={stats} />
       <ReadOnlyNote className="mt-5" />
     </AppShell>

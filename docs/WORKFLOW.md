@@ -121,7 +121,7 @@ access.** This is on purpose — the university decides who runs a startup.
 - Everything about their own startup page: name, description, industry, stage
 - Post job listings for their startup
 - Search the Student Pool and filter by skill
-- Contact a student directly through the Concierge
+- Contact a student directly through the Service
 - See everyone who applied to their listings
 - Ask for a mentorship session
 - Apply for incubation
@@ -319,7 +319,7 @@ button exists yet. See [Current limitations](#12-current-limitations).
 
 ---
 
-## 3.4 The Concierge journey (founder finds a student directly)
+## 3.4 The Service journey (founder finds a student directly)
 
 This is the reverse of applying. Instead of the student coming to the job, the
 founder goes to the student.
@@ -464,7 +464,7 @@ Below is every screen in the platform, grouped by role.
 | Screen | Purpose | What you do there | What happens next |
 |---|---|---|---|
 | **Home** | Startup summary | Read your counters and recent activity | — |
-| **Concierge** | Find students | Browse available students | Click Contact to reach one |
+| **Service** | Find students | Browse available students | Click Contact to reach one |
 | **Search Student Pool** | Find students by skill | Filter, then click **Contact** | "Contact Sent!" and it is logged |
 | **My Posted Needs** | Things you said you need | Read the list | ⚠️ Posting a new need has no screen yet |
 | **Contact Log** | Everyone you contacted | Read the history | ⚠️ Changing a contact's status has no button yet |
@@ -1336,7 +1336,7 @@ the platform tells you why.
 | **Mentorship** | A mentor can be assigned, but the session can never be marked complete or cancelled | The end of the mentorship cycle |
 | **Mentorship (desktop)** | On a desktop screen, a founder has no button to request a session | It only appears on mobile-sized screens. Students are not affected |
 | **Error logs** | Errors can be viewed but never marked as resolved | The error counter only ever goes up |
-| **Concierge follow-up** | A contact is recorded but its status cannot be updated afterwards | No button exists |
+| **Service follow-up** | A contact is recorded but its status cannot be updated afterwards | No button exists |
 | **Posted needs** | Existing needs can be read, but a founder cannot post a new one from the screen | No form exists |
 
 ## 12.3 Features planned but not started

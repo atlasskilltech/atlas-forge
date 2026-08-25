@@ -1,7 +1,7 @@
 import { Chip } from '@/components/ui'
 
 /**
- * Reference: "MY SKILLS" blocks on Concierge and My Profile — lavender skill
+ * Reference: "MY SKILLS" blocks on Service and My Profile — lavender skill
  * chips followed by a dashed-feeling "+ Add Skill" affordance.
  */
 export default function SkillTagRow({ skills = [], onAdd }) {

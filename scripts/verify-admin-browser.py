@@ -58,7 +58,7 @@ SCREENS = [
     ("/admin/users", "ATL-2024-0871"),
     ("/admin/startups", "Registered Startups"),
     ("/admin/incubation-status", "Early Traction"),
-    ("/admin/activity-report", "Concierge Contacts"),
+    ("/admin/activity-report", "Service Contacts"),
     ("/admin/contact-log", "Mihir Pawar"),
     ("/admin/contract-log", "Brand identity engagement"),
     ("/admin/job-listings", "UI/UX Designer"),

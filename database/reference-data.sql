@@ -227,7 +227,7 @@ INSERT INTO platform_settings (setting_key, setting_value, value_type, group_key
   ('collab_posts_require_approval','true',                'boolean', 'moderation',
    'Collab Posts require approval',    'Collab posts go to the Forge Manager before going live.'),
   ('contact_log_auto_cc',  'true',                        'boolean', 'moderation',
-   'Contact Log auto-CC',              'Forge Manager is CC''d on every Concierge outreach.')
+   'Contact Log auto-CC',              'Forge Manager is CC''d on every Service outreach.')
 ON DUPLICATE KEY UPDATE
   label = VALUES(label), description = VALUES(description),
   value_type = VALUES(value_type), group_key = VALUES(group_key);

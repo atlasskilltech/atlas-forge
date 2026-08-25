@@ -6,14 +6,14 @@ import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
   title: 'My Posted Needs',
-  description: 'Talent needs you have posted through Concierge.',
+  description: 'Talent needs you have posted through Service.',
   path: '/founder/posted-needs',
   noIndex: true,
 })
 
 /**
  * NOTE: the reference set contains no "My Posted Needs" frame. This page is
- * assembled purely from existing design-system pieces and the Concierge data —
+ * assembled purely from existing design-system pieces and the Service data —
  * it should be replaced once a design is supplied.
  */
 export default async function FounderPostedNeedsPage() {
@@ -24,7 +24,7 @@ export default async function FounderPostedNeedsPage() {
     <AppShell role={ROLES.FOUNDER} user={chromeUser}>
       <PageTitle>My Posted Needs</PageTitle>
       <Subtle className="mt-3 mb-4 text-sm lg:mb-[22px]">
-        Talent needs you&apos;ve posted through Concierge. Mihir Pawar is CC&apos;d on
+        Talent needs you&apos;ve posted through Service. Mihir Pawar is CC&apos;d on
         every engagement.
       </Subtle>
 

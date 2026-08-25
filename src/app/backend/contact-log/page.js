@@ -7,7 +7,7 @@ import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
   title: 'Contact Log',
-  description: 'Every contact made by founders through Concierge.',
+  description: 'Every contact made by founders through Service.',
   path: '/backend/contact-log',
   noIndex: true,
 })
@@ -22,7 +22,7 @@ export default async function BackendContactLogPage() {
   return (
     <AppShell role={ROLES.BACKEND_MANAGER} user={chromeUser}>
       <PageTitle>Contact Log</PageTitle>
-      <Subtle className="mt-3 mb-4 text-sm lg:mb-[22px]">Every contact made by founders through Concierge.</Subtle>
+      <Subtle className="mt-3 mb-4 text-sm lg:mb-[22px]">Every contact made by founders through Service.</Subtle>
       <AllContactsView contacts={rows} stats={stats} />
     </AppShell>
   )

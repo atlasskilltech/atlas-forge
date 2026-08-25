@@ -24,7 +24,7 @@ export default async function BackendRoleAssignmentsPage({ searchParams }) {
         <span className="hidden lg:inline">Role Management</span>
       </PageTitle>
       <Subtle className="mt-4 mb-4 hidden text-sm lg:block lg:mb-[22px]">
-        Grant or revoke Founder access. Founders can post jobs, use Concierge, and
+        Grant or revoke Founder access. Founders can post jobs, use Service, and
         manage their startup listing.
       </Subtle>
       <div className="mt-4 lg:hidden" />

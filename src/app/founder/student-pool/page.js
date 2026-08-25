@@ -13,8 +13,8 @@ export const metadata = buildMetadata({
 })
 
 /**
- * The sidebar lists "Concierge" and "Search Student Pool" separately; the
- * reference draws one screen for both (desktop "Concierge" / mobile
+ * The sidebar lists "Service" and "Search Student Pool" separately; the
+ * reference draws one screen for both (desktop "Service" / mobile
  * "Student Pool"). This route renders that same screen so either entry works.
  */
 export default async function FounderStudentPoolPage() {

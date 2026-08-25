@@ -93,11 +93,11 @@ export function toProfile(profile) {
     timing: profile.availabilityTiming ?? 'Not set',
     concierge: profile.isAvailable
       ? joinMeta(
-          'You are visible to Founders in the Concierge pool',
+          'You are visible to Founders in the Service pool',
           hours,
           profile.availabilityTiming
         )
-      : 'You are hidden from the Concierge pool. Turn availability on to be discoverable.',
+      : 'You are hidden from the Service pool. Turn availability on to be discoverable.',
     skills,
     // The mobile profile frame draws a shorter chip row than the desktop one.
     mobileSkills: skills.slice(0, 3),
