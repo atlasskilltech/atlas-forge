@@ -37,6 +37,7 @@ export default function ProjectBrowser({ projects = [], filters = ['All'] }) {
             <div className="flex items-start justify-between gap-3">
               <Avatar
                 initials={startup.initial}
+                src={startup.logoUrl}
                 tone={startup.tone}
                 shape="square"
                 size="lg"
@@ -81,6 +82,7 @@ export default function ProjectBrowser({ projects = [], filters = ['All'] }) {
           >
             <Avatar
               initials={startup.initial}
+              src={startup.logoUrl}
               tone={startup.tone}
               shape="square"
               size="lg"

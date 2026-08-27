@@ -259,6 +259,9 @@ CREATE TABLE startups (
   status            ENUM('pending','under_review','active','inactive') NOT NULL DEFAULT 'pending',
   initial           VARCHAR(4)        NULL,
   avatar_tone       VARCHAR(16)       NOT NULL DEFAULT 'primary',
+  -- Site-relative URL of an uploaded logo, NULL while the startup still shows
+  -- the `initial`/`avatar_tone` monogram. See migrations/004_startup_logo.sql.
+  logo_url          VARCHAR(255)      NULL DEFAULT NULL,
   created_at        TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at        TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at        TIMESTAMP         NULL DEFAULT NULL,

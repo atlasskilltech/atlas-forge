@@ -21,7 +21,13 @@ export default function StartupsView({ startups = [], stats: startupStats = [] }
     id: startup.id,
     name: (
       <span className="flex items-center gap-3.5">
-        <Avatar initials={startup.initial} tone={startup.tone} shape="square" size="sm" />
+        <Avatar
+          initials={startup.initial}
+          src={startup.logoUrl}
+          tone={startup.tone}
+          shape="square"
+          size="sm"
+        />
         {startup.name}
       </span>
     ),
@@ -69,6 +75,7 @@ export default function StartupsView({ startups = [], stats: startupStats = [] }
             <Card padding="lg" className="flex items-center gap-3.5">
               <Avatar
                 initials={startup.initial}
+                src={startup.logoUrl}
                 tone={startup.tone}
                 shape="square"
                 size="lg"

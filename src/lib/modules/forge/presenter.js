@@ -387,6 +387,7 @@ export function toProject(startup) {
     name: startup.name,
     initial: startup.initial ?? startup.name.charAt(0),
     tone: startup.avatarTone ?? 'primary',
+    logoUrl: startup.logoUrl ?? null,
     status: status.label,
     statusTone: status.tone,
     tags: [startup.industry?.name, startup.stage?.name].filter(Boolean),

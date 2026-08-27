@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { join } from 'node:path'
 import { resolveSessionCookieName } from '@/lib/auth/cookie-name'
 
 /**
@@ -92,6 +93,25 @@ export const rateLimitConfig = Object.freeze({
   maxPerIdentifier: integer('AUTH_RATE_LIMIT_MAX_ATTEMPTS', 8),
   maxPerIp: integer('AUTH_RATE_LIMIT_IP_MAX_ATTEMPTS', 40),
   retentionSeconds: integer('AUTH_RATE_LIMIT_RETENTION_HOURS', 72) * 3600,
+})
+
+/**
+ * Where uploaded files are written, and how large one may be.
+ *
+ * The default keeps a working install working with no new variable — `uploads/`
+ * beside the application — but production should point `UPLOAD_DIR` at a path
+ * OUTSIDE the deployed directory. A logo is user data with no copy anywhere
+ * else: if it lives inside the folder a deploy replaces, the next release
+ * deletes every logo ever uploaded. Anything outside it survives.
+ *
+ * `public/` is deliberately not that path. Next serves it as part of the build
+ * output, so a file written there after build is not guaranteed to be served,
+ * and it shares the same delete-on-deploy problem. Uploads are streamed by a
+ * Route Handler instead — see src/app/uploads/[...path]/route.js.
+ */
+export const uploadsConfig = Object.freeze({
+  directory: optional('UPLOAD_DIR') || join(process.cwd(), 'uploads'),
+  maxBytes: integer('UPLOAD_MAX_BYTES', 2 * 1024 * 1024),
 })
 
 /** Credentials-safe summary for health checks and error reporting. */

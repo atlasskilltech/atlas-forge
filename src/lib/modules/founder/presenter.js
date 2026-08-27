@@ -242,6 +242,7 @@ export function toProject(startup, { ownStartupId = null, now = new Date() } = {
     name: startup.name,
     initial: startup.initial ?? startup.name.charAt(0),
     tone: startup.avatarTone ?? 'primary',
+    logoUrl: startup.logoUrl ?? null,
     mine: startup.id === ownStartupId,
     tags: [startup.industry?.name, startup.stage?.name].filter(Boolean),
     description: startup.tagline ?? '',
@@ -266,6 +267,8 @@ export function toMyStartup(startup, members) {
     // The reference draws a two-letter monogram here, unlike the one-letter
     // tile used in the project grid.
     initial: startup.name.slice(0, 2).toUpperCase(),
+    // The uploaded logo takes the monogram's place when there is one.
+    logoUrl: startup.logoUrl ?? null,
     tagline: startup.tagline ?? '',
     mobileTagline: startup.tagline ?? '',
     tags: startup.isHiring ? [...tags, 'Actively Hiring'] : tags,
@@ -290,6 +293,7 @@ export function toMyStartup(startup, members) {
       stageSlug: startup.stage?.slug ?? null,
       isHiring: startup.isHiring,
       openRoles: startup.openRoles ?? 0,
+      logoUrl: startup.logoUrl ?? null,
     },
   }
 }

@@ -1,8 +1,9 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useMemo, useState, useTransition } from 'react'
+import { useMemo, useRef, useState, useTransition } from 'react'
 import {
+  Avatar,
   Button,
   Card,
   ConfirmDialog,
@@ -12,6 +13,17 @@ import {
 } from '@/components/ui'
 import { api } from '@/lib/api/client'
 import { cn } from '@/lib/utils'
+
+/**
+ * Used only if a caller renders the form without passing the server's limits.
+ * The server enforces its own; these values just keep the picker and the hint
+ * sensible rather than empty.
+ */
+const DEFAULT_LOGO_UPLOAD = {
+  accept: 'image/png,image/jpeg,image/webp',
+  formats: 'PNG, JPG, JPEG or WebP',
+  maxBytes: 2 * 1024 * 1024,
+}
 
 /**
  * Reference: /reference/mast ui/Founder/Edit Listing.png and
@@ -32,6 +44,7 @@ export default function StartupListingForm({
   stages = [],
   hiringStatuses = [],
   readinessItems = [],
+  logoUpload = DEFAULT_LOGO_UPLOAD,
   values = {},
 }) {
   const router = useRouter()
@@ -48,6 +61,17 @@ export default function StartupListingForm({
     values.isHiring ? hiringStatuses[0] : (hiringStatuses[1] ?? hiringStatuses[0])
   )
   const [readiness, setReadiness] = useState(values.readiness ?? {})
+  /**
+   * The logo as the server knows it: the stored URL when the listing already
+   * has one, and the URL the upload endpoint returns after a new file is
+   * chosen. Never an object URL — what is previewed here is the file that is
+   * already on the server, so the preview cannot promise something the save
+   * does not deliver.
+   */
+  const [logoUrl, setLogoUrl] = useState(values.logoUrl ?? null)
+  const [logoError, setLogoError] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const logoInput = useRef(null)
   const [saved, setSaved] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
@@ -58,6 +82,45 @@ export default function StartupListingForm({
     const done = readinessItems.filter((item) => readiness[item.id]?.trim()).length
     return Math.round((done / readinessItems.length) * 100)
   }, [readiness, readinessItems])
+
+  /**
+   * Uploads as soon as a file is chosen, then previews what came back.
+   *
+   * The type and size are checked here only to answer instantly; the server
+   * checks the bytes themselves and is the one that decides, so a picker that
+   * lets an odd file through is still refused.
+   */
+  async function handleLogoChange(event) {
+    const file = event.target.files?.[0]
+    // Reset immediately so choosing the same file twice still fires `change`.
+    event.target.value = ''
+    if (!file) return
+
+    setLogoError(null)
+
+    if (!logoUpload.accept.split(',').includes(file.type)) {
+      setLogoError(`That file is not a supported image. Use ${logoUpload.formats}.`)
+      return
+    }
+    if (file.size > logoUpload.maxBytes) {
+      const limit = Math.round(logoUpload.maxBytes / (1024 * 1024))
+      setLogoError(`That image is too large. The limit is ${limit}MB.`)
+      return
+    }
+
+    const body = new FormData()
+    body.append('file', file)
+
+    setUploading(true)
+    try {
+      const { logoUrl: uploaded } = await api.upload('/api/founder/startup/logo', body)
+      setLogoUrl(uploaded)
+    } catch (requestError) {
+      setLogoError(requestError.message)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -74,6 +137,7 @@ export default function StartupListingForm({
         stageSlug: stages.find((item) => item.name === stage)?.slug ?? null,
         isHiring: hiring === hiringStatuses[0],
         openRoles: form.get('openRoles')?.trim() || values.openRoles,
+        logoUrl,
         readiness,
       })
       setSaved(true)
@@ -93,6 +157,54 @@ export default function StartupListingForm({
       >
         <Card padding="none" className="px-4 py-5 lg:px-8 lg:py-7">
           <div className="space-y-5">
+            <div className="space-y-2">
+              <p className="text-[13px] leading-4 font-semibold text-ink">Startup Logo</p>
+              <div className="flex items-center gap-4">
+                <Avatar
+                  initials={(values.name ?? '').slice(0, 2).toUpperCase()}
+                  src={logoUrl}
+                  tone="primary"
+                  shape="square"
+                  size="xl"
+                  className="size-16 text-xl"
+                />
+                <div className="min-w-0">
+                  {/* Hidden rather than restyled: a file input cannot be
+                      styled consistently across browsers, and the platform has
+                      one button primitive. The input keeps its own accessible
+                      label, which is what a screen reader reaches. */}
+                  <input
+                    ref={logoInput}
+                    type="file"
+                    name="logo"
+                    aria-label="Startup Logo"
+                    accept={logoUpload.accept}
+                    onChange={handleLogoChange}
+                    className="sr-only"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="lg"
+                    disabled={uploading}
+                    onClick={() => logoInput.current?.click()}
+                  >
+                    {uploading ? 'Uploading…' : logoUrl ? 'Replace Logo' : 'Upload Logo'}
+                  </Button>
+                  <p className="mt-1.5 text-[13px] text-muted">
+                    {logoUpload.formats} · up to{' '}
+                    {Math.round(logoUpload.maxBytes / (1024 * 1024))}MB. Saved with the rest of
+                    the form.
+                  </p>
+                </div>
+              </div>
+              {logoError ? (
+                <p role="alert" className="text-[13px] text-danger">
+                  {logoError}
+                </p>
+              ) : null}
+            </div>
+
             <FormField
               label="Idea / Project Name"
               name="ideaName"

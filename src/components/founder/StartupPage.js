@@ -15,6 +15,7 @@ export default function StartupPage({ startup }) {
         <div className="flex items-start gap-4 lg:gap-6">
           <Avatar
             initials={myStartup.initial}
+            src={myStartup.logoUrl}
             tone="primary"
             shape="square"
             size="xl"

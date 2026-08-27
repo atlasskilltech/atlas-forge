@@ -120,6 +120,7 @@ export function toStartupRow(startup) {
     name: startup.name,
     initial: startup.initial ?? startup.name.charAt(0),
     tone: startup.avatarTone ?? 'primary',
+    logoUrl: startup.logoUrl ?? null,
     domain: startup.industry?.name ?? '—',
     stage: startup.stage?.name ?? '—',
     founder: shortName(startup.owner?.name),

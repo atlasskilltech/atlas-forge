@@ -23,6 +23,8 @@ export const toStartup = (row) => ({
   status: row.status,
   initial: row.initial,
   avatarTone: row.avatar_tone,
+  // Null until a founder uploads one; every avatar falls back to the monogram.
+  logoUrl: row.logo_url ?? null,
   teamSize: num(row.team_size) ?? 0,
   createdAt: iso(row.created_at),
 })
@@ -105,6 +107,7 @@ export async function create(data, conn) {
       data.openRoles ?? 0,
       data.name.charAt(0).toUpperCase(),
       data.avatarTone ?? 'primary',
+      data.logoUrl ?? null,
     ],
     conn
   )
@@ -126,6 +129,7 @@ export async function update(startupId, data, conn) {
       data.stageId ?? null,
       data.isHiring ?? false,
       data.openRoles ?? 0,
+      data.logoUrl ?? null,
       startupId,
     ],
     conn

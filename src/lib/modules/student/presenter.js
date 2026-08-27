@@ -240,6 +240,7 @@ export function toProject(startup, { now = new Date() } = {}) {
     name: startup.name,
     initial: startup.initial ?? startup.name.charAt(0),
     tone: startup.avatarTone ?? 'primary',
+    logoUrl: startup.logoUrl ?? null,
     hiring: startup.isHiring,
     tags: [startup.industry?.name, startup.stage?.name].filter(Boolean),
     description: startup.tagline ?? '',

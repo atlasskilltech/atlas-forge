@@ -2,7 +2,7 @@ import 'server-only'
 
 const STARTUP_FIELDS = `
   s.id, s.slug, s.name, s.tagline, s.problem_statement, s.is_hiring, s.open_roles,
-  s.is_featured, s.status, s.initial, s.avatar_tone, s.created_at,
+  s.is_featured, s.status, s.initial, s.avatar_tone, s.logo_url, s.created_at,
   i.name AS industry_name, i.slug AS industry_slug,
   st.name AS stage_name, st.slug AS stage_slug,
   o.full_name AS owner_name, o.id AS owner_user_id, o.initials AS owner_initials,
@@ -64,8 +64,8 @@ export const SELECT_STARTUP_MEMBERS = `
 export const INSERT_STARTUP = `
   INSERT INTO startups
     (slug, name, tagline, problem_statement, industry_id, stage_id,
-     owner_user_id, is_hiring, open_roles, initial, avatar_tone, status)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+     owner_user_id, is_hiring, open_roles, initial, avatar_tone, logo_url, status)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
 `
 
 export const SELECT_STARTUP_SLUGS_LIKE = `
@@ -81,7 +81,7 @@ export const INSERT_STARTUP_MEMBER = `
 export const UPDATE_STARTUP = `
   UPDATE startups
      SET name = ?, tagline = ?, problem_statement = ?, industry_id = ?, stage_id = ?,
-         is_hiring = ?, open_roles = ?
+         is_hiring = ?, open_roles = ?, logo_url = ?
    WHERE id = ? AND deleted_at IS NULL
 `
 

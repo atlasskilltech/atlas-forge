@@ -60,6 +60,7 @@ export default function ProjectsGrid({ only, projects: allProjects = [], filters
             <div className="flex items-start justify-between gap-3">
               <Avatar
                 initials={project.initial}
+                src={project.logoUrl}
                 tone={project.tone}
                 shape="square"
                 size="sm"
@@ -104,6 +105,7 @@ export default function ProjectsGrid({ only, projects: allProjects = [], filters
               <div className="flex items-center gap-3">
                 <Avatar
                   initials={project.initial}
+                  src={project.logoUrl}
                   tone={project.tone}
                   shape="square"
                   size="md"

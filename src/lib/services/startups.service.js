@@ -70,6 +70,7 @@ export async function createForOwner(input, ownerUserId) {
         ownerUserId,
         isHiring: input.isHiring ?? false,
         openRoles: input.openRoles ?? 0,
+        logoUrl: input.logoUrl ?? null,
       },
       tx
     )
@@ -111,6 +112,7 @@ export async function updateListing(startupId, input, actorId) {
         stageId,
         isHiring: input.isHiring,
         openRoles: input.openRoles,
+        logoUrl: input.logoUrl ?? null,
       },
       tx
     )

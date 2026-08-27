@@ -13,6 +13,12 @@ import {
   startupsService,
   studentsService,
 } from '@/lib/services'
+import {
+  ACCEPTED_IMAGE_LABEL,
+  ACCEPTED_IMAGE_MIME,
+  MAX_IMAGE_BYTES,
+  storeImage,
+} from '@/lib/storage/uploads'
 import * as present from './presenter'
 
 /**
@@ -378,6 +384,13 @@ export async function getStartupForm(user) {
     industries: industries.map((industry) => ({ slug: industry.slug, name: industry.name })),
     stages: stages.map((stage) => ({ slug: stage.slug, name: stage.name })),
     hiringStatuses: HIRING_STATUSES,
+    // The picker's `accept` list and the size it refuses at come from the
+    // module that enforces them, so the form cannot drift from the server.
+    logoUpload: {
+      accept: ACCEPTED_IMAGE_MIME,
+      formats: ACCEPTED_IMAGE_LABEL,
+      maxBytes: MAX_IMAGE_BYTES,
+    },
     readinessItems: readinessItems.map((item) => ({
       id: item.slug,
       label: item.name,
@@ -514,6 +527,9 @@ export async function saveStartupProfile(user, input) {
     openRoles: has(input, 'openRoles')
       ? normaliseOpenRoles(input.openRoles)
       : (current?.openRoles ?? 0),
+    logoUrl: has(input, 'logoUrl')
+      ? normaliseLogoUrl(input.logoUrl)
+      : (current?.logoUrl ?? null),
   }
 
   const startup = context.startup
@@ -529,6 +545,21 @@ export async function saveStartupProfile(user, input) {
   }
 
   return { startupId: startup.id, created: !context.startup }
+}
+
+/**
+ * Store a logo chosen on Edit Listing and hand back the URL it will load from.
+ *
+ * Nothing is written to `startups` here — `saveStartupProfile` does that when
+ * the founder saves, with the URL this returned. Keeping the two apart is what
+ * lets the same field work in Startup Profile Setup, where the row the column
+ * belongs to does not exist yet.
+ */
+export async function uploadStartupLogo(user, file) {
+  if (!user?.id) throw new NotFoundError('Founder')
+
+  const stored = await storeImage(file, 'startup-logos')
+  return { logoUrl: stored.url, bytes: stored.bytes }
 }
 
 export async function requestMentorship(user, input) {
@@ -610,6 +641,27 @@ function normaliseOpenRoles(value) {
     throw new ValidationError('Open roles must be a whole number between 0 and 99.')
   }
   return roles
+}
+
+/**
+ * Keeps `startups.logo_url` to URLs this application actually issued.
+ *
+ * The column is read straight into an `<img src>` on pages other people look
+ * at, so an arbitrary string here would be a founder-controlled URL on someone
+ * else's screen — an off-site tracker at best. `storeImage` only ever returns
+ * `/uploads/startup-logos/<sha256>.<ext>`, so anything else was not produced by
+ * the upload endpoint and is refused. An empty value clears the logo.
+ */
+const LOGO_URL_PATTERN = /^\/uploads\/startup-logos\/[a-f0-9]{64}\.[a-z]{3,4}$/
+
+function normaliseLogoUrl(value) {
+  if (value === null || value === undefined || value === '') return null
+  if (typeof value !== 'string' || !LOGO_URL_PATTERN.test(value)) {
+    throw new ValidationError('That logo could not be attached. Upload the image again.', {
+      fields: { logoUrl: 'Not an uploaded image.' },
+    })
+  }
+  return value
 }
 
 /**

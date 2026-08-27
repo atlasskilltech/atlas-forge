@@ -38,14 +38,11 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path, { method = 'GET', body, signal } = {}) {
+async function send(path, init) {
   let response
   try {
     response = await fetch(path, {
-      method,
-      signal,
-      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      ...init,
       // Send the session cookie; never reuse a cached authenticated response.
       credentials: 'same-origin',
       cache: 'no-store',
@@ -71,8 +68,29 @@ async function request(path, { method = 'GET', body, signal } = {}) {
   return payload.data
 }
 
+function request(path, { method = 'GET', body, signal } = {}) {
+  return send(path, {
+    method,
+    signal,
+    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+}
+
+/**
+ * POST a `FormData` body — the file-upload counterpart to `post`.
+ *
+ * `Content-Type` is deliberately not set: the browser has to add it itself so
+ * it can append the multipart boundary. Setting it by hand produces a body the
+ * server cannot parse.
+ */
+function upload(path, formData, { signal } = {}) {
+  return send(path, { method: 'POST', signal, body: formData })
+}
+
 export const api = {
   get: (path, options) => request(path, { ...options, method: 'GET' }),
+  upload,
   post: (path, body, options) => request(path, { ...options, method: 'POST', body: body ?? {} }),
   patch: (path, body, options) => request(path, { ...options, method: 'PATCH', body: body ?? {} }),
   put: (path, body, options) => request(path, { ...options, method: 'PUT', body: body ?? {} }),
