@@ -1,9 +1,10 @@
 import 'server-only'
 
 import { requireRoleOrRedirect } from '@/lib/auth/guard'
-import { ValidationError } from '@/lib/errors'
+import { NotFoundError, ValidationError } from '@/lib/errors'
 import {
   conciergeService,
+  documentsService,
   incubationService,
   listingsService,
   lookupsService,
@@ -53,6 +54,51 @@ export async function requireForgePage(returnTo) {
 /* -------------------------------------------------------------------------- */
 /* Reads                                                                      */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Compliance oversight: how complete each startup's document vault is.
+ *
+ * There is no reference design for this screen — the Compliance & Docs frames
+ * are the founder's. It is built from the same checklist the founder sees,
+ * summarised one row per startup, so the two stay recognisably the same
+ * feature.
+ */
+export async function getComplianceOverview() {
+  const [summaries, categories] = await Promise.all([
+    documentsService.listComplianceSummary(),
+    lookupsService.getDocumentCategories(),
+  ])
+
+  const coreTotal = categories.filter((category) => category.tier === 'core').length
+
+  return {
+    startups: summaries.map((startup) =>
+      present.toComplianceSummary(startup, { total: categories.length, coreTotal })
+    ),
+    total: categories.length,
+    coreTotal,
+  }
+}
+
+/**
+ * One startup's checklist, read-only.
+ *
+ * Staff hold `document.view_all`, which is a reading permission: the page
+ * renders Download but never Upload or Replace, and the upload route refuses
+ * them regardless of what the page draws.
+ */
+export async function getStartupCompliance(slug) {
+  const startup = await startupsService.getBySlug(slug)
+  if (!startup) throw new NotFoundError('Startup')
+
+  const rows = await documentsService.getChecklist(startup.id)
+
+  return {
+    startup: { name: startup.name, slug: startup.slug, status: startup.status },
+    rows: rows.map(present.toDocumentRow),
+    stats: present.toComplianceStats(rows),
+  }
+}
 
 export async function getDashboard() {
   const [stats, queue, requests, contacts] = await Promise.all([

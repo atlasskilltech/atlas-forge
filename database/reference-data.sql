@@ -58,6 +58,8 @@ INSERT INTO permissions (slug, name, module) VALUES
   ('platform.settings.view',  'View platform settings',     'platform'),
   ('platform.settings.write', 'Change platform settings',   'platform'),
   ('platform.logs.view',      'View platform logs',         'platform'),
+  ('document.manage_own',     'Upload and replace own startup documents', 'compliance'),
+  ('document.view_all',       'View and download any startup documents',  'compliance'),
   ('platform.reset',          'Reset platform data',        'platform')
 ON DUPLICATE KEY UPDATE name = VALUES(name), module = VALUES(module);
 
@@ -77,7 +79,7 @@ INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r JOIN permissions p ON p.slug IN (
   'listing.view','listing.create','application.view_all','concierge.search',
   'concierge.contact','startup.view','startup.manage_own','mentorship.request',
-  'incubation.apply')
+  'incubation.apply','document.manage_own')
 WHERE r.slug = 'founder'
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
@@ -86,7 +88,7 @@ SELECT r.id, p.id FROM roles r JOIN permissions p ON p.slug IN (
   'listing.view','listing.approve','application.view_all','concierge.search',
   'concierge.view_all_logs','startup.view','startup.manage_all','startup.feature',
   'mentorship.assign','mentorship.view_all','incubation.review','access.grant',
-  'user.view_all','platform.logs.view')
+  'user.view_all','platform.logs.view','document.view_all')
 WHERE r.slug = 'forge-manager'
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
@@ -98,7 +100,8 @@ ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r JOIN permissions p ON p.slug IN (
   'listing.view','application.view_all','concierge.view_all_logs','startup.view',
-  'mentorship.view_all','user.view_all','platform.settings.view','platform.logs.view')
+  'mentorship.view_all','user.view_all','platform.settings.view','platform.logs.view',
+  'document.view_all')
 WHERE r.slug = 'super-admin'
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
@@ -147,6 +150,32 @@ INSERT INTO contract_types (slug, name, sort_order) VALUES
   ('paid-academic-credit', 'Paid Work / Academic Credit',              5),
   ('equity-cofounder',     'Equity / Revenue Share / Co-founder Role', 6)
 ON DUPLICATE KEY UPDATE name = VALUES(name), sort_order = VALUES(sort_order);
+
+-- ---------------------------------------------------------------------------
+-- Compliance & Documents checklist
+--
+-- The fourteen categories from /reference/mast ui/Compliance & Docs.
+-- See migrations/006_compliance_documents.sql.
+-- ---------------------------------------------------------------------------
+INSERT INTO document_categories (slug, name, description, tier, accepted_types, sort_order) VALUES
+  ('pitch-deck',                'Pitch Deck',                                       NULL, 'core',        'pdf',      1),
+  ('incubation-agreement',      'Incubation Agreement',                             NULL, 'core',        'pdf',      2),
+  ('dpiit-recognition',         'DPIIT Recognition Certificate',
+     'Department for Promotion of Industry and Internal Trade',                           'core',        'pdf',      3),
+  ('certificate-incorporation', 'Certificate of Incorporation',                     NULL, 'core',        'pdf',      4),
+  ('gst-registration',          'GST Registration Certificate',                     NULL, 'core',        'pdf',      5),
+  ('business-pan',              'Business PAN Card',                                NULL, 'core',        'pdf',      6),
+  ('founders-agreement',        'Founders'' Agreement',                             NULL, 'recommended', 'pdf',      7),
+  ('moa-aoa',                   'Memorandum & Articles of Association (MoA & AoA)', NULL, 'recommended', 'pdf',      8),
+  ('shareholders-agreement',    'Shareholders'' Agreement',                         NULL, 'recommended', 'pdf',      9),
+  ('ip-trademark',              'IP & Trademark Documents',                         NULL, 'recommended', 'pdf,zip', 10),
+  ('funding-agreements',        'Funding Agreements / Term Sheets',                 NULL, 'recommended', 'pdf',     11),
+  ('udyam-msme',                'Udyam / MSME Registration',                        NULL, 'recommended', 'pdf',     12),
+  ('business-licences',         'Business Licences & Regulatory Approvals',         NULL, 'recommended', 'pdf,zip', 13),
+  ('bank-proof',                'Bank Proof / Cancelled Cheque',                    NULL, 'recommended', 'pdf',     14)
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name), description = VALUES(description), tier = VALUES(tier),
+  accepted_types = VALUES(accepted_types), sort_order = VALUES(sort_order);
 
 -- ---------------------------------------------------------------------------
 -- Mentorship areas

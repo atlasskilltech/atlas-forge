@@ -88,6 +88,7 @@ export const SIDEBAR_NAV = {
         { label: 'Projects Under Forge', href: '/founder/projects' },
         { label: 'My Startup Page', href: '/founder/startup' },
         { label: 'Edit Listing', href: '/founder/edit-listing' },
+        { label: 'Compliance & Docs', href: '/founder/compliance' },
       ],
     },
     {
@@ -139,6 +140,7 @@ export const SIDEBAR_NAV = {
       items: [
         { label: 'All Projects', href: '/forge/projects' },
         { label: 'Featured', href: '/forge/featured' },
+        { label: 'Compliance & Docs', href: '/forge/compliance' },
       ],
     },
     {

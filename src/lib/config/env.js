@@ -112,6 +112,10 @@ export const rateLimitConfig = Object.freeze({
 export const uploadsConfig = Object.freeze({
   directory: optional('UPLOAD_DIR') || join(process.cwd(), 'uploads'),
   maxBytes: integer('UPLOAD_MAX_BYTES', 2 * 1024 * 1024),
+  // Compliance documents are scans and signed agreements, not avatars: a
+  // photographed certificate of incorporation clears 2MB routinely. Separate
+  // from `maxBytes` so raising one does not raise the other.
+  maxDocumentBytes: integer('UPLOAD_MAX_DOCUMENT_BYTES', 10 * 1024 * 1024),
 })
 
 /** Credentials-safe summary for health checks and error reporting. */

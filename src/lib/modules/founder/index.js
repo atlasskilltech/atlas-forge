@@ -5,6 +5,7 @@ import { NotFoundError, ValidationError } from '@/lib/errors'
 import {
   applicationsService,
   conciergeService,
+  documentsService,
   incubationService,
   listingsService,
   lookupsService,
@@ -358,6 +359,29 @@ export async function getMentorship(user, { area = null } = {}) {
   }
 }
 
+/**
+ * Compliance & Documents.
+ *
+ * Reference: /reference/mast ui/Compliance & Docs/1.png and 2.png
+ *
+ * Returns every category whether or not it has been filled — the empty rows
+ * are the checklist. A founder with no startup yet has nowhere to file
+ * anything, so `startup` comes back null and the page says so rather than
+ * rendering fourteen upload buttons that cannot work.
+ */
+export async function getCompliance(user) {
+  const context = await getContext(user)
+  if (!context.startup) return { startup: null, rows: [], stats: null }
+
+  const rows = await documentsService.getChecklist(context.startupId)
+
+  return {
+    startup: { name: context.startup.name, slug: context.startup.slug },
+    rows: rows.map(present.toDocumentRow),
+    stats: present.toComplianceStats(rows),
+  }
+}
+
 export async function getIncubation(user) {
   const userId = user.id
   const applications = await incubationService.listApplications({ applicantId: userId })
@@ -577,6 +601,36 @@ export async function uploadStartupLogo(user, file) {
 
   const stored = await storeImage(file, 'startup-logos')
   return { logoUrl: stored.url, bytes: stored.bytes }
+}
+
+/**
+ * Upload or replace one compliance document.
+ *
+ * The startup is resolved from the session rather than the request, and the
+ * service re-checks ownership against it — the category slug is the only thing
+ * the caller gets to choose.
+ */
+export async function uploadDocument(identity, { categorySlug, file }) {
+  const context = await getContext(identity.user)
+  if (!context.startup) {
+    throw new ValidationError('Create your startup profile before uploading documents.')
+  }
+
+  // The owner id comes from the startup row, not from the session. `getContext`
+  // already resolves the startup by owner, so this is defence in depth rather
+  // than the only check — but passing the caller's own id here would make the
+  // assertion agree with itself and prove nothing.
+  documentsService.assertCanManage(identity, {
+    id: context.startupId,
+    ownerUserId: context.startup.owner?.id ?? null,
+  })
+
+  return documentsService.upload({
+    startup: { id: context.startupId, name: context.startup.name },
+    categorySlug,
+    file,
+    actorId: identity.user.id,
+  })
 }
 
 export async function requestMentorship(user, input) {

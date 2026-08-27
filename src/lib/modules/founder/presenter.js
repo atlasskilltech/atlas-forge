@@ -232,6 +232,69 @@ export function toContactRow(contact) {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Compliance & Documents                                                     */
+/* -------------------------------------------------------------------------- */
+
+const TIER_LABEL = { core: 'CORE', recommended: 'RECOMMENDED' }
+
+/**
+ * One row of the document checklist.
+ *
+ * `stored_name` and `checksum` are dropped here and never reach the browser:
+ * they are the on-disk identity of a private file, and a page that renders a
+ * download link has no use for them. The id is enough — the download route
+ * re-checks who is asking anyway.
+ */
+export function toDocumentRow(row) {
+  const { category, document } = row
+  const accepted = category.acceptedTypes ?? ['pdf']
+
+  return {
+    id: category.slug,
+    categorySlug: category.slug,
+    name: category.name,
+    description: category.description ?? null,
+    tier: TIER_LABEL[category.tier] ?? 'RECOMMENDED',
+    isCore: category.tier === 'core',
+    accept: accepted.map((extension) => `.${extension}`).join(','),
+    acceptLabel: accepted.map((extension) => extension.toUpperCase()).join(' or '),
+    document: document
+      ? {
+          id: document.id,
+          fileName: document.originalName,
+          size: fileSize(document.byteSize),
+          uploadedAt: document.createdAt ? dayLabel(document.createdAt) : null,
+          uploadedBy: document.uploadedByName ?? null,
+          downloadHref: `/api/documents/${document.id}/download`,
+        }
+      : null,
+  }
+}
+
+/** The counts under the page title: how much of the checklist is done. */
+export function toComplianceStats(rows) {
+  const core = rows.filter((row) => row.category.tier === 'core')
+  const filled = rows.filter((row) => row.document)
+
+  return {
+    total: rows.length,
+    uploaded: filled.length,
+    coreTotal: core.length,
+    coreUploaded: core.filter((row) => row.document).length,
+    complete: filled.length === rows.length,
+  }
+}
+
+/** "412 KB" / "2.4 MB" — sized for a table cell, not for accounting. */
+function fileSize(bytes) {
+  const size = Number(bytes)
+  if (!Number.isFinite(size) || size <= 0) return ''
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`
+}
+
+/* -------------------------------------------------------------------------- */
 /* Projects                                                                   */
 /* -------------------------------------------------------------------------- */
 

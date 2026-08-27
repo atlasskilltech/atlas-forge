@@ -18,6 +18,7 @@ const ALLOWED = new Set([
   'mentor_types',
   'mentorship_areas',
   'readiness_items',
+  'document_categories',
 ])
 
 export function selectLookup(table) {
@@ -26,8 +27,12 @@ export function selectLookup(table) {
   }
   const extra = table === 'readiness_items' ? ', hint' : ''
   const roleExtra = table === 'roles' ? ', description, is_view_only' : ''
+  // The compliance checklist carries its CORE/RECOMMENDED tier and its own
+  // accepted file types, both of which the founder page renders per row.
+  const documentExtra =
+    table === 'document_categories' ? ', description, tier, accepted_types' : ''
   return `
-    SELECT id, slug, name${extra}${roleExtra}, sort_order
+    SELECT id, slug, name${extra}${roleExtra}${documentExtra}, sort_order
       FROM ${table}
      WHERE is_active = TRUE
      ORDER BY sort_order, name

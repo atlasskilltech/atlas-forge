@@ -29,6 +29,8 @@ DROP TABLE IF EXISTS founder_access_grants;
 DROP TABLE IF EXISTS application_readiness;
 DROP TABLE IF EXISTS incubation_applications;
 DROP TABLE IF EXISTS readiness_items;
+DROP TABLE IF EXISTS startup_documents;
+DROP TABLE IF EXISTS document_categories;
 DROP TABLE IF EXISTS mentorship_sessions;
 DROP TABLE IF EXISTS mentorship_requests;
 DROP TABLE IF EXISTS mentor_mentorship_areas;
@@ -307,6 +309,56 @@ CREATE TABLE startup_members (
 -- ===========================================================================
 -- 4 · LISTINGS & APPLICATIONS
 -- ===========================================================================
+
+CREATE TABLE document_categories (
+  id             BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
+  slug           VARCHAR(64)       NOT NULL,
+  name           VARCHAR(120)      NOT NULL,
+  -- Shown under the name. Only DPIIT carries one in the reference.
+  description    VARCHAR(255)      NULL DEFAULT NULL,
+  -- Drives the CORE / RECOMMENDED chip. 'core' is required of every startup in
+  -- the programme; 'recommended' is expected but not blocking.
+  tier           ENUM('core','recommended') NOT NULL DEFAULT 'recommended',
+  -- Comma-separated extensions, lower case, no dots.
+  accepted_types VARCHAR(64)       NOT NULL DEFAULT 'pdf',
+  sort_order     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  is_active      BOOLEAN           NOT NULL DEFAULT TRUE,
+  created_at     TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_document_categories_slug (slug)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE startup_documents (
+  id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  startup_id    BIGINT UNSIGNED NOT NULL,
+  category_id   BIGINT UNSIGNED NOT NULL,
+  stored_name   VARCHAR(128)    NOT NULL,
+  original_name VARCHAR(255)    NOT NULL,
+  mime_type     VARCHAR(128)    NOT NULL,
+  byte_size     INT UNSIGNED    NOT NULL,
+  checksum      CHAR(64)        NOT NULL,
+  -- The person who uploaded it, kept for the audit trail. NULL once that
+  -- account is removed — the document outlives the uploader.
+  uploaded_by   BIGINT UNSIGNED NULL,
+  is_current    BOOLEAN         NOT NULL DEFAULT TRUE,
+  replaced_at   TIMESTAMP       NULL DEFAULT NULL,
+  created_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at    TIMESTAMP       NULL DEFAULT NULL,
+  PRIMARY KEY (id),
+  -- The checklist query: every current document for one startup.
+  KEY idx_startup_documents_slot (startup_id, category_id, is_current),
+  KEY idx_startup_documents_category (category_id),
+  KEY idx_startup_documents_uploader (uploaded_by),
+  KEY idx_startup_documents_deleted (deleted_at),
+  CONSTRAINT fk_startup_documents_startup FOREIGN KEY (startup_id)
+    REFERENCES startups (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_startup_documents_category FOREIGN KEY (category_id)
+    REFERENCES document_categories (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_startup_documents_uploader FOREIGN KEY (uploaded_by)
+    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE listing_types (
   id         BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,

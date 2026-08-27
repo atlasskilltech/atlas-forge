@@ -108,8 +108,10 @@ check('the role is flagged view-only in the database', identity.roles[0].isViewO
 const writeish = identity.permissions.filter((slug) => !/(^|\.)view(_|\.|$)/.test(slug))
 check('every granted permission is a view permission', writeish.length === 0,
   writeish.join(', ') || `all ${identity.permissions.length} are views`)
-check('and there are exactly the eight the reference data grants',
-  identity.permissions.length === 8, `${identity.permissions.length} permissions`)
+// Nine since migration 006 added `document.view_all` for compliance
+// oversight — still a read, which the check above enforces.
+check('and there are exactly the nine the reference data grants',
+  identity.permissions.length === 9, `${identity.permissions.length} permissions`)
 
 for (const permission of [
   'listing.approve',

@@ -31,6 +31,8 @@ export const getMentorTypes = () => cached('mentor_types', () => lookups.findLoo
 export const getMentorshipAreas = () =>
   cached('mentorship_areas', () => lookups.findLookup('mentorship_areas'))
 export const getReadinessItems = () => cached('readiness_items', () => lookups.findLookup('readiness_items'))
+export const getDocumentCategories = () =>
+  cached('document_categories', () => lookups.findLookup('document_categories'))
 export const getSkills = () => cached('skills', () => lookups.findSkills())
 
 /** Resolve a lookup slug to its id, for writes that receive slugs from a form. */

@@ -18,6 +18,8 @@ const toLookup = (row) => ({
   ...(row.hint !== undefined && { hint: row.hint }),
   ...(row.description !== undefined && { description: row.description }),
   ...(row.is_view_only !== undefined && { isViewOnly: bool(row.is_view_only) }),
+  ...(row.tier !== undefined && { tier: row.tier }),
+  ...(row.accepted_types !== undefined && { acceptedTypes: row.accepted_types }),
 })
 
 const toSkill = (row) => ({

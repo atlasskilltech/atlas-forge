@@ -375,6 +375,45 @@ export function toListingCounts(listings) {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Compliance & Documents                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The document row and the completeness stats are exactly what the founder
+ * page renders, so they are re-exported rather than reimplemented: two copies
+ * of "how do we describe a document" would drift.
+ */
+export { toDocumentRow, toComplianceStats } from '@/lib/modules/founder/presenter'
+
+/** One line of the staff overview: a startup and how far through the checklist it is. */
+export function toComplianceSummary(startup, { total, coreTotal }) {
+  const missingCore = coreTotal - startup.uploadedCore
+
+  return {
+    id: startup.slug,
+    slug: startup.slug,
+    name: startup.name,
+    initial: startup.initial ?? startup.name.charAt(0),
+    tone: startup.avatarTone ?? 'primary',
+    logoUrl: startup.logoUrl ?? null,
+    uploaded: startup.uploadedTotal,
+    total,
+    coreUploaded: startup.uploadedCore,
+    coreTotal,
+    // What a Forge Manager actually scans for: who is missing required papers.
+    statusLabel:
+      missingCore > 0
+        ? `${missingCore} core missing`
+        : startup.uploadedTotal === total
+          ? 'Complete'
+          : 'Core complete',
+    statusTone: missingCore > 0 ? 'warning' : startup.uploadedTotal === total ? 'success' : 'info',
+    lastUpload: startup.lastUploadAt ? dayLabel(startup.lastUploadAt) : 'No uploads yet',
+    href: `/forge/compliance/${startup.slug}`,
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 /* Projects                                                                   */
 /* -------------------------------------------------------------------------- */
 
