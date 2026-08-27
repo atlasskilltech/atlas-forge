@@ -31,6 +31,8 @@ DROP TABLE IF EXISTS incubation_applications;
 DROP TABLE IF EXISTS readiness_items;
 DROP TABLE IF EXISTS mentorship_sessions;
 DROP TABLE IF EXISTS mentorship_requests;
+DROP TABLE IF EXISTS mentor_mentorship_areas;
+DROP TABLE IF EXISTS mentorship_areas;
 DROP TABLE IF EXISTS mentor_skills;
 DROP TABLE IF EXISTS mentors;
 DROP TABLE IF EXISTS mentor_types;
@@ -528,6 +530,28 @@ CREATE TABLE mentors (
   id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id        BIGINT UNSIGNED NULL,
   full_name      VARCHAR(160)    NOT NULL,
+  -- Alumni profile, filled by the alumni-form import and NULL for mentors
+  -- entered by hand. See migrations/005_alumni_mentors.sql.
+  --
+  -- email, phone and linkedin_url are STAFF-ONLY: the founder-facing directory
+  -- reads a statement that does not select them at all.
+  email                  VARCHAR(255)      NULL DEFAULT NULL,
+  phone                  VARCHAR(32)       NULL DEFAULT NULL,
+  linkedin_url           VARCHAR(255)      NULL DEFAULT NULL,
+  -- Role and company as one field: the form collected them together with no
+  -- consistent separator. `role_title` because CURRENT_ROLE is reserved.
+  role_title             VARCHAR(160)      NULL DEFAULT NULL,
+  city                   VARCHAR(120)      NULL DEFAULT NULL,
+  course                 VARCHAR(160)      NULL DEFAULT NULL,
+  graduation_year        SMALLINT UNSIGNED NULL DEFAULT NULL,
+  -- Free text, not a foreign key: the form's sectors do not overlap the
+  -- platform's startup industries.
+  industry               VARCHAR(96)       NULL DEFAULT NULL,
+  experience_band        VARCHAR(16)       NULL DEFAULT NULL,
+  -- 'yes' or 'maybe' — the founder directory shows only 'yes'.
+  mentoring_availability VARCHAR(16)       NULL DEFAULT NULL,
+  import_source          VARCHAR(64)       NULL DEFAULT NULL,
+  consent_at             DATETIME          NULL DEFAULT NULL,
   mentor_type_id BIGINT UNSIGNED NOT NULL,
   initials       VARCHAR(4)      NULL,
   avatar_tone    VARCHAR(16)     NOT NULL DEFAULT 'primary',
@@ -538,6 +562,9 @@ CREATE TABLE mentors (
   deleted_at     TIMESTAMP       NULL DEFAULT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_mentors_user (user_id),
+  -- The import's natural key. Repeated NULLs are allowed in a UNIQUE index,
+  -- so hand-entered mentors without an email coexist here.
+  UNIQUE KEY uq_mentors_email (email),
   KEY idx_mentors_type (mentor_type_id),
   CONSTRAINT fk_mentors_user FOREIGN KEY (user_id)
     REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
@@ -560,6 +587,33 @@ CREATE TABLE mentor_skills (
     REFERENCES mentors (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_mentor_skills_skill FOREIGN KEY (skill_id)
     REFERENCES skills (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- The ten areas the alumni mentorship form offered. A lookup of its own
+-- rather than rows in `skills`: those are fine-grained and drive
+-- student-to-listing matching, these are coarse buckets a mentor picks from.
+CREATE TABLE mentorship_areas (
+  id         BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
+  slug       VARCHAR(64)       NOT NULL,
+  name       VARCHAR(96)       NOT NULL,
+  sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  is_active  BOOLEAN           NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_mentorship_areas_slug (slug)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE mentor_mentorship_areas (
+  mentor_id  BIGINT UNSIGNED NOT NULL,
+  area_id    BIGINT UNSIGNED NOT NULL,
+  created_at TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (mentor_id, area_id),
+  KEY idx_mentor_areas_area (area_id),
+  CONSTRAINT fk_mentor_areas_mentor FOREIGN KEY (mentor_id)
+    REFERENCES mentors (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_mentor_areas_area FOREIGN KEY (area_id)
+    REFERENCES mentorship_areas (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE mentorship_requests (

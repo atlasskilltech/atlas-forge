@@ -16,6 +16,7 @@ const ALLOWED = new Set([
   'listing_types',
   'contract_types',
   'mentor_types',
+  'mentorship_areas',
   'readiness_items',
 ])
 

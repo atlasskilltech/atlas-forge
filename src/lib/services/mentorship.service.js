@@ -7,6 +7,13 @@ import * as platform from '@/lib/repositories/platform.repository'
 import { getMentorTypes, resolveId } from './lookups.service'
 
 export const listMentors = (filters) => mentorship.findMentors(filters)
+
+/**
+ * The alumni mentors a founder may browse. Distinct from `listMentors`, which
+ * is staff-only because it carries contact details — see the note on
+ * SELECT_MENTORS. A founder screen must call this one.
+ */
+export const listAlumniDirectory = (filters) => mentorship.findAlumniDirectory(filters)
 export const getPrimaryMentor = () => mentorship.findPrimaryMentor()
 export const listRequests = (filters) => mentorship.findRequests(filters)
 export const listSessions = (filters) => mentorship.findSessions(filters)

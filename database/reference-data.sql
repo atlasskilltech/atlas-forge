@@ -149,6 +149,25 @@ INSERT INTO contract_types (slug, name, sort_order) VALUES
 ON DUPLICATE KEY UPDATE name = VALUES(name), sort_order = VALUES(sort_order);
 
 -- ---------------------------------------------------------------------------
+-- Mentorship areas
+--
+-- The ten options the alumni mentorship form offered, ordered by how many
+-- alumni chose each. See migrations/005_alumni_mentors.sql.
+-- ---------------------------------------------------------------------------
+INSERT INTO mentorship_areas (slug, name, sort_order) VALUES
+  ('design-creative',         'Design & Creative',             1),
+  ('business-strategy',       'Business & Strategy',           2),
+  ('career-development',      'Career & Personal Development', 3),
+  ('marketing-growth',        'Marketing & Growth',            4),
+  ('product-technology',      'Product & Technology',          5),
+  ('sales-bizdev',            'Sales & Business Development',  6),
+  ('hr-culture',              'HR & Culture',                  7),
+  ('finance-fundraising',     'Finance & Fundraising',         8),
+  ('operations-supply-chain', 'Operations & Supply Chain',     9),
+  ('sector-specific',         'Sector-specific',              10)
+ON DUPLICATE KEY UPDATE name = VALUES(name), sort_order = VALUES(sort_order);
+
+-- ---------------------------------------------------------------------------
 -- Mentor types
 -- ---------------------------------------------------------------------------
 INSERT INTO mentor_types (slug, name, sort_order) VALUES

@@ -24,20 +24,49 @@ import { cn } from '@/lib/utils'
  * The request is filed against the founder's startup, so the Forge Manager
  * knows which project it is for when assigning a mentor.
  */
+const ALL_AREAS = 'All areas'
+
 export default function MentorshipPanel({
   mentor,
   sessions = [],
   upcoming,
   mentorTypes = [],
+  alumniMentors = [],
+  mentorshipAreas = [],
 }) {
   const router = useRouter()
   const typeNames = mentorTypes.map((type) => type.name)
+  const areaNames = [ALL_AREAS, ...mentorshipAreas.map((item) => item.name)]
+  const [area, setArea] = useState(ALL_AREAS)
+  /**
+   * The mentor a founder asked for by name, or null for an open request. It
+   * only pre-fills the form — the Forge Manager still decides who is assigned,
+   * so this is a preference rather than a booking.
+   */
+  const [requestedMentor, setRequestedMentor] = useState(null)
   const [formOpen, setFormOpen] = useState(false)
   const [sent, setSent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [mentorType, setMentorType] = useState(typeNames[0])
   const [, startTransition] = useTransition()
+
+  // Filtered here rather than on the server: the whole directory is already
+  // on the page, so a filter click should not cost a round trip.
+  const visibleMentors =
+    area === ALL_AREAS
+      ? alumniMentors
+      : alumniMentors.filter((alumnus) => alumnus.areas.includes(area))
+
+  function openRequest(alumnus = null) {
+    setRequestedMentor(alumnus)
+    // An alumni mentor was asked for by name, so the type control should not
+    // still say "Faculty Mentor" underneath.
+    if (alumnus) {
+      setMentorType(typeNames.find((name) => name.includes('Alumni')) ?? typeNames[0])
+    }
+    setFormOpen(true)
+  }
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -86,7 +115,7 @@ export default function MentorshipPanel({
             variant="secondary"
             size="md"
             className="shrink-0 lg:hidden"
-            onClick={() => setFormOpen(true)}
+            onClick={() => openRequest()}
           >
             Request
           </Button>
@@ -94,7 +123,7 @@ export default function MentorshipPanel({
       </Card>
       ) : null}
 
-      <Button fullWidth className="mt-4 h-12 lg:hidden" onClick={() => setFormOpen(true)}>
+      <Button fullWidth className="mt-4 h-12 lg:hidden" onClick={() => openRequest()}>
         Request Session
       </Button>
 
@@ -126,13 +155,97 @@ export default function MentorshipPanel({
         </div>
       ) : null}
 
+      {/* ---- Alumni mentor directory ------------------------------------- */}
+      {alumniMentors.length > 0 ? (
+        <div>
+          <SectionLabel className="mt-6">
+            Alumni Mentors · {alumniMentors.length}
+          </SectionLabel>
+          <p className="mt-1.5 text-[13px] text-muted">
+            ATLAS alumni who offered to mentor. Ask for one by name and the Forge Manager
+            arranges the introduction.
+          </p>
+
+          {mentorshipAreas.length > 0 ? (
+            <SegmentedControl
+              label="Mentorship area"
+              tone="primary"
+              options={areaNames}
+              value={area}
+              onChange={setArea}
+              className="mt-3 overflow-x-auto"
+            />
+          ) : null}
+
+          <div className="mt-3 grid gap-3 lg:mt-[18px] lg:grid-cols-3 lg:gap-[18px]">
+            {visibleMentors.map((alumnus) => (
+              <Card key={alumnus.id} padding="lg" className="self-start px-5 py-5">
+                <div className="flex items-start gap-3.5">
+                  <Avatar
+                    initials={alumnus.initials}
+                    tone={alumnus.tone}
+                    shape="square"
+                    size="lg"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[15px] font-bold text-ink">{alumnus.name}</p>
+                    <p className="mt-0.5 text-[13px] leading-[18px] text-muted">
+                      {alumnus.role}
+                    </p>
+                    <p className="mt-1 text-[13px] text-primary-text">{alumnus.meta}</p>
+                  </div>
+                </div>
+
+                {alumnus.areas.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {alumnus.areas.slice(0, 3).map((name) => (
+                      <Chip key={name} tone="skill" size="lg">
+                        {name}
+                      </Chip>
+                    ))}
+                    {alumnus.areas.length > 3 ? (
+                      <Chip tone="info" size="lg">
+                        +{alumnus.areas.length - 3}
+                      </Chip>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <Button
+                  variant="secondary"
+                  size="md"
+                  fullWidth
+                  className="mt-4"
+                  onClick={() => openRequest(alumnus)}
+                >
+                  Request this mentor
+                </Button>
+              </Card>
+            ))}
+          </div>
+
+          {visibleMentors.length === 0 ? (
+            <Card padding="lg" className="mt-3">
+              <p className="text-[13px] text-muted">
+                No alumni mentor has listed {area} yet. Send an open request and the Forge
+                Manager will find someone.
+              </p>
+            </Card>
+          ) : null}
+        </div>
+      ) : null}
+
       <Modal
         open={formOpen}
         onClose={() => setFormOpen(false)}
         size="lg"
         showClose
         title="Request a Mentorship Session"
-        description="Mihir Pawar reviews requests and matches you with a mentor."
+        description={
+          requestedMentor
+            ? `Mihir Pawar will pass this to ${requestedMentor.name} and confirm a time.`
+            : 'Mihir Pawar reviews requests and matches you with a mentor.'
+        }
       >
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           <FormField
@@ -143,10 +256,17 @@ export default function MentorshipPanel({
             requiredMark={false}
           />
           <FormField
+            // Remounted per mentor so the prefill follows whichever card was
+            // clicked; without the key React keeps the first value typed.
+            key={requestedMentor?.id ?? 'open-request'}
             label="Context / background"
             name="context"
             as="textarea"
             rows={3}
+            defaultValue={
+              requestedMentor ? `Requested mentor: ${requestedMentor.name}
+` : ''
+            }
             placeholder="Share anything the mentor should know before the session"
           />
           <div className="space-y-2">

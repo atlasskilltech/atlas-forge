@@ -14,7 +14,8 @@ export const metadata = buildMetadata({
 
 export default async function FounderMentorshipPage() {
   const { user, chromeUser } = await founder.requireFounderPage('/founder/mentorship')
-  const { mentor, sessions, upcoming, mentorTypes } = await founder.getMentorship(user)
+  const { mentor, sessions, upcoming, mentorTypes, alumniMentors, mentorshipAreas } =
+    await founder.getMentorship(user)
 
   return (
     <AppShell role={ROLES.FOUNDER} user={chromeUser}>
@@ -24,6 +25,8 @@ export default async function FounderMentorshipPage() {
         sessions={sessions}
         upcoming={upcoming}
         mentorTypes={mentorTypes}
+        alumniMentors={alumniMentors}
+        mentorshipAreas={mentorshipAreas}
       />
     </AppShell>
   )

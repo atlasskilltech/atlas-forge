@@ -129,7 +129,10 @@ check('concierge stats aggregate', cStats.total === 5 && cStats.ongoing === 2,
 // ---- mentorship -----------------------------------------------------------
 const mentors = await mentorship.listMentors()
 const grouped = await mentorship.listMentorsGrouped()
-check('mentorship.listMentors + skills', mentors.length === 7 && mentors[0].skills !== undefined,
+// `>= 7` rather than `=== 7`: the alumni import adds seventy rows where it has
+// been run. The three type groups hold regardless — alumni is one of them.
+check('mentorship.listMentors + skills', mentors.length >= 7 && mentors[0].skills !== undefined &&
+  grouped.length === 3,
   `${mentors.length} mentors, ${grouped.length} groups`)
 
 // ---- incubation -----------------------------------------------------------

@@ -28,6 +28,8 @@ export const getStages = () => cached('stages', () => lookups.findLookup('stages
 export const getListingTypes = () => cached('listing_types', () => lookups.findLookup('listing_types'))
 export const getContractTypes = () => cached('contract_types', () => lookups.findLookup('contract_types'))
 export const getMentorTypes = () => cached('mentor_types', () => lookups.findLookup('mentor_types'))
+export const getMentorshipAreas = () =>
+  cached('mentorship_areas', () => lookups.findLookup('mentorship_areas'))
 export const getReadinessItems = () => cached('readiness_items', () => lookups.findLookup('readiness_items'))
 export const getSkills = () => cached('skills', () => lookups.findSkills())
 

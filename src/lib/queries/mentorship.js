@@ -1,7 +1,20 @@
 import 'server-only'
 
+/**
+ * STAFF ONLY — includes email, phone and linkedin_url.
+ *
+ * Alumni consented to their details being stored for alumni-network purposes,
+ * not to them being shown to every founder on the platform. Nothing on a
+ * founder screen may read this statement; the founder-facing directory below
+ * does not select those three columns at all, so a mistake further up the
+ * stack cannot leak them. Same split as `SELECT_USER_CREDENTIALS` in
+ * queries/users.js, and for the same reason.
+ */
 export const SELECT_MENTORS = `
   SELECT m.id, m.full_name, m.initials, m.avatar_tone, m.is_primary,
+         m.email, m.phone, m.linkedin_url,
+         m.role_title, m.city, m.course, m.graduation_year, m.industry,
+         m.experience_band, m.mentoring_availability, m.import_source,
          mt.name AS mentor_type_name, mt.slug AS mentor_type_slug,
          u.id AS user_id
     FROM mentors m
@@ -12,6 +25,33 @@ export const SELECT_MENTORS = `
    ORDER BY m.is_primary DESC, m.full_name
 `
 
+/**
+ * The alumni directory a founder browses. Contact columns are deliberately
+ * absent from this SELECT — not filtered out later, never fetched.
+ *
+ * `mentoring_availability` excludes only the alumni who answered "Maybe" to
+ * mentoring: a founder should not request someone who has not committed. NULL
+ * passes, because a mentor entered by hand by staff has no form answer and
+ * their presence in the table is the commitment.
+ */
+export const SELECT_ALUMNI_MENTOR_DIRECTORY = `
+  SELECT m.id, m.full_name, m.initials, m.avatar_tone,
+         m.role_title, m.city, m.graduation_year, m.experience_band,
+         mt.name AS mentor_type_name, mt.slug AS mentor_type_slug
+    FROM mentors m
+    JOIN mentor_types mt ON mt.id = m.mentor_type_id
+   WHERE m.deleted_at IS NULL AND m.is_active = TRUE
+     AND mt.slug = 'alumni'
+     AND (m.mentoring_availability IS NULL OR m.mentoring_availability = 'yes')
+     AND (? IS NULL OR EXISTS (
+           SELECT 1
+             FROM mentor_mentorship_areas mma
+             JOIN mentorship_areas a ON a.id = mma.area_id
+            WHERE mma.mentor_id = m.id AND a.slug = ?
+         ))
+   ORDER BY m.full_name
+`
+
 export const SELECT_PRIMARY_MENTOR = `
   SELECT m.id, m.full_name, m.initials, m.avatar_tone,
          mt.name AS mentor_type_name, mt.slug AS mentor_type_slug
@@ -20,6 +60,16 @@ export const SELECT_PRIMARY_MENTOR = `
    WHERE m.is_primary = TRUE AND m.deleted_at IS NULL AND m.is_active = TRUE
    LIMIT 1
 `
+
+export function selectAreasForMentors(placeholders) {
+  return `
+    SELECT mma.mentor_id, a.id, a.slug, a.name
+      FROM mentor_mentorship_areas mma
+      JOIN mentorship_areas a ON a.id = mma.area_id
+     WHERE mma.mentor_id IN ${placeholders} AND a.is_active = TRUE
+     ORDER BY a.sort_order
+  `
+}
 
 export function selectSkillsForMentors(placeholders) {
   return `

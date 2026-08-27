@@ -8,6 +8,7 @@ import {
   timeLabel,
   yearLabel,
 } from '@/lib/utils/format'
+import { initials as initialsOf } from '@/lib/utils'
 
 /**
  * Domain objects → the exact props the Founder components already render.
@@ -388,6 +389,31 @@ export function toMentor(mentor) {
       : joinMeta(mentor.type?.name ?? 'Mentor'),
     note: 'Faculty, Alumni, and Industry mentors available for special project needs',
     mobileRole: joinMeta(mentor.isPrimary ? 'Forge Manager' : null, mentor.type?.name ?? 'Mentor'),
+  }
+}
+
+/**
+ * One alumni mentor card in the founder's directory.
+ *
+ * Name, what they do now, when they graduated, and what they can help with —
+ * no email, phone or LinkedIn. Contact happens through the request the Forge
+ * Manager assigns, the same way founder-to-student contact goes through
+ * Concierge rather than a raw address.
+ */
+export function toAlumniMentorCard(mentor) {
+  return {
+    id: String(mentor.id),
+    mentorId: mentor.id,
+    name: mentor.name,
+    initials: mentor.initials ?? initialsOf(mentor.name),
+    tone: mentor.avatarTone ?? 'primary',
+    role: mentor.roleTitle ?? 'Alumni Mentor',
+    meta: joinMeta(
+      mentor.graduationYear ? `Batch of ${mentor.graduationYear}` : null,
+      mentor.city,
+      mentor.experienceBand
+    ),
+    areas: mentor.areas.map((area) => area.name),
   }
 }
 

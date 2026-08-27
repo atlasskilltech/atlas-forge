@@ -121,8 +121,13 @@ check('getStudentPool — engagement stats ordered as the reference draws them',
 const mentorship = await forge.getMentorship()
 check('getMentorship — open requests only', mentorship.requests.length === 2,
   `${mentorship.requests.length} of 3 total`)
-check('getMentorship — full mentor roster', mentorship.mentors.length === 7,
-  `${mentorship.mentors.length} mentors`)
+// Not an exact count any more: the alumni intake (migration 005 plus
+// scripts/import-alumni-mentors.mjs) adds seventy mentors on an installation
+// that has run it and none on one that has not. What must hold either way is
+// that the roster returns every seeded mentor, primary first.
+check('getMentorship — full mentor roster', mentorship.mentors.length >= 7 &&
+  mentorship.mentors[0].name === 'Mihir Pawar',
+  `${mentorship.mentors.length} mentors, first is ${mentorship.mentors[0]?.name}`)
 check('getMentorship — mentors carry their skills',
   mentorship.mentors.every((mentor) => Array.isArray(mentor.skills)))
 check('getMentorship — session log covers every session',

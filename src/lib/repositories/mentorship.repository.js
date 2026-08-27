@@ -4,6 +4,10 @@ import { execute, insert, query, queryOne, queryValue } from '@/lib/db'
 import * as sql from '@/lib/queries/mentorship'
 import { bool, inClause, iso, num, pair } from '@/lib/utils/rows'
 
+/**
+ * STAFF shape — carries contact details. Only reachable through `findMentors`,
+ * which reads the staff-only statement.
+ */
 export const toMentor = (row) => ({
   id: num(row.id),
   userId: num(row.user_id),
@@ -14,8 +18,39 @@ export const toMentor = (row) => ({
   type: row.mentor_type_name
     ? { name: row.mentor_type_name, slug: row.mentor_type_slug }
     : null,
+  contact: { email: row.email ?? null, phone: row.phone ?? null, linkedinUrl: row.linkedin_url ?? null },
+  roleTitle: row.role_title ?? null,
+  city: row.city ?? null,
+  course: row.course ?? null,
+  graduationYear: num(row.graduation_year),
+  industry: row.industry ?? null,
+  experienceBand: row.experience_band ?? null,
+  mentoringAvailability: row.mentoring_availability ?? null,
+  importSource: row.import_source ?? null,
   skills: [],
 })
+
+/**
+ * FOUNDER-FACING shape. There is no contact key to omit — the statement behind
+ * it never selected those columns, so nothing downstream can render or
+ * serialise them into the page payload.
+ */
+const toDirectoryMentor = (row) => ({
+  id: num(row.id),
+  name: row.full_name,
+  initials: row.initials,
+  avatarTone: row.avatar_tone,
+  type: row.mentor_type_name
+    ? { name: row.mentor_type_name, slug: row.mentor_type_slug }
+    : null,
+  roleTitle: row.role_title ?? null,
+  city: row.city ?? null,
+  graduationYear: num(row.graduation_year),
+  experienceBand: row.experience_band ?? null,
+  areas: [],
+})
+
+const toArea = (row) => ({ id: num(row.id), slug: row.slug, name: row.name })
 
 const toSkill = (row) => ({
   id: num(row.id),
@@ -78,6 +113,25 @@ export async function findMentors({ typeSlug = null } = {}) {
   for (const row of skillRows) byMentor.get(num(row.mentor_id))?.push(toSkill(row))
 
   return mentors.map((mentor) => ({ ...mentor, skills: byMentor.get(mentor.id) ?? [] }))
+}
+
+/**
+ * Active alumni mentors for the founder directory, with their mentorship
+ * areas. Two queries rather than a join with duplicated mentor rows, the same
+ * shape `findMentors` uses for skills.
+ */
+export async function findAlumniDirectory({ areaSlug = null } = {}) {
+  const rows = await query(sql.SELECT_ALUMNI_MENTOR_DIRECTORY, [...pair(areaSlug)])
+  const mentors = rows.map(toDirectoryMentor)
+  if (mentors.length === 0) return mentors
+
+  const ids = mentors.map((mentor) => mentor.id)
+  const areaRows = await query(sql.selectAreasForMentors(inClause(ids)), ids)
+
+  const byMentor = new Map(mentors.map((mentor) => [mentor.id, []]))
+  for (const row of areaRows) byMentor.get(num(row.mentor_id))?.push(toArea(row))
+
+  return mentors.map((mentor) => ({ ...mentor, areas: byMentor.get(mentor.id) ?? [] }))
 }
 
 export async function findPrimaryMentor() {

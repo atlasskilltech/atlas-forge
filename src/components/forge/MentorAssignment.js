@@ -28,10 +28,26 @@ export default function MentorAssignment({
   mobileAssignments = [],
 }) {
   const router = useRouter()
+  /**
+   * The mentor list went from a handful to the whole alumni network when the
+   * alumni intake was imported, and this picker is a modal with no paging. A
+   * search box is what makes seventy-odd names usable; without it the Forge
+   * Manager scrolls to find somebody they can already name.
+   */
+  const [mentorQuery, setMentorQuery] = useState('')
   const [picking, setPicking] = useState(null)
   const [confirmed, setConfirmed] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [, startTransition] = useTransition()
+
+  const query = mentorQuery.trim().toLowerCase()
+  const visibleMentors = query
+    ? mentors.filter((mentor) =>
+        [mentor.name, mentor.kind, ...(mentor.skills ?? [])]
+          .filter(Boolean)
+          .some((field) => field.toLowerCase().includes(query))
+      )
+    : mentors
 
   async function selectMentor(mentor) {
     setSubmitting(true)
@@ -175,8 +191,23 @@ export default function MentorAssignment({
         description="Mentors are grouped by their skill focus"
         className="max-h-[85dvh] overflow-y-auto lg:max-w-[470px]"
       >
-        <ul className="mt-6 space-y-3">
-          {mentors.map((mentor) => (
+        <label htmlFor="mentor-search" className="sr-only">
+          Search mentors by name, type or skill
+        </label>
+        <input
+          id="mentor-search"
+          type="search"
+          value={mentorQuery}
+          onChange={(event) => setMentorQuery(event.target.value)}
+          placeholder="Search by name, type or skill..."
+          className="mt-6 h-10 w-full rounded-field border border-line bg-surface px-3.5 text-sm text-ink placeholder:text-muted focus:border-primary-500 focus:outline-none"
+        />
+        <p className="mt-2 text-[13px] text-muted">
+          {visibleMentors.length} of {mentors.length} mentors
+        </p>
+
+        <ul className="mt-3 space-y-3">
+          {visibleMentors.map((mentor) => (
             <li key={mentor.id}>
               <Card padding="lg" className="bg-canvas">
                 <div className="flex items-center gap-3">

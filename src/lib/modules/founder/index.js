@@ -313,14 +313,25 @@ export async function getApplicants(user) {
   }
 }
 
-export async function getMentorship(user) {
+/**
+ * The Mentorship screen: the founder's own mentor and sessions, plus the
+ * alumni mentors they can ask for by name.
+ *
+ * `listAlumniDirectory` — never `listMentors`. The latter is the staff read
+ * and carries alumni email, phone and LinkedIn; everything returned from here
+ * is serialised into the page payload for a client component, so a field that
+ * merely goes unrendered is still a field the browser receives.
+ */
+export async function getMentorship(user, { area = null } = {}) {
   const context = await getContext(user)
   const userId = user.id
 
-  const [sessions, mentorTypes, primaryMentor] = await Promise.all([
+  const [sessions, mentorTypes, primaryMentor, alumni, areas] = await Promise.all([
     mentorshipService.listSessions({ menteeId: userId }),
     lookupsService.getMentorTypes(),
     mentorshipService.getPrimaryMentor(),
+    mentorshipService.listAlumniDirectory({ areaSlug: area }),
+    lookupsService.getMentorshipAreas(),
   ])
 
   const assigned = sessions.find((session) => session.mentor)?.mentor ?? null
@@ -338,6 +349,12 @@ export async function getMentorship(user) {
       ...mentorTypes.map((type) => ({ slug: type.slug, name: type.name })),
       { slug: null, name: 'No preference' },
     ],
+    alumniMentors: alumni.map(present.toAlumniMentorCard),
+    // Only the areas somebody actually covers: an empty filter is a dead end,
+    // and three of the ten went unchosen by every alumnus in the intake.
+    mentorshipAreas: areas
+      .filter((item) => alumni.some((mentor) => mentor.areas.some((a) => a.slug === item.slug)))
+      .map((item) => ({ slug: item.slug, name: item.name })),
   }
 }
 
