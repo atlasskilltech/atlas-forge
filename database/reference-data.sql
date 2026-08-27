@@ -142,7 +142,10 @@ INSERT INTO contract_types (slug, name, sort_order) VALUES
   ('no-pay',        'Collaboration / No Pay', 1),
   ('paid-freelance','Paid Freelance',         2),
   ('equity',        'Equity / Revenue Share', 3),
-  ('part-time-paid','Part-time paid',         4)
+  ('part-time-paid','Part-time paid',         4),
+  -- Offered on Post a Job. See migrations/003_job_contract_types.sql.
+  ('paid-academic-credit', 'Paid Work / Academic Credit',              5),
+  ('equity-cofounder',     'Equity / Revenue Share / Co-founder Role', 6)
 ON DUPLICATE KEY UPDATE name = VALUES(name), sort_order = VALUES(sort_order);
 
 -- ---------------------------------------------------------------------------

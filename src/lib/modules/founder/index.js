@@ -31,6 +31,53 @@ import * as present from './presenter'
 /* Static navigation                                                          */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * The Contract Type options on Post a Job: paid engagements (including
+ * academic credit) or an equity-style stake.
+ *
+ * Post a Job offers a fixed pair, and the control must never render empty, so
+ * the labels live here. `contract_types` still owns storage — each slug below
+ * is a real row (migration 003) and is what `listings.contract_type_id` points
+ * at. That table is shared with Post a Collab and with every listing already
+ * posted, so this form narrows to its own two by slug rather than the table
+ * being edited to suit it, the same way the Student module narrows to
+ * COLLAB_CONTRACT_SLUGS.
+ */
+const JOB_CONTRACT_TYPES = [
+  { slug: 'paid-academic-credit', name: 'Paid Work / Academic Credit' },
+  { slug: 'equity-cofounder', name: 'Equity / Revenue Share / Co-founder Role' },
+]
+
+/**
+ * Lookups are cached for the life of the server process, so a server that was
+ * already running when migration 003 landed still holds a `contract_types`
+ * list without the two slugs above. Such a process would render an empty
+ * control and, worse, silently resolve the slug to NULL on submit. Refreshing
+ * the cache once on a miss repairs both without a restart; the flag keeps an
+ * install that never ran the migration from re-reading every lookup on every
+ * page view.
+ */
+let contractTypesRefreshed = false
+
+async function jobContractTypes() {
+  let rows = await lookupsService.getContractTypes()
+  const missing = JOB_CONTRACT_TYPES.some((type) => !rows.some((row) => row.slug === type.slug))
+
+  if (missing && !contractTypesRefreshed) {
+    contractTypesRefreshed = true
+    lookupsService.clearCache()
+    rows = await lookupsService.getContractTypes()
+  }
+
+  // The stored label wins when the row is there; the constant keeps the
+  // control populated if it is not.
+  const bySlug = new Map(rows.map((row) => [row.slug, row]))
+  return JOB_CONTRACT_TYPES.map((type) => ({
+    slug: type.slug,
+    name: bySlug.get(type.slug)?.name ?? type.name,
+  }))
+}
+
 const QUICK_ACTIONS = [
   { label: 'Search Student Pool', href: '/founder/student-pool', primary: true },
   { label: 'Post a Job', href: '/founder/post-job' },
@@ -297,11 +344,12 @@ export async function getIncubation(user) {
 /** Field options for Post a Job. */
 export async function getJobFormOptions() {
   const [contractTypes, listingTypes] = await Promise.all([
-    lookupsService.getContractTypes(),
+    jobContractTypes(),
     lookupsService.getListingTypes(),
   ])
+
   return {
-    contractTypes: contractTypes.map((type) => ({ slug: type.slug, name: type.name })),
+    contractTypes,
     listingTypes: listingTypes.map((type) => ({ slug: type.slug, name: type.name })),
   }
 }
