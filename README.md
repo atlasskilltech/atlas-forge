@@ -29,7 +29,7 @@ It is not open to the public. There is no sign-up. Every user is issued an
 
 ---
 
-## What it does
+## What it does.
 
 A university repeatedly hits the same three problems. ATLAS Forge solves each:
 
