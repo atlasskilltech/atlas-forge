@@ -107,9 +107,9 @@ export default function PostJobForm({ contractTypes = [] }) {
           />
 
           <div className="hidden space-y-2 lg:block">
-            <p className="text-[13px] leading-4 font-semibold text-ink">Contract Type</p>
+            <p className="text-[13px] leading-4 font-semibold text-ink">Engagement Type</p>
             <SegmentedControl
-              label="Contract Type"
+              label="Engagement Type"
               options={contractNames}
               value={contract}
               onChange={setContract}
