@@ -206,7 +206,7 @@ export default function StartupListingForm({
             </div>
 
             <FormField
-              label="Idea / Project Name"
+              label="Startup Name"
               name="ideaName"
               defaultValue={values.name ?? ''}
               placeholder="e.g. NovaMed — AI health monitoring"

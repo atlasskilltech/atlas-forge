@@ -84,7 +84,7 @@ export default function EnquirySheet({ open, onClose, eyebrow, labelledBy, child
 
   return (
     <div
-      className="fixed inset-0 z-100 flex justify-center overflow-y-auto bg-forge-ink/45 p-0 backdrop-blur-[2px] sm:p-6 lg:p-10"
+      className="fixed inset-0 z-100 flex justify-center overflow-y-auto bg-forge-ink/45 p-0 backdrop-blur-[2px] sm:p-4 lg:p-6"
       onMouseDown={(event) => {
         // mousedown, not click: a click that STARTS inside the panel and ends
         // on the backdrop (selecting text, then releasing) would otherwise
@@ -99,24 +99,24 @@ export default function EnquirySheet({ open, onClose, eyebrow, labelledBy, child
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cn(
-          'relative my-0 h-fit w-full max-w-[1048px] overflow-hidden bg-[#f5f5f7]',
+          'relative my-0 h-fit w-full max-w-[920px] overflow-hidden bg-[#f5f5f7]',
           'font-forge shadow-[0_32px_80px_-24px_rgb(26_20_80/0.45)] focus:outline-none',
-          'sm:my-auto sm:rounded-[18px]'
+          'sm:my-auto sm:rounded-[16px]'
         )}
       >
         {/* ---- Header strip -------------------------------------------- */}
-        <div className="flex items-center justify-between gap-4 bg-white px-6 py-5 sm:px-10 sm:py-6">
-          <p className="text-base font-bold text-forge-ink sm:text-lg">{eyebrow}</p>
+        <div className="flex items-center justify-between gap-4 bg-white px-5 py-3.5 sm:px-8 sm:py-4">
+          <p className="text-[15px] font-bold text-forge-ink sm:text-[17px]">{eyebrow}</p>
           <button
             type="button"
             onClick={onClose}
-            className="-mr-1 shrink-0 rounded-md px-1 text-lg font-normal text-forge-ink transition-opacity hover:opacity-60 sm:text-xl"
+            className="-mr-1 shrink-0 rounded-md px-1 text-base font-normal text-forge-ink transition-opacity hover:opacity-60 sm:text-lg"
           >
             Close
           </button>
         </div>
 
-        <div className="px-6 pt-6 pb-10 sm:px-10 sm:pt-8 sm:pb-12">{children}</div>
+        <div className="px-5 pt-5 pb-7 sm:px-8 sm:pt-6 sm:pb-8">{children}</div>
       </div>
     </div>
   )

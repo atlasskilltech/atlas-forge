@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils'
  */
 
 const CONTROL =
-  'w-full rounded-[8px] border border-[#dddcf0] bg-white px-4 text-[15px] text-forge-ink ' +
+  'w-full rounded-[8px] border border-[#dddcf0] bg-white px-3.5 text-[14px] text-forge-ink ' +
   'transition-colors duration-150 placeholder:text-[#a8a7bb] ' +
   'hover:border-forge-purple/60 focus:border-forge-purple focus:outline-none ' +
   'disabled:cursor-not-allowed disabled:opacity-60'
@@ -54,7 +54,7 @@ export function Field({
     'aria-describedby': errorId,
     className: cn(
       CONTROL,
-      as !== 'textarea' && 'h-[52px]',
+      as !== 'textarea' && 'h-[44px]',
       error && 'border-forge-pink focus:border-forge-pink',
       className
     ),
@@ -62,11 +62,11 @@ export function Field({
   }
 
   return (
-    <div className={cn('flex flex-col gap-2.5', containerClassName)}>
+    <div className={cn('flex flex-col gap-1.5', containerClassName)}>
       <Label htmlFor={id}>{label}</Label>
 
       {as === 'textarea' ? (
-        <textarea rows={4} {...shared} className={cn(shared.className, 'resize-y py-3.5')} />
+        <textarea rows={3} {...shared} className={cn(shared.className, 'resize-y py-2.5')} />
       ) : as === 'select' ? (
         // `appearance-none` plus the chevron below: a native select is kept
         // (it is the right control on a phone) but the OS arrow is replaced
@@ -122,7 +122,7 @@ export function Rule({ className }) {
 
 export function PrivacyNote() {
   return (
-    <p className="text-[13px] leading-[18px] text-[#6c6b80]">
+    <p className="text-[12px] leading-[16px] text-[#6c6b80]">
       We use the information you provide only to respond to your enquiry and route it to the
       appropriate ATLAS Forge team.
     </p>
@@ -135,8 +135,8 @@ export function SubmitButton({ pending, children, pendingLabel = 'Sending…' })
       type="submit"
       disabled={pending}
       className={cn(
-        'inline-flex h-[54px] min-w-[196px] items-center justify-center rounded-[8px] px-8',
-        'bg-[#3d3a8c] text-[13px] font-semibold tracking-[0.11em] text-white uppercase',
+        'inline-flex h-[46px] min-w-[176px] items-center justify-center rounded-[8px] px-7',
+        'bg-[#3d3a8c] text-[12px] font-semibold tracking-[0.11em] text-white uppercase',
         'transition-colors duration-150 hover:bg-forge-ink',
         'disabled:cursor-not-allowed disabled:opacity-70'
       )}

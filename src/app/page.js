@@ -748,8 +748,8 @@ function LandingFooter() {
             />
 
             <ul className="mt-10 flex flex-col gap-4 text-[12.5px] leading-none text-forge-ink">
-              <li>
-                <a href="#about" className="transition-opacity hover:opacity-65">
+              <li className='hidden'>
+                <a href="#about" className="transition-opacity hover:opacity-65 ">
                   Programmes
                 </a>
               </li>
@@ -803,10 +803,10 @@ function LandingFooter() {
               <p>
                 <span className="font-bold">Write to us</span>{' '}
                 <a
-                  href="mailto:mihir.pawar@atlasuniversity.edu.in"
+                  href="mailto:contact@atlasforge.in"
                   className="ml-2 text-forge-ink transition-opacity hover:opacity-65"
                 >
-                  mihir.pawar@atlasuniversity.edu.in
+                  contact@atlasforge.in
                 </a>
               </p>
               <p>

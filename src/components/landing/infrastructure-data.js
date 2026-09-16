@@ -44,7 +44,7 @@ export const INFRASTRUCTURE = [
     stats: [
       { value: '30+', label: '3D Printers' },
       { value: '150–300', label: 'Parts / Day' },
-      { value: '40 × 40 CM', label: 'Build Bed' },
+      { value: '40 × 40 CM', label: 'Bed Size' },
       { value: '3', label: 'Print Technologies' },
     ],
     capabilityLabel: 'Capability + Workflow',
@@ -54,7 +54,7 @@ export const INFRASTRUCTURE = [
       ['Qidi XCF Pro · Creality K1/K1C', 'Elegoo Centauri · Saturn 4 Ultra'],
       ['Custom large-format printer', 'Experiential design'],
     ],
-    pillsLabel: 'Facility System',
+    pillsLabel: 'Material Options',
     pills: [
       'PLA',
       'PETG',
@@ -92,7 +92,7 @@ export const INFRASTRUCTURE = [
       ['Embroidery equipment', 'Leather + heavy-duty machines'],
       ['Cylinder / top-bed machines', 'Vacuum steam finishing'],
     ],
-    pillsLabel: 'Material Options',
+    pillsLabel: 'Facilities Options',
     pills: [
       'CUTTING TABLES',
       'PRODUCTION SPACE',

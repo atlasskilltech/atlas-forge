@@ -74,22 +74,22 @@ export default function PartnerRequestModal({ open, onClose }) {
         <>
           <h2
             id={titleId}
-            className="text-[52px] leading-[0.94] font-bold tracking-[-0.02em] text-forge-ink uppercase sm:text-[68px] lg:text-[84px]"
+            className="text-[32px] leading-[0.96] font-bold tracking-[-0.02em] text-forge-ink uppercase sm:text-[38px] lg:text-[42px]"
           >
             Let&rsquo;s Build
             <br />
             <span className="text-forge-pink">Together</span>
           </h2>
 
-          <p className="mt-6 max-w-[620px] text-[15px] leading-[22px] text-[#4b4a63]">
+          <p className="mt-3 max-w-[620px] text-[13.5px] leading-[19px] text-[#4b4a63]">
             Interested in partnering with ATLAS Forge? Tell us how you&rsquo;d like to collaborate.
             Your request will be sent to {ENQUIRY_EMAIL}
           </p>
 
-          <Rule className="mt-8" />
+          <Rule className="mt-5" />
 
-          <form ref={formRef} onSubmit={handleSubmit} className="mt-7">
-            <div className="grid gap-6 sm:grid-cols-2">
+          <form ref={formRef} onSubmit={handleSubmit} className="mt-5">
+            <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label="Name"
                 name="name"
@@ -111,7 +111,7 @@ export default function PartnerRequestModal({ open, onClose }) {
               />
             </div>
 
-            <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Field
                 label="Phone Number"
                 name="phone"
@@ -133,7 +133,7 @@ export default function PartnerRequestModal({ open, onClose }) {
               />
             </div>
 
-            <div className="mt-6">
+            <div className="mt-4">
               <Field
                 label="Message"
                 as="textarea"
@@ -145,18 +145,18 @@ export default function PartnerRequestModal({ open, onClose }) {
             </div>
 
             {formError ? (
-              <div className="mt-6">
+              <div className="mt-4">
                 <FormError message={formError} />
               </div>
             ) : null}
 
-            <Rule className="mt-9" />
+            <Rule className="mt-6" />
 
-            <div className="mt-5">
+            <div className="mt-4">
               <PrivacyNote />
             </div>
 
-            <div className="mt-6">
+            <div className="mt-4">
               <SubmitButton pending={pending}>Send Request</SubmitButton>
             </div>
           </form>

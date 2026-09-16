@@ -72,22 +72,22 @@ export default function ServiceRequestModal({ open, onClose }) {
         <>
           <h2
             id={titleId}
-            className="text-[52px] leading-[0.94] font-bold tracking-[-0.02em] text-forge-ink sm:text-[68px] lg:text-[84px]"
+            className="text-[32px] leading-[0.96] font-bold tracking-[-0.02em] text-forge-ink sm:text-[38px] lg:text-[42px]"
           >
             How can we
             <br />
             <span className="text-forge-pink">Help You?</span>
           </h2>
 
-          <p className="mt-5 max-w-[560px] text-[15px] leading-[22px] text-[#4b4a63]">
+          <p className="mt-3 max-w-[560px] text-[13.5px] leading-[19px] text-[#4b4a63]">
             Select the service you need and share a concise project brief. Your request will be sent
             to <span className="underline underline-offset-2">{ENQUIRY_EMAIL}</span>.
           </p>
 
-          <Rule className="mt-8" />
+          <Rule className="mt-5" />
 
-          <form ref={formRef} onSubmit={handleSubmit} noValidate={false} className="mt-7">
-            <div className="grid gap-6 sm:grid-cols-2">
+          <form ref={formRef} onSubmit={handleSubmit} noValidate={false} className="mt-5">
+            <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label="Name"
                 name="name"
@@ -109,7 +109,11 @@ export default function ServiceRequestModal({ open, onClose }) {
               />
             </div>
 
-            <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            {/* Phone and the service picker share a row from `sm` up: two
+                half-width controls instead of two stacked rows is the single
+                biggest height saving in this sheet. Field order, names and
+                behaviour are unchanged, and they stack again below `sm`. */}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Field
                 label="Phone Number"
                 name="phone"
@@ -120,9 +124,6 @@ export default function ServiceRequestModal({ open, onClose }) {
                 placeholder="+91"
                 error={fieldErrors.phone}
               />
-            </div>
-
-            <div className="mt-6">
               <Field
                 label="Service Required"
                 as="select"
@@ -142,7 +143,7 @@ export default function ServiceRequestModal({ open, onClose }) {
               </Field>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-4">
               <Field
                 label="Tell Us More"
                 as="textarea"
@@ -154,18 +155,18 @@ export default function ServiceRequestModal({ open, onClose }) {
             </div>
 
             {formError ? (
-              <div className="mt-6">
+              <div className="mt-4">
                 <FormError message={formError} />
               </div>
             ) : null}
 
-            <Rule className="mt-9" />
+            <Rule className="mt-6" />
 
-            <div className="mt-5">
+            <div className="mt-4">
               <PrivacyNote />
             </div>
 
-            <div className="mt-6">
+            <div className="mt-4">
               <SubmitButton pending={pending}>Request Service</SubmitButton>
             </div>
           </form>
