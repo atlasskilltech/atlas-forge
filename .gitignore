@@ -11,6 +11,19 @@ yarn-error.log*
 
 # User uploads written at runtime (see UPLOAD_DIR in .env.example).
 /uploads/
+
+# Landing-page MP4s. Served from https://atlasskilltech.app/atlas-forge-assets/
+# rather than shipped with the app, so they stay on disk but out of the repo
+# and out of the deployment. Posters and every other image under
+# public/assets/landing-page/ are still tracked.
+/public/assets/landing-page/videos/
+
+# Landing-page source material (raw interview footage, the pitch deck, the
+# full-length design export). 358 MB, two files over GitHub's 100 MB hard
+# limit, and nothing in the app reads it — the web-sized derivatives in
+# public/assets/landing-page/ are what ship. Kept on disk, out of the repo.
+# The other reference/ folders stay tracked.
+/reference/landing-page/
 .vercel
 next-env.d.ts
 .turbo

@@ -19,6 +19,8 @@ USE `atlas-forge-dashboard`;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS partner_requests;
+DROP TABLE IF EXISTS service_requests;
 DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS error_logs;
@@ -974,4 +976,51 @@ CREATE TABLE login_attempts (
   KEY idx_login_attempts_identifier (action, identifier, created_at),
   KEY idx_login_attempts_ip (action, ip_address, created_at),
   KEY idx_login_attempts_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------------
+-- Landing page enquiries
+--
+-- Added by migration 007 and repeated here so a fresh `npm run db:schema`
+-- produces the same shape as a migrated database.
+--
+-- Both are fed by anonymous visitors on `/`, so neither has a foreign key to
+-- `users` and neither soft-deletes — see the migration for the reasoning.
+-- ---------------------------------------------------------------------------
+CREATE TABLE service_requests (
+  id               BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name             VARCHAR(120)    NOT NULL,
+  email            VARCHAR(190)    NOT NULL,
+  phone            VARCHAR(32)     NOT NULL,
+  service_required VARCHAR(64)     NOT NULL,
+  message          TEXT            NULL DEFAULT NULL,
+  status           ENUM('new','in_review','contacted','closed') NOT NULL DEFAULT 'new',
+  source_ip        VARCHAR(45)     NOT NULL DEFAULT '',
+  user_agent       VARCHAR(255)    NULL DEFAULT NULL,
+  created_at       TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at       TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_service_requests_created (created_at),
+  KEY idx_service_requests_status (status, created_at),
+  KEY idx_service_requests_email (email, created_at),
+  KEY idx_service_requests_ip (source_ip, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE partner_requests (
+  id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name        VARCHAR(120)    NOT NULL,
+  email       VARCHAR(190)    NOT NULL,
+  phone       VARCHAR(32)     NOT NULL,
+  company     VARCHAR(160)    NOT NULL,
+  message     TEXT            NULL DEFAULT NULL,
+  status      ENUM('new','in_review','contacted','closed') NOT NULL DEFAULT 'new',
+  source_ip   VARCHAR(45)     NOT NULL DEFAULT '',
+  user_agent  VARCHAR(255)    NULL DEFAULT NULL,
+  created_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_partner_requests_created (created_at),
+  KEY idx_partner_requests_status (status, created_at),
+  KEY idx_partner_requests_email (email, created_at),
+  KEY idx_partner_requests_ip (source_ip, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

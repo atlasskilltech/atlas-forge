@@ -91,6 +91,36 @@
   /* ---- Typography -------------------------------------------------------- */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     'Segoe UI', Roboto, sans-serif;
+
+  /* ==========================================================================
+     ATLAS Forge — public landing page (`/`) only
+     Sampled from /reference/landing-page/Forge Landing - 5.png and the
+     "Property 1=*" infrastructure frames. These are a SEPARATE palette from
+     the signed-in platform above: the marketing page is indigo/magenta, the
+     dashboard is violet/navy. Nothing above this line is used by `/`, and
+     nothing below it is used by any signed-in screen.
+     ========================================================================== */
+
+  /* Headings, dark cards, footer type. */
+  --color-forge-ink: #362980;
+  /* Headings that sit ON the purple band, where --color-forge-ink is too light. */
+  --color-forge-ink-deep: #271978;
+  /* The accent: second heading line, stat bands, subtitles. */
+  --color-forge-pink: #ff3377;
+  /* Full-bleed section background and primary buttons. */
+  --color-forge-purple: #584add;
+  /* Lighter purple: panel edge tab, the offset block in the bridge collage. */
+  --color-forge-purple-soft: #786cec;
+  /* The "From Idea to Growth" band. */
+  --color-forge-blue: #83b1c9;
+  /* Page background, and the alternate band behind Infrastructure / Core Team. */
+  --color-forge-bg: #fafafa;
+  --color-forge-bg-alt: #ececec;
+
+  /* The landing page is set in Roboto, not the platform's Inter — see the
+     `--font-roboto` variable applied by src/app/page.js. */
+  --font-forge: var(--font-roboto), ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, sans-serif;
 }
 
 /* ==========================================================================

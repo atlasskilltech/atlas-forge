@@ -25,6 +25,12 @@ const contentSecurityPolicy = [
   `script-src 'self' 'unsafe-inline'${isProduction ? '' : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data:",
+  // The landing page's MP4s are served from the ATLAS SkillTech asset host
+  // rather than from `public/`, so video is the one media type allowed
+  // off-origin. Without this directive `<video>` falls back to
+  // `default-src 'self'` and every clip is blocked. Images are unaffected and
+  // still come from this origin.
+  "media-src 'self' https://atlasskilltech.app",
   "font-src 'self' data:",
   // The app talks only to its own Route Handlers.
   "connect-src 'self'",
@@ -105,8 +111,9 @@ const nextConfig = {
 
   async redirects() {
     return [
-      // The platform has no public marketing page — the root is sign-in.
-      { source: '/', destination: '/login', permanent: false },
+      // The root used to redirect to /login, because the platform had no public
+      // page. It now serves the ATLAS Forge landing page (src/app/page.js);
+      // /login is unchanged and still the entry point for every signed-in role.
       // Backend Manager's bottom nav has no "More" slot; its fifth item is Settings.
       { source: '/backend/more', destination: '/backend/dashboard', permanent: false },
     ]

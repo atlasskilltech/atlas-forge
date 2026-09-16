@@ -5,7 +5,10 @@ import { siteConfig } from '@/config/site'
  * authentication and are excluded in robots.js.
  */
 const PUBLIC_ROUTES = [
-  { path: '/login', priority: 1, changeFrequency: 'monthly' },
+  // The landing page is now the public face of the site, so it outranks the
+  // sign-in screen it used to redirect to.
+  { path: '/', priority: 1, changeFrequency: 'monthly' },
+  { path: '/login', priority: 0.5, changeFrequency: 'monthly' },
 ]
 
 export default function sitemap() {
