@@ -19,6 +19,7 @@ USE `atlas-forge-dashboard`;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS outsider_incubation_applications;
 DROP TABLE IF EXISTS partner_requests;
 DROP TABLE IF EXISTS service_requests;
 DROP TABLE IF EXISTS messages;
@@ -1023,4 +1024,83 @@ CREATE TABLE partner_requests (
   KEY idx_partner_requests_status (status, created_at),
   KEY idx_partner_requests_email (email, created_at),
   KEY idx_partner_requests_ip (source_ip, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------------
+-- Outsider (public) incubation applications
+--
+-- Added by migration 008 and repeated here so a fresh `npm run db:schema`
+-- produces the same shape as a migrated database. A public submission lives
+-- only in this table until a Forge Manager approves it — see the migration.
+-- ---------------------------------------------------------------------------
+CREATE TABLE only.
+-- ===========================================================================
+
+CREATE TABLE IF NOT EXISTS outsider_incubation_applications (
+  id                        BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  reference                 VARCHAR(24)     NOT NULL,
+
+  -- Applicant
+  full_name                 VARCHAR(160)    NOT NULL,
+  email                     VARCHAR(190)    NOT NULL,
+  phone                     VARCHAR(32)     NOT NULL,
+
+  -- Startup
+  startup_name              VARCHAR(160)    NOT NULL,
+  tagline                   VARCHAR(255)    NULL DEFAULT NULL,
+  problem_statement         TEXT            NULL,
+  industry_id               BIGINT UNSIGNED NULL DEFAULT NULL,
+  stage_id                  BIGINT UNSIGNED NULL DEFAULT NULL,
+  startup_logo_url          VARCHAR(255)    NULL DEFAULT NULL,
+
+  -- Readiness
+  pitch_deck                VARCHAR(500)    NOT NULL,
+  product_demo              VARCHAR(500)    NULL DEFAULT NULL,
+  product_assets            VARCHAR(500)    NULL DEFAULT NULL,
+  key_personnel             VARCHAR(500)    NOT NULL,
+
+  -- Review
+  status                    ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  reviewed_by               BIGINT UNSIGNED NULL DEFAULT NULL,
+  reviewed_at               TIMESTAMP       NULL DEFAULT NULL,
+  rejection_reason          VARCHAR(1000)   NULL DEFAULT NULL,
+
+  -- What approval created in the internal system (NULL until approved)
+  approved_user_id          BIGINT UNSIGNED NULL DEFAULT NULL,
+  approved_startup_id       BIGINT UNSIGNED NULL DEFAULT NULL,
+  incubation_application_id BIGINT UNSIGNED NULL DEFAULT NULL,
+
+  source_ip                 VARCHAR(45)     NOT NULL DEFAULT '',
+  user_agent                VARCHAR(255)    NULL DEFAULT NULL,
+  created_at                TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at                TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_outsider_incubation_reference (reference),
+  -- The review queue: filtered by status, newest first.
+  KEY idx_outsider_incubation_status (status, created_at),
+  KEY idx_outsider_incubation_created (created_at),
+  -- Serves the "already have a pending application" guard.
+  KEY idx_outsider_incubation_email (email, status),
+  -- Serves the per-IP throttle.
+  KEY idx_outsider_incubation_ip (source_ip, created_at),
+  KEY idx_outsider_incubation_industry (industry_id),
+  KEY idx_outsider_incubation_stage (stage_id),
+  KEY idx_outsider_incubation_reviewer (reviewed_by),
+  KEY idx_outsider_incubation_user (approved_user_id),
+  KEY idx_outsider_incubation_startup (approved_startup_id),
+  KEY idx_outsider_incubation_application (incubation_application_id),
+
+  CONSTRAINT fk_outsider_incubation_industry FOREIGN KEY (industry_id)
+    REFERENCES industries (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_outsider_incubation_stage FOREIGN KEY (stage_id)
+    REFERENCES stages (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_outsider_incubation_reviewer FOREIGN KEY (reviewed_by)
+    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_outsider_incubation_user FOREIGN KEY (approved_user_id)
+    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_outsider_incubation_startup FOREIGN KEY (approved_startup_id)
+    REFERENCES startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_outsider_incubation_application FOREIGN KEY (incubation_application_id)
+    REFERENCES incubation_applications (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

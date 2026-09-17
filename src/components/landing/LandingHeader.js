@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useEnquiry } from './EnquiryProvider'
+import { useIncubationApply } from './IncubationApplyProvider'
 
 /**
  * Reference: the top strip of /reference/landing-page/Forge Landing - 5.png
@@ -13,12 +14,13 @@ import { useEnquiry } from './EnquiryProvider'
  * Partner With Us, an outlined Login and the solid "Apply For Atlas
  * Incubation".
  *
- * Login points at `/login`, which is unchanged, and so does the incubation
- * call to action — the application form lives behind sign-in, and the
- * reference gives no other destination.
+ * Login points at `/login`, which is unchanged. "Apply For Atlas Incubation"
+ * opens the public incubation application (`IncubationApplyModal`), so a
+ * visitor without an account can apply without signing in.
  */
 export default function LandingHeader() {
   const { openPartner } = useEnquiry()
+  const { openIncubation } = useIncubationApply()
   const [menuOpen, setMenuOpen] = useState(false)
 
   // A navigation drawer that outlives the page behind it is a trap on a phone.
@@ -78,12 +80,13 @@ export default function LandingHeader() {
           >
             Login
           </Link>
-          <Link
-            href="/login"
-            className="inline-flex h-[38px] items-center rounded-[7px] bg-forge-ink px-6 text-[14px] font-semibold text-white transition-colors hover:bg-forge-purple"
+          <button
+            type="button"
+            onClick={openIncubation}
+            className="inline-flex h-[38px] cursor-pointer items-center rounded-[7px] bg-forge-ink px-6 text-[14px] font-semibold text-white transition-colors hover:bg-forge-purple"
           >
             Apply For Atlas Incubation
-          </Link>
+          </button>
         </nav>
 
         {/* ---- Mobile trigger -------------------------------------------- */}
@@ -136,13 +139,16 @@ export default function LandingHeader() {
           >
             Login
           </Link>
-          <Link
-            href="/login"
-            onClick={() => setMenuOpen(false)}
-            className="mt-2.5 inline-flex h-[46px] items-center justify-center rounded-[8px] bg-forge-ink text-[15px] font-semibold text-white"
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false)
+              openIncubation()
+            }}
+            className="mt-2.5 inline-flex h-[46px] cursor-pointer items-center justify-center rounded-[8px] bg-forge-ink text-[15px] font-semibold text-white"
           >
             Apply For Atlas Incubation
-          </Link>
+          </button>
         </nav>
       </div>
     </header>

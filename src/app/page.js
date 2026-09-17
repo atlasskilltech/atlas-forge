@@ -4,6 +4,8 @@ import { Roboto } from 'next/font/google'
 import EnquiryButton from '@/components/landing/EnquiryButton'
 import EnquiryProvider from '@/components/landing/EnquiryProvider'
 import FaqSection from '@/components/landing/FaqSection'
+import IncubationApplyButton from '@/components/landing/IncubationApplyButton'
+import IncubationApplyProvider from '@/components/landing/IncubationApplyProvider'
 import InfrastructureSection from '@/components/landing/InfrastructureSection'
 import LandingHeader from '@/components/landing/LandingHeader'
 import StoryVideo from '@/components/landing/StoryVideo'
@@ -87,6 +89,7 @@ function Stat({ value, label, valueClass, labelClass }) {
 export default function LandingPage() {
   return (
     <EnquiryProvider>
+      <IncubationApplyProvider>
       <div className={`${roboto.variable} bg-forge-bg font-forge text-forge-ink`}>
         <LandingHeader />
 
@@ -255,12 +258,9 @@ export default function LandingPage() {
                   final onboarding. No complicated process. Just show us what you&rsquo;re building.
                 </p>
 
-                <Link
-                  href="/login"
-                  className="mt-8 inline-flex h-[44px] items-center justify-center rounded-[7px] bg-forge-ink px-7 text-[15px] font-medium text-white transition-colors hover:bg-forge-purple"
-                >
+                <IncubationApplyButton className="mt-8 inline-flex h-[44px] items-center justify-center rounded-[7px] bg-forge-ink px-7 text-[15px] font-medium text-white transition-colors hover:bg-forge-purple">
                   Join Us
-                </Link>
+                </IncubationApplyButton>
 
                 {/* ---- Why join ---------------------------------------- */}
                 <div className="mt-16 grid gap-10 lg:grid-cols-2 lg:gap-16">
@@ -712,6 +712,7 @@ export default function LandingPage() {
 
         <LandingFooter />
       </div>
+      </IncubationApplyProvider>
     </EnquiryProvider>
   )
 }
@@ -784,12 +785,9 @@ function LandingFooter() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link
-                href="/login"
-                className="inline-flex h-[44px] items-center justify-center gap-2 rounded-[7px] bg-forge-ink px-7 text-[15px] font-medium text-white transition-colors hover:bg-forge-purple"
-              >
+              <IncubationApplyButton className="inline-flex h-[44px] items-center justify-center gap-2 rounded-[7px] bg-forge-ink px-7 text-[15px] font-medium text-white transition-colors hover:bg-forge-purple">
                 Apply for incubation <ArrowIcon />
-              </Link>
+              </IncubationApplyButton>
 
               <EnquiryButton
                 sheet="partner"

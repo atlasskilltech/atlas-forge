@@ -162,6 +162,7 @@ export const SIDEBAR_NAV = {
       label: 'Incubation',
       items: [
         { label: 'Applications', href: '/forge/applications', badge: 5 },
+        { label: 'Public Applications', href: '/forge/outsider-applications' },
         { label: 'Active Startups', href: '/forge/active-startups' },
       ],
     },
@@ -346,7 +347,11 @@ export const NAVBAR_NAV = {
       href: '/forge/approval-queue',
       match: ['/forge/approval-queue', '/forge/listings', '/forge/contract-log'],
     },
-    { ...BASE_NAVBAR_LINKS[4], href: '/forge/applications' },
+    {
+      ...BASE_NAVBAR_LINKS[4],
+      href: '/forge/applications',
+      match: ['/forge/applications', '/forge/outsider-applications'],
+    },
     {
       label: 'Manage',
       key: 'manage',
@@ -524,6 +529,12 @@ export const MORE_TRAY = {
       description: 'Review startup applications',
       icon: '📚',
       href: '/forge/applications',
+    },
+    {
+      label: 'Public Applications',
+      description: 'Review applications from the website',
+      icon: '🌐',
+      href: '/forge/outsider-applications',
     },
     {
       label: 'User Accounts',
