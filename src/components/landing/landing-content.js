@@ -234,41 +234,36 @@ export const STARTUP_GROUPS = [
 ]
 
 /**
- * "Atlas Concierge" — the eight project cards.
+ * "Atlas Concierge" — the service cards.
  *
- * The reference repeats the smartwatch image across four of the eight tiles;
- * that repetition is in the source frame and is reproduced rather than padded
- * out with images the reference does not contain.
+ * Images and labels come from the supplied Atlas Concierge reference set; each
+ * label is the image's own file name.
  */
-const WATCH = {
-  image: '/assets/landing-page/images/concierge-smartwatch.png',
-  alt: 'Smartwatch product photography',
-}
-
 export const CONCIERGE = [
   {
-    image: '/assets/landing-page/images/concierge-coffee-branding.png',
-    alt: 'Coffee brand identity and packaging',
+    image: '/assets/landing-page/images/concierge-3d-rendering-animation.png',
+    alt: '3D Rendering & Animation',
+    label: '3D Rendering & Animation',
+  },
+  {
+    image: '/assets/landing-page/images/concierge-branding-packaging.png',
+    alt: 'Branding & Packaging',
     label: 'Branding & Packaging',
   },
-  { ...WATCH, label: 'Branding & Packaging' },
   {
-    image: '/assets/landing-page/images/concierge-earthen-roots.png',
-    alt: 'Earthen Roots packaging',
-    label: 'Branding & Packaging',
+    image: '/assets/landing-page/images/concierge-fashion-design.png',
+    alt: 'Fashion Design',
+    label: 'Fashion Design',
   },
-  { ...WATCH, label: 'Branding & Packaging' },
-  { ...WATCH, label: 'Branding & Packaging' },
   {
-    image: '/assets/landing-page/images/concierge-finance-marketing.png',
-    alt: 'Finance and marketing campaign artwork',
-    label: 'Finance & Marketing',
+    image: '/assets/landing-page/images/concierge-interior-design.png',
+    alt: 'Interior Design',
+    label: 'Interior Design',
   },
-  { ...WATCH, label: 'Branding & Packaging' },
   {
-    image: '/assets/landing-page/images/concierge-cacau.png',
-    alt: 'Natura Cacau product campaign',
-    label: 'Branding & Packaging',
+    image: '/assets/landing-page/images/concierge-legal-advisory.png',
+    alt: 'Legal Advisory',
+    label: 'Legal Advisory',
   },
 ]
 

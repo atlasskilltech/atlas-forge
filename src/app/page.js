@@ -38,12 +38,19 @@ const roboto = Roboto({
   weight: ['400', '500', '700'],
 })
 
-export const metadata = buildMetadata({
-  title: 'From sketch to shelf',
-  description:
-    'ATLAS Forge is a university-led incubation model in Mumbai. Founders get the people, facilities and practical support needed to move from an idea to a product.',
-  path: '/',
-})
+export const metadata = {
+  ...buildMetadata({
+    title: 'From sketch to shelf',
+    description:
+      'ATLAS Forge is a university-led incubation model in Mumbai. Founders get the people, facilities and practical support needed to move from an idea to a product.',
+    path: '/',
+  }),
+  /**
+   * The browser tab shows this verbatim: `absolute` opts out of the root
+   * layout's `%s | ATLAS Forge` template. Social card titles are untouched.
+   */
+  title: { absolute: 'ATLAS Forge | Innovation, Incubation & Product Development Centre' },
+}
 
 /* -------------------------------------------------------------------------- */
 /* Small shared pieces                                                        */
@@ -642,7 +649,7 @@ export default function LandingPage() {
                   </EnquiryButton>
                 </div>
 
-                <ul className="mt-12 grid grid-cols-2 gap-5 lg:grid-cols-4 lg:gap-6">
+                <ul className="mt-12 grid grid-cols-2 gap-5 lg:grid-cols-3 lg:gap-6">
                   {CONCIERGE.map((project, index) => (
                     <li
                       key={`${project.alt}-${index}`}
@@ -654,7 +661,7 @@ export default function LandingPage() {
                           alt={project.alt}
                           width={520}
                           height={520}
-                          sizes="(min-width: 1024px) 220px, 44vw"
+                          sizes="(min-width: 1024px) 420px, 44vw"
                           className="size-full object-cover"
                         />
                       </div>
@@ -755,7 +762,12 @@ function LandingFooter() {
                 </a>
               </li>
               <li>
-                <a href="#infrastructure" className="transition-opacity hover:opacity-65">
+                <a
+                  href="https://chat.whatsapp.com/LanzHESnBU1AhZW4BnswYw?s=sh&p=i&mlu=0&ilr=4"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-opacity hover:opacity-65"
+                >
                   Community
                 </a>
               </li>
