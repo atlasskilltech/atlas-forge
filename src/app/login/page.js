@@ -1,5 +1,5 @@
 import LoginForm from '@/components/auth/LoginForm'
-import { BrandLogo, Chip } from '@/components/ui'
+import { BrandLogo } from '@/components/ui'
 import { siteConfig } from '@/config/site'
 import { buildMetadata } from '@/lib/seo'
 
@@ -15,18 +15,6 @@ const HIGHLIGHTS = [
   { icon: '💼', label: 'Post jobs and build your team' },
   { icon: '🤝', label: 'Connect with mentors' },
   { icon: '🚀', label: 'Apply for ATLAS Forge incubation' },
-]
-
-/**
- * Role chips beneath the form. Note these tones are specific to the login
- * screen and deliberately differ from the role-select tints — both are
- * reproduced exactly as drawn in their respective references.
- */
-const ACCESS_CHIPS = [
-  { label: 'Standard Student', tone: 'neutral' },
-  { label: 'Founder', tone: 'info' },
-  { label: 'Forge Manager', tone: 'success' },
-  { label: 'Backend Manager', tone: 'warning' },
 ]
 
 /**
@@ -102,19 +90,6 @@ export default function LoginPage() {
               Contact Mihir Pawar for account issues.
             </span>
           </p>
-
-          <div className="hidden lg:mt-[22px] lg:block">
-            <p className="text-[13px] font-semibold text-ink">
-              Access is determined by your role after login
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {ACCESS_CHIPS.map((chip) => (
-                <Chip key={chip.label} tone={chip.tone} size="lg">
-                  {chip.label}
-                </Chip>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
     </main>
