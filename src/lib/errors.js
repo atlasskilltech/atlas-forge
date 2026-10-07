@@ -54,6 +54,21 @@ export class ForbiddenError extends AppError {
 }
 
 /**
+ * The caller is authenticated but must set a new password before doing anything
+ * else. Thrown by the guard for every protected route except the password
+ * change itself; `details.redirect` tells a client where to send the user.
+ */
+export class PasswordChangeRequiredError extends AppError {
+  constructor(message = 'You must change your password before continuing.') {
+    super(message, {
+      status: 403,
+      code: 'PASSWORD_CHANGE_REQUIRED',
+      details: { redirect: '/change-password' },
+    })
+  }
+}
+
+/**
  * Too many attempts in the configured window.
  *
  * `retryAfterSeconds` travels in `details` so the route layer can turn it into

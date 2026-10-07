@@ -2,9 +2,12 @@ import 'server-only'
 
 import { cache } from 'react'
 import { redirect } from 'next/navigation'
-import { ForbiddenError, UnauthorizedError } from '@/lib/errors'
+import { ForbiddenError, PasswordChangeRequiredError, UnauthorizedError } from '@/lib/errors'
 import * as auth from '@/lib/services/auth.service'
 import { readSession } from './session'
+
+/** Where a user who must rotate a temporary password is sent/held. */
+const CHANGE_PASSWORD_PATH = '/change-password'
 
 /**
  * Turns the session cookie into a real identity.
@@ -37,9 +40,22 @@ export const getIdentity = cache(async () => {
   }
 })
 
-export async function requireIdentity() {
+/**
+ * The authenticated identity, or a 401.
+ *
+ * `allowPasswordChange` is the single exemption used by the password-change
+ * endpoint: everywhere else, a user with a pending forced change is stopped
+ * here with a 403 before the route does anything. Because `requireRole` and
+ * `requirePermission` call this, the gate covers every protected API without
+ * each route repeating it. The flag is read from the DB on every request (via
+ * `getIdentity`), so it cannot be bypassed with a stale or forged cookie.
+ */
+export async function requireIdentity({ allowPasswordChange = false } = {}) {
   const identity = await getIdentity()
   if (!identity) throw new UnauthorizedError('Sign in to continue.')
+  if (!allowPasswordChange && identity.user.mustChangePassword) {
+    throw new PasswordChangeRequiredError()
+  }
   return identity
 }
 
@@ -63,9 +79,13 @@ export async function requirePermission(permission) {
 /* Page variants — redirect instead of throwing                               */
 /* -------------------------------------------------------------------------- */
 
-export async function requireIdentityOrRedirect(returnTo) {
+export async function requireIdentityOrRedirect(returnTo, { allowPasswordChange = false } = {}) {
   const identity = await getIdentity()
   if (!identity) redirect(loginUrl(returnTo))
+  // A user mid forced-change is held on the change-password screen; the page
+  // that renders that screen passes `allowPasswordChange` so it is not bounced
+  // away from the one place it is allowed to be.
+  if (!allowPasswordChange && identity.user.mustChangePassword) redirect(CHANGE_PASSWORD_PATH)
   return identity
 }
 

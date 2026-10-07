@@ -88,7 +88,14 @@ export async function changePassword(userId, currentPassword, newPassword) {
 
   const hash = await hashPassword(newPassword)
   return transaction(async (tx) => {
-    await execute('UPDATE users SET password_hash = ? WHERE id = ?', [hash, userId], tx)
+    // Any successful password change also clears a pending forced-change flag:
+    // the temporary password has now been rotated. A no-op for the users whose
+    // flag is already 0.
+    await execute(
+      'UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?',
+      [hash, userId],
+      tx
+    )
     return true
   })
 }

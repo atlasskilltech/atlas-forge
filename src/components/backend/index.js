@@ -1,4 +1,5 @@
 export { default as AllUsersTable } from './AllUsersTable'
+export { default as CreateStaffUser } from './CreateStaffUser'
 export { default as JobQueueTable } from './JobQueueTable'
 export { default as PlatformLogsTable } from './PlatformLogsTable'
 export { default as PlatformSettings } from './PlatformSettings'

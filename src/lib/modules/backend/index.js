@@ -2,7 +2,9 @@ import 'server-only'
 
 import { requireRoleOrRedirect } from '@/lib/auth/guard'
 import { ConflictError, NotFoundError, ValidationError } from '@/lib/errors'
+import { validator } from '@/lib/validate'
 import {
+  accountsService,
   incubationService,
   listingsService,
   lookupsService,
@@ -43,6 +45,17 @@ const MOBILE_QUICK_ACTIONS = [
 const USER_FILTERS = ['All', 'Students', 'Founders', 'Managers', 'Inactive']
 const QUEUE_TABS = ['All Pending', 'Job Listings', 'Collab Posts', 'Approved', 'Rejected']
 
+/**
+ * The roles a staff account may be created with. Deliberately the three
+ * administrative roles only — a Backend Manager provisions colleagues, not
+ * students or founders, which have their own self-service onboarding.
+ */
+const STAFF_ROLE_SLUGS = ['forge-manager', 'backend-manager', 'super-admin']
+
+// A pragmatic email shape check. The authoritative check is a real delivery;
+// this only rejects input that could not be an address.
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 /* -------------------------------------------------------------------------- */
 /* Page entry                                                                 */
 /* -------------------------------------------------------------------------- */
@@ -80,6 +93,22 @@ export async function getUsers() {
   const now = new Date()
   const rows = users.map((user) => present.toUserRow(user, { now }))
   return { users: rows, filters: USER_FILTERS, counts: present.toUserCounts(rows) }
+}
+
+/**
+ * Options for the Create Staff User form.
+ *
+ * Role labels come from the roles lookup rather than being hard-coded, so the
+ * dropdown stays in step with any rename an administrator makes in reference
+ * data — the same reason the account classifier matches on slugs, not names.
+ */
+export async function getCreateStaffForm() {
+  const roles = await lookupsService.getRoles()
+  return {
+    roles: roles
+      .filter((role) => STAFF_ROLE_SLUGS.includes(role.slug))
+      .map((role) => ({ value: role.slug, label: role.name })),
+  }
 }
 
 /**
@@ -208,6 +237,45 @@ export async function decideListing(user, input) {
     reason: input.reason?.trim() || null,
   })
   return { listingId, decision: input.decision }
+}
+
+/**
+ * Create a staff account.
+ *
+ * Every submitted field is checked here, at the module boundary, before the
+ * service is asked to write anything — the form gets back one `ValidationError`
+ * listing every bad field at once rather than one round trip per mistake.
+ *
+ * `password` is optional: left blank, the service generates a strong temporary
+ * one and returns it once for the Backend Manager to hand over.
+ */
+export async function createStaffUser(user, input) {
+  const check = validator()
+  const name = check.text('name', input.name, { required: true, max: 160, label: 'Full name' })
+  const email = check.text('email', input.email, { required: true, max: 255, label: 'Email' })
+  const roleSlug = check.oneOf('role', input.role, STAFF_ROLE_SLUGS, {
+    required: true,
+    label: 'Role',
+  })
+
+  let password
+  if (input.password !== undefined && input.password !== null && input.password !== '') {
+    password = check.text('password', input.password, { min: 10, max: 128, label: 'Password' })
+  }
+
+  if (email && !EMAIL_PATTERN.test(email)) {
+    check.reject('email', 'Enter a valid email address.')
+  }
+
+  check.throwIfInvalid()
+
+  return accountsService.createStaffUser({
+    name,
+    email,
+    roleSlug,
+    password: password ?? null,
+    actorId: user.id,
+  })
 }
 
 export async function grantAccess(user, input) {

@@ -15,6 +15,7 @@ export const ROLES = {
   FORGE_MANAGER: 'forge-manager',
   BACKEND_MANAGER: 'backend-manager',
   SUPER_ADMIN: 'super-admin',
+  NETWORK_MEMBER: 'network-member',
 }
 
 export const ROLE_LIST = [
@@ -77,6 +78,18 @@ export const ROLE_LIST = [
     tone: 'neutral',
     chipTone: 'neutral',
     viewOnly: true,
+  },
+  {
+    id: ROLES.NETWORK_MEMBER,
+    initials: 'NM',
+    label: 'Network Member',
+    shortLabel: 'Member',
+    mobileLabel: 'Network Member',
+    description: 'Member of the ATLAS Forge network',
+    mobileDescription: 'ATLAS Forge network member',
+    tone: 'primary',
+    chipTone: 'primary',
+    viewOnly: false,
   },
 ]
 

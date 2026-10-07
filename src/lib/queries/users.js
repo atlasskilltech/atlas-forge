@@ -9,7 +9,7 @@ import 'server-only'
 
 const USER_FIELDS = `
   u.id, u.app_id, u.full_name, u.email, u.initials, u.avatar_tone, u.bio,
-  u.status, u.last_active_at, u.created_at
+  u.status, u.must_change_password, u.last_active_at, u.created_at
 `
 
 export const SELECT_USER_BY_ID = `
@@ -27,6 +27,35 @@ export const SELECT_USER_CREDENTIALS = `
   SELECT u.id, u.app_id, u.email, u.full_name, u.password_hash, u.status
     FROM users u
    WHERE (u.app_id = ? OR u.email = ?) AND u.deleted_at IS NULL
+`
+
+/**
+ * Finds an account by email WITHOUT the usual `deleted_at IS NULL` filter.
+ *
+ * The unique index `uq_users_email` covers soft-deleted rows too, so a create
+ * must detect a collision with an account that was deactivated — otherwise the
+ * INSERT fails with a raw duplicate-key error instead of a message naming the
+ * account the address already belongs to.
+ */
+export const SELECT_USER_BY_EMAIL_ANY = `
+  SELECT u.id, u.app_id, u.status, u.deleted_at
+    FROM users u
+   WHERE u.email = ?
+`
+
+/**
+ * The highest App ID issued under a given `ATL-<year>-` prefix.
+ *
+ * Suffixes are zero-padded to a fixed width, so a lexical `MAX` is also the
+ * numeric maximum. Taken inside the create transaction with `FOR UPDATE` so two
+ * accounts started at once cannot be handed the same sequence number.
+ */
+export const SELECT_MAX_APP_ID_FOR_PREFIX = `
+  SELECT app_id FROM users
+   WHERE app_id LIKE ?
+   ORDER BY app_id DESC
+   LIMIT 1
+   FOR UPDATE
 `
 
 export const SELECT_USER_ROLES = `

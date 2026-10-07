@@ -20,7 +20,9 @@ import * as rateLimit from '@/lib/services/rate-limit.service'
  * No UI: the reference set has no change-password screen.
  */
 export const POST = route(async (request) => {
-  const identity = await requireIdentity()
+  // The one endpoint exempt from the forced-change gate — it is how a user
+  // clears that very requirement. A valid session is still required.
+  const identity = await requireIdentity({ allowPasswordChange: true })
   const ipAddress = rateLimit.clientAddress(request)
   const limitKey = { action: 'password-change', identifier: identity.user.appId, ipAddress }
 

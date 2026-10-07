@@ -14,6 +14,9 @@ export const toUser = (row) => ({
   avatarTone: row.avatar_tone,
   bio: row.bio ?? null,
   status: row.status,
+  // Defaults to false when the column is not in the SELECT, so this is safe
+  // before the column exists; the guard reads it to enforce a first-login reset.
+  mustChangePassword: bool(row.must_change_password),
   lastActiveAt: iso(row.last_active_at),
   createdAt: iso(row.created_at),
 })
@@ -56,6 +59,30 @@ export async function findById(id) {
 export async function findByAppId(appId) {
   const row = await queryOne(sql.SELECT_USER_BY_APP_ID, [appId])
   return row ? toUser(row) : null
+}
+
+/**
+ * Finds an account by email including soft-deleted ones, for collision checks
+ * before a create. Returns the minimum a caller needs to explain the clash.
+ */
+export async function findByEmailAny(email) {
+  const row = await queryOne(sql.SELECT_USER_BY_EMAIL_ANY, [email])
+  return row
+    ? { id: num(row.id), appId: row.app_id, status: row.status, isDeleted: Boolean(row.deleted_at) }
+    : null
+}
+
+/**
+ * The next free App ID for the given year, in the platform's `ATL-<year>-NNNN`
+ * format. Runs on the caller's transaction connection so the `FOR UPDATE` lock
+ * serialises concurrent account creation.
+ */
+export async function nextAppId(year, conn) {
+  const prefix = `ATL-${year}-`
+  const row = await queryOne(sql.SELECT_MAX_APP_ID_FOR_PREFIX, [`${prefix}%`], conn)
+  const lastSeq = row ? Number(String(row.app_id).slice(prefix.length)) : 0
+  const next = Number.isFinite(lastSeq) ? lastSeq + 1 : 1
+  return `${prefix}${String(next).padStart(4, '0')}`
 }
 
 /** Returns the password hash — only the auth service may call this. */

@@ -23,6 +23,7 @@ export const ROLE_HOME = {
   [ROLES.FORGE_MANAGER]: '/forge/dashboard',
   [ROLES.BACKEND_MANAGER]: '/backend/dashboard',
   [ROLES.SUPER_ADMIN]: '/admin/overview',
+  [ROLES.NETWORK_MEMBER]: '/member/home',
 }
 
 /* -------------------------------------------------------------------------- */
@@ -163,6 +164,7 @@ export const SIDEBAR_NAV = {
       items: [
         { label: 'Applications', href: '/forge/applications', badge: 5 },
         { label: 'Public Applications', href: '/forge/outsider-applications' },
+        { label: 'Registrations', href: '/forge/registrations' },
         { label: 'Active Startups', href: '/forge/active-startups' },
       ],
     },
@@ -189,6 +191,7 @@ export const SIDEBAR_NAV = {
     {
       label: 'Access Control',
       items: [
+        { label: 'Create Staff User', href: '/backend/create-user' },
         { label: 'Role Assignments', href: '/backend/role-assignments' },
         { label: 'Grant Founder Access', href: '/backend/grant-access' },
         { label: 'Revoke Access', href: '/backend/revoke-access' },
@@ -350,7 +353,7 @@ export const NAVBAR_NAV = {
     {
       ...BASE_NAVBAR_LINKS[4],
       href: '/forge/applications',
-      match: ['/forge/applications', '/forge/outsider-applications'],
+      match: ['/forge/applications', '/forge/outsider-applications', '/forge/registrations'],
     },
     {
       label: 'Manage',
@@ -382,6 +385,7 @@ export const NAVBAR_NAV = {
         '/backend/settings',
         '/backend/dashboard',
         '/backend/users',
+        '/backend/create-user',
         '/backend/role-assignments',
         '/backend/grant-access',
         '/backend/revoke-access',
@@ -535,6 +539,12 @@ export const MORE_TRAY = {
       description: 'Review applications from the website',
       icon: '🌐',
       href: '/forge/outsider-applications',
+    },
+    {
+      label: 'Registrations',
+      description: 'Review network registrations from the website',
+      icon: '📝',
+      href: '/forge/registrations',
     },
     {
       label: 'User Accounts',

@@ -40,6 +40,18 @@ export function proxy(request) {
 }
 
 export const config = {
-  /** Every authenticated area. All five modules now read from MySQL. */
-  matcher: ['/student/:path*', '/founder/:path*', '/forge/:path*', '/backend/:path*', '/admin/:path*'],
+  /**
+   * Every authenticated area. `/member` is the network-member home and
+   * `/change-password` is the forced first-login reset; both need an anonymous
+   * visitor sent to the login screen with a real 307 before the page renders.
+   */
+  matcher: [
+    '/student/:path*',
+    '/founder/:path*',
+    '/forge/:path*',
+    '/backend/:path*',
+    '/admin/:path*',
+    '/member/:path*',
+    '/change-password',
+  ],
 }

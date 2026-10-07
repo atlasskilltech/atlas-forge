@@ -11,12 +11,13 @@ import { useIncubationApply } from './IncubationApplyProvider'
  * Reference: the top strip of /reference/landing-page/Forge Landing - 5.png
  *
  * ATLAS FORGE wordmark · rule · ATLAS SkillTech University lockup, then About,
- * Partner With Us, an outlined Login and the solid "Apply For Atlas
- * Incubation".
+ * Partner With Us, an outlined Register, an outlined Login and the solid "Apply
+ * For Atlas Incubation".
  *
- * Login points at `/login`, which is unchanged. "Apply For Atlas Incubation"
- * opens the public incubation application (`IncubationApplyModal`), so a
- * visitor without an account can apply without signing in.
+ * Register points at `/register` (the public "Join the ATLAS Forge Network"
+ * page). Login points at `/login`, which is unchanged. "Apply For Atlas
+ * Incubation" opens the public incubation application (`IncubationApplyModal`),
+ * so a visitor without an account can apply without signing in.
  */
 export default function LandingHeader() {
   const { openPartner } = useEnquiry()
@@ -74,6 +75,12 @@ export default function LandingHeader() {
           >
             Partner With Us
           </button>
+          <Link
+            href="/register"
+            className="inline-flex h-[38px] items-center rounded-[7px] border border-forge-ink/35 px-6 text-[14px] text-forge-ink transition-colors hover:border-forge-ink hover:bg-forge-ink/5"
+          >
+            Register
+          </Link>
           <Link
             href="/login"
             className="inline-flex h-[38px] items-center rounded-[7px] border border-forge-ink/35 px-6 text-[14px] text-forge-ink transition-colors hover:border-forge-ink hover:bg-forge-ink/5"
@@ -133,9 +140,16 @@ export default function LandingHeader() {
             Partner With Us
           </button>
           <Link
-            href="/login"
+            href="/register"
             onClick={() => setMenuOpen(false)}
             className="mt-3 inline-flex h-[46px] items-center justify-center rounded-[8px] border border-forge-ink/35 text-[15px] text-forge-ink"
+          >
+            Register
+          </Link>
+          <Link
+            href="/login"
+            onClick={() => setMenuOpen(false)}
+            className="mt-2.5 inline-flex h-[46px] items-center justify-center rounded-[8px] border border-forge-ink/35 text-[15px] text-forge-ink"
           >
             Login
           </Link>
