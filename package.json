@@ -36,6 +36,7 @@
     "test:errors": "node --env-file=.env.local scripts/verify-errors.mjs",
     "test:pagination": "node --env-file=.env.local scripts/verify-pagination.mjs",
     "test:student-verification": "node --env-file=.env.local scripts/verify-student-verification.mjs",
+    "test:student-activity": "node --env-file=.env.local scripts/verify-student-activity.mjs",
     "db:reset": "npm run db:schema -- --force && npm run db:reference && npm run db:seed"
   },
   "dependencies": {
