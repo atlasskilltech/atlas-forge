@@ -18,6 +18,7 @@ import {
   TYPE_OF_SUPPORT,
   WILLING_TO_MENTOR,
 } from '@/config/registration'
+import { api } from '@/lib/api/client'
 import { Field, FormError, Rule, SubmitButton, useEnquirySubmit } from './EnquiryFields'
 import { CheckboxGroup, RadioGroup, SchoolPicker } from './RegisterOptionGroups'
 
@@ -62,14 +63,76 @@ export default function RegisterForm() {
     '/api/landing/registrations'
   )
 
+  // Atlas Student verification state. status drives the gate below:
+  //   idle → nothing checked yet · verifying → request in flight
+  //   verified → the rest of the form is unlocked · invalid → ID not found / bad
+  //   error → upstream problem, offer Retry (never counts as verified)
+  const [verify, setVerify] = useState({ status: 'idle', id: null, error: null })
+
   const role = form.roleCategory ?? ''
+  const isStudent = role === 'atlas_student'
+  const studentVerified = verify.status === 'verified'
+  // The rest of the form shows once a role is chosen — and, for a student, only
+  // after the University Student Application ID has been verified.
+  const showRest = role !== '' && (!isStudent || studentVerified)
+
   const set = (field) => (event) => setForm((f) => ({ ...f, [field]: event.target.value }))
   const setValue = (field, value) => setForm((f) => ({ ...f, [field]: value }))
   const val = (field) => form[field] ?? ''
   const arr = (field) => form[field] ?? []
 
+  const resetVerification = () => setVerify({ status: 'idle', id: null, error: null })
+
+  // Switching category clears the student-only verification state so another
+  // category is never held behind a student check.
+  const onRoleChange = (event) => {
+    const next = event.target.value
+    setForm((f) => ({ ...f, roleCategory: next }))
+    if (next !== 'atlas_student') resetVerification()
+  }
+
+  // Editing the ID invalidates any previous verification — the new value must be
+  // re-checked before the student can proceed.
+  const onApplicationIdChange = (event) => {
+    const next = event.target.value
+    setForm((f) => ({ ...f, studentApplicationId: next }))
+    setVerify((v) => (v.status === 'idle' ? v : { status: 'idle', id: null, error: null }))
+  }
+
+  async function verifyStudentId() {
+    if (verify.status === 'verifying') return // never fire a duplicate request
+    const id = (form.studentApplicationId ?? '').trim()
+    if (!id) {
+      setVerify({ status: 'invalid', id: null, error: 'Enter your Student Application ID.' })
+      return
+    }
+    setVerify({ status: 'verifying', id, error: null })
+    try {
+      const data = await api.post('/api/landing/student-verification', { applicationId: id })
+      if (data?.status === 'verified') {
+        setVerify({ status: 'verified', id, error: null })
+      } else {
+        setVerify({
+          status: 'invalid',
+          id,
+          error: 'We could not find this Student Application ID. Please check it and try again.',
+        })
+      }
+    } catch (requestError) {
+      // A 422 is a definitive bad value; anything else (502/network/timeout) is a
+      // transient verification problem the student can retry — never a pass.
+      if (requestError?.status === 422) {
+        setVerify({ status: 'invalid', id, error: requestError.fields?.applicationId ?? requestError.message })
+      } else {
+        setVerify({ status: 'error', id, error: 'Verification is unavailable right now. Please retry.' })
+      }
+    }
+  }
+
   const onSubmit = async (event) => {
     event.preventDefault()
+    // A student cannot submit until verified; the server re-checks regardless.
+    if (isStudent && !studentVerified) return
     const success = await submit({ ...form, consent: form.consent === true })
     if (success) {
       setSubmitted(true)
@@ -80,6 +143,7 @@ export default function RegisterForm() {
   const startOver = () => {
     setForm({})
     setSubmitted(false)
+    resetVerification()
     reset()
   }
 
@@ -97,52 +161,15 @@ export default function RegisterForm() {
 
       <form className="mt-8" onSubmit={onSubmit} noValidate>
         <Rule className="mb-7" />
-        <p className={SECTION_LABEL}>About</p>
 
-        <div className={cn('mt-4', GRID)}>
-          <Field
-            label="Name"
-            name="fullName"
-            type="text"
-            autoComplete="name"
-            placeholder="Your full name"
-            value={val('fullName')}
-            onChange={set('fullName')}
-            error={fieldErrors.fullName}
-            required
-          />
-          <Field
-            label="Email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@company.com"
-            value={val('email')}
-            onChange={set('email')}
-            error={fieldErrors.email}
-            required
-          />
-          <Field
-            label="Phone Number"
-            name="phone"
-            type="tel"
-            autoComplete="tel"
-            placeholder="+91"
-            value={val('phone')}
-            onChange={set('phone')}
-            error={fieldErrors.phone}
-          />
-        </div>
-
-        <Rule className="my-7" />
-
+        {/* Who are you? — the first question; it decides which fields follow. */}
         <div className={GRID}>
           <Field
             as="select"
             label={req('Who are you?')}
             name="roleCategory"
             value={role}
-            onChange={set('roleCategory')}
+            onChange={onRoleChange}
             error={fieldErrors.roleCategory}
             required
           >
@@ -155,9 +182,105 @@ export default function RegisterForm() {
           </Field>
         </div>
 
-        {/* ---- Role sections --------------------------------------------- */}
-        {role === 'atlas_student' ? (
-          <div className="mt-7 space-y-7">
+        {/* Atlas Student: the University Student Application ID is verified with
+            the university before any other field is shown. */}
+        {isStudent ? (
+          <div className="mt-7 space-y-3">
+            <Field
+              label={req('Student Application ID')}
+              name="studentApplicationId"
+              value={val('studentApplicationId')}
+              onChange={onApplicationIdChange}
+              error={verify.status === 'invalid' ? verify.error : fieldErrors.studentApplicationId}
+              placeholder="Your ATLAS University Student Application ID"
+              maxLength={64}
+              disabled={verify.status === 'verifying'}
+              required
+            />
+
+            {studentVerified ? (
+              <p className="flex items-center gap-1.5 text-[13px] font-semibold text-forge-purple">
+                <svg viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path d="M4 10.5l4 4 8-9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Student Application ID verified.
+              </p>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={verifyStudentId}
+                  disabled={verify.status === 'verifying'}
+                  className={cn(
+                    'inline-flex h-[40px] min-w-[150px] items-center justify-center rounded-[8px] px-5',
+                    'bg-forge-purple text-[12px] font-semibold tracking-[0.08em] text-white uppercase',
+                    'transition-colors duration-150 hover:bg-forge-ink disabled:cursor-not-allowed disabled:opacity-60'
+                  )}
+                >
+                  {verify.status === 'verifying'
+                    ? 'Verifying…'
+                    : verify.status === 'error'
+                      ? 'Retry verification'
+                      : 'Verify'}
+                </button>
+                {verify.status === 'verifying' ? (
+                  <span className="text-[13px] text-[#52526a]">Verifying Student Application ID…</span>
+                ) : null}
+                {verify.status === 'error' ? (
+                  <span role="alert" className="text-[13px] font-medium text-forge-pink">
+                    {verify.error}
+                  </span>
+                ) : null}
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        {/* The rest of the form — shown once a role is chosen, and for an Atlas
+            Student only after the Application ID is verified. */}
+        {showRest ? (
+          <>
+            <Rule className="my-7" />
+            <p className={SECTION_LABEL}>About</p>
+
+            <div className={cn('mt-4', GRID)}>
+              <Field
+                label="Name"
+                name="fullName"
+                type="text"
+                autoComplete="name"
+                placeholder="Your full name"
+                value={val('fullName')}
+                onChange={set('fullName')}
+                error={fieldErrors.fullName}
+                required
+              />
+              <Field
+                label="Email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@company.com"
+                value={val('email')}
+                onChange={set('email')}
+                error={fieldErrors.email}
+                required
+              />
+              <Field
+                label="Phone Number"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                placeholder="+91"
+                value={val('phone')}
+                onChange={set('phone')}
+                error={fieldErrors.phone}
+              />
+            </div>
+
+            {/* ---- Role sections ------------------------------------------- */}
+            {role === 'atlas_student' ? (
+              <div className="mt-7 space-y-7">
             <SchoolPicker
               value={val('school')}
               onChange={(value) => setValue('school', value)}
@@ -571,6 +694,8 @@ export default function RegisterForm() {
                 Submit
               </SubmitButton>
             </div>
+          </>
+        ) : null}
           </>
         ) : null}
       </form>

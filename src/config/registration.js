@@ -191,6 +191,9 @@ export const REGISTRATION_LIMITS = Object.freeze({
   fullName: 160,
   email: 190,
   phone: 32,
+  // The University Student Application ID (Atlas Student only). Matches the
+  // VARCHAR(64) column added in migration 012. NOT the AFN reference or AFM App ID.
+  studentApplicationId: 64,
   department: 160,
   course: 160,
   currentCity: 120,

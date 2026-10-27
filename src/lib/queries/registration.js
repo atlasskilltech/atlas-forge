@@ -11,9 +11,9 @@
 
 export const INSERT_REGISTRATION_REQUEST = `
   INSERT INTO registration_requests
-    (reference, full_name, email, phone, role_category, details_json,
-     consent, consented_at, source_ip, user_agent)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    (reference, full_name, email, phone, role_category, student_application_id,
+     details_json, consent, consented_at, source_ip, user_agent)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 /**
@@ -75,13 +75,57 @@ export const COUNT_PUBLIC_REGISTRATIONS = `
    WHERE (? IS NULL OR status = ?)
 `
 
+/**
+ * The public single-student lookup: GET /api/public/registrations?applicationId=…
+ *
+ * Exact, parameterised match on the stored University Student Application ID,
+ * CONSTRAINED to role 'atlas_student' so an Alumni/Faculty/Others row can never
+ * be returned by this path. The LEFT JOIN surfaces the approved ATLAS Forge
+ * account (if approval created one) — App ID, active status, first-login flag —
+ * none of which is a secret or an internal numeric id.
+ *
+ * It may match more than one row (the ID is not unique — a student could
+ * re-register after a rejection), so the caller counts the rows and refuses to
+ * guess rather than leaking the wrong person's record. Newest first, so a
+ * future "latest wins" policy has the row it needs without another query.
+ */
+export const SELECT_STUDENT_BY_APPLICATION_ID = `
+  SELECT
+    r.reference, r.student_application_id, r.role_category, r.status, r.created_at,
+    r.approved_user_id,
+    u.app_id               AS account_app_id,
+    u.status               AS account_status,
+    u.must_change_password AS account_must_change,
+    u.deleted_at           AS account_deleted_at
+  FROM registration_requests r
+  LEFT JOIN users u ON u.id = r.approved_user_id
+  WHERE r.role_category = 'atlas_student'
+    AND r.student_application_id = ?
+  ORDER BY r.created_at DESC, r.id DESC
+`
+
+/**
+ * Read-only: the most recent non-deleted incubation application for a user, so
+ * the lookup can report genuine founder/incubation participation when (and only
+ * when) a real row exists. Keyed on `applicant_user_id`, the only link the data
+ * model has between an account and an incubation application. No write, no PII.
+ */
+export const SELECT_LATEST_INCUBATION_STATUS_BY_USER = `
+  SELECT status
+    FROM incubation_applications
+   WHERE applicant_user_id = ?
+     AND deleted_at IS NULL
+   ORDER BY COALESCE(submitted_at, created_at) DESC, id DESC
+   LIMIT 1
+`
+
 /* -------------------------------------------------------------------------- */
 /* Forge Manager review                                                       */
 /* -------------------------------------------------------------------------- */
 
 const REGISTRATION_FIELDS = `
   r.id, r.reference, r.full_name, r.email, r.phone,
-  r.role_category, r.details_json, r.consent, r.consented_at,
+  r.role_category, r.student_application_id, r.details_json, r.consent, r.consented_at,
   r.status, r.reviewed_by, rv.full_name AS reviewer_name, r.reviewed_at,
   r.rejection_reason,
   r.approved_user_id, au.app_id AS approved_user_app_id,

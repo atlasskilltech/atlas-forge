@@ -31,6 +31,8 @@ export const toRegistration = (row) => ({
   email: row.email,
   phone: row.phone ?? null,
   roleCategory: row.role_category,
+  // University Student Application ID (Atlas Student only; NULL otherwise).
+  studentApplicationId: row.student_application_id ?? null,
   details: parseDetails(row.details_json),
   consent: Boolean(row.consent),
   consentedAt: iso(row.consented_at),
@@ -63,6 +65,7 @@ export function create({
   email,
   phone = null,
   roleCategory,
+  studentApplicationId = null,
   details = {},
   consent = false,
   sourceIp = '',
@@ -74,6 +77,7 @@ export function create({
     email,
     phone,
     roleCategory,
+    studentApplicationId,
     JSON.stringify(details ?? {}),
     consent ? 1 : 0,
     consent ? new Date() : null,
@@ -114,6 +118,46 @@ export async function findPublic({ status = null, limit = null, offset = null } 
 /** Total public registrations matching the same optional status filter. */
 export const countPublic = ({ status = null } = {}) =>
   count(sql.COUNT_PUBLIC_REGISTRATIONS, [...pair(status)])
+
+/**
+ * The safe lookup-row shape: the student's registration plus the ATLAS Forge
+ * account approval created, if any. No phone, details, IP, reviewer, audit or
+ * internal numeric id — only Forge-facing identifiers and lifecycle flags.
+ */
+const toStudentLookupRow = (row) => ({
+  reference: row.reference,
+  studentApplicationId: row.student_application_id,
+  roleCategory: row.role_category,
+  status: row.status,
+  createdAt: iso(row.created_at),
+  // Internal: used by the service to join incubation participation, then
+  // dropped — it never reaches the public response.
+  approvedUserId: row.approved_user_id && !row.account_deleted_at ? num(row.approved_user_id) : null,
+  account:
+    row.approved_user_id && !row.account_deleted_at
+      ? {
+          appId: row.account_app_id ?? null,
+          status: row.account_status ?? null,
+          mustChangePassword: bool(row.account_must_change),
+        }
+      : null,
+})
+
+/**
+ * Every Atlas Student registration whose stored University Student Application
+ * ID matches exactly. Returns an array because the column is not unique; the
+ * service decides how to treat zero / one / many. Parameterised; read-only.
+ */
+export async function findStudentByApplicationId(applicationId) {
+  const rows = await query(sql.SELECT_STUDENT_BY_APPLICATION_ID, [applicationId])
+  return rows.map(toStudentLookupRow)
+}
+
+/** The most recent non-deleted incubation application status for a user, or null. */
+export async function findLatestIncubationStatusByUserId(userId) {
+  const row = await queryOne(sql.SELECT_LATEST_INCUBATION_STATUS_BY_USER, [userId])
+  return row?.status ?? null
+}
 
 export const countPendingByEmail = (email) => count(sql.COUNT_PENDING_BY_EMAIL, [email])
 

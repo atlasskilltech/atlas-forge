@@ -24,14 +24,24 @@ import { rateLimitService, registrationService } from '@/lib/services'
  *   - It sends permissive CORS (any origin) because the data is intentionally
  *     public; CORS governs browser access, it does not make the data private.
  *
- * Query parameters:
- *   ?status=pending|approved|rejected   optional filter (omit, or `all`, = any)
- *   ?page=<n>                            1-based page, default 1
- *   ?perPage=<n>                         page size, default 20, max 100
+ * Two modes, one endpoint:
+ *
+ *   LIST  (no `applicationId`)  — the existing paginated list, unchanged.
+ *     ?status=pending|approved|rejected   optional filter (omit, or `all`, = any)
+ *     ?page=<n>                            1-based page, default 1
+ *     ?perPage=<n>                         page size, default 20, max 100
+ *
+ *   LOOKUP (`applicationId` present) — ONE Atlas Student by their University
+ *     Student Application ID. Returns that student's permitted participation, a
+ *     safe not-found, or an ambiguity flag — never a list, never a non-student.
+ *     ?applicationId=<university student application id>
  */
 
 const DEFAULT_PER_PAGE = 20
 const MAX_PER_PAGE = 100
+
+/** Longer than the stored column (VARCHAR(64)), so a longer value can't match. */
+const MAX_APPLICATION_ID_LENGTH = 64
 
 const ALLOWED_STATUSES = new Set(registrationService.PUBLIC_REGISTRATION_STATUSES)
 
@@ -74,10 +84,37 @@ function parseStatus(raw) {
   return raw
 }
 
+/**
+ * LOOKUP mode. `applicationId` present (even blank) switches here, so a caller
+ * that meant to look someone up is never silently handed the whole list. A
+ * blank or over-long value can match no stored ID, so it short-circuits to a
+ * safe not-found without touching the database.
+ */
+async function lookupResponse(rawApplicationId) {
+  const applicationId = rawApplicationId.trim()
+  if (!applicationId || applicationId.length > MAX_APPLICATION_ID_LENGTH) {
+    return ok({
+      lookup: {
+        applicationId: applicationId.slice(0, MAX_APPLICATION_ID_LENGTH),
+        found: false,
+        reason: 'invalid',
+        student: null,
+      },
+    })
+  }
+
+  const result = await registrationService.lookupStudentByApplicationId(applicationId)
+  return ok({ lookup: { applicationId, ...result } })
+}
+
 const handleGet = route(async (request) => {
   assertWithinRequestLimit(rateLimitService.clientAddress(request))
 
   const params = new URL(request.url).searchParams
+
+  const rawApplicationId = params.get('applicationId')
+  if (rawApplicationId !== null) return lookupResponse(rawApplicationId)
+
   const status = parseStatus(params.get('status'))
   const page = positiveInt(params.get('page'), 1, 'page')
   const perPage = Math.min(

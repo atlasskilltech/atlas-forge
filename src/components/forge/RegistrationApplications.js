@@ -313,6 +313,11 @@ export default function RegistrationApplications({ registrations = [], counts = 
               )}
               <Detail label="Submitted">{viewing.submittedAt}</Detail>
               <Detail label="Role">{viewing.roleLabel}</Detail>
+              {viewing.studentApplicationId ? (
+                <Detail label="Student Application ID">
+                  <span className="break-all text-ink">{viewing.studentApplicationId}</span>
+                </Detail>
+              ) : null}
             </dl>
 
             {viewing.details.length > 0 ? (

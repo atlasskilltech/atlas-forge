@@ -148,6 +148,8 @@ export function toRegistrationView(registration) {
     fullName: registration.fullName,
     email: registration.email,
     phone: registration.phone,
+    // University Student Application ID — Atlas Student only, null otherwise.
+    studentApplicationId: registration.studentApplicationId ?? null,
     roleCategory: registration.roleCategory,
     roleLabel: REGISTRATION_ROLE_LABEL[registration.roleCategory] ?? registration.roleCategory,
     details: toDetailRows(registration.details),

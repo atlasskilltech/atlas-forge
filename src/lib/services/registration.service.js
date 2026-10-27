@@ -23,11 +23,12 @@ import {
 import { execute, transaction } from '@/lib/db'
 import { hashPassword } from '@/lib/auth/password'
 import * as registrationEmails from '@/lib/email/registration-emails'
-import { ConflictError, NotFoundError, TooManyRequestsError } from '@/lib/errors'
+import { AppError, ConflictError, NotFoundError, TooManyRequestsError, ValidationError } from '@/lib/errors'
 import * as lookups from '@/lib/repositories/lookups.repository'
 import * as platform from '@/lib/repositories/platform.repository'
 import * as registration from '@/lib/repositories/registration.repository'
 import * as users from '@/lib/repositories/users.repository'
+import * as studentVerification from '@/lib/services/student-verification.service'
 import { validator } from '@/lib/validate'
 
 /** Approved registrants receive this role and only this role. */
@@ -414,15 +415,53 @@ export async function submit(input = {}, { sourceIp = '', userAgent = null } = {
   // Only validate a role's own section once the role itself is valid.
   const details = roleCategory ? ROLE_CHECKERS[roleCategory](check, input) : {}
 
+  // The University Student Application ID is MANDATORY for an Atlas Student and
+  // collected for no other role. Stored in its own column (migration 012), not
+  // in `details`, because the public lookup matches on it exactly. It is not the
+  // AFN reference nor the AFM App ID — both of those are minted by the platform.
+  const studentApplicationId =
+    roleCategory === 'atlas_student'
+      ? check.text('studentApplicationId', input.studentApplicationId, {
+          required: true,
+          max: L.studentApplicationId,
+          label: 'Student Application ID',
+        })
+      : null
+
   check.throwIfInvalid()
 
   await assertNotFlooding({ email, sourceIp })
+
+  // Authoritative server-side gate for Atlas Students: the submitted Application
+  // ID is verified against the university HERE, regardless of what the browser
+  // did. No client-supplied "verified" flag is trusted — the only thing that
+  // lets a student through is a fresh `exists:true` from the upstream check, so
+  // a crafted request that skips or fakes the browser step still cannot register
+  // an unverified ID. A definite "not found" is a 422 on the field; an upstream
+  // failure fails closed (503, retryable) rather than being treated as valid.
+  if (roleCategory === 'atlas_student') {
+    const verification = await studentVerification.verifyApplicationId(studentApplicationId)
+    if (verification.status === studentVerification.NOT_FOUND) {
+      throw new ValidationError('This Student Application ID could not be verified with the university.', {
+        fields: {
+          studentApplicationId: 'We could not verify this Student Application ID. Please check it and try again.',
+        },
+      })
+    }
+    if (verification.status !== studentVerification.VERIFIED) {
+      throw new AppError(
+        'We could not verify your Student Application ID right now. Please try again in a moment.',
+        { status: 503, code: 'VERIFICATION_UNAVAILABLE' }
+      )
+    }
+  }
 
   const row = {
     fullName,
     email,
     phone,
     roleCategory,
+    studentApplicationId,
     details,
     consent: input.consent === true,
     sourceIp,
@@ -486,6 +525,79 @@ export async function listPublic({ status = null, limit = null, offset = null } 
   }))
 
   return { registrations, total }
+}
+
+/**
+ * Human labels for the genuine incubation-application statuses (schema enum on
+ * `incubation_applications.status`). Used only to annotate a real row — never
+ * to invent participation.
+ */
+const INCUBATION_STATUS_LABELS = Object.freeze({
+  draft: 'Draft',
+  pending: 'Pending',
+  under_review: 'Under review',
+  approved: 'Approved',
+  rejected: 'Rejected',
+})
+
+/**
+ * Public single-student lookup by University Student Application ID.
+ *
+ * Returns one student's permitted ATLAS Forge participation, or a safe
+ * non-result — never a list, and never a non-student. The outcomes are explicit
+ * so a consumer can branch on them:
+ *
+ *   { found: false, reason: 'no_match' }    no Atlas Student has this ID
+ *   { found: false, reason: 'ambiguous' }   the ID is on >1 student record;
+ *                                            we refuse to guess which person
+ *   { found: true,  student: { … } }        exactly one match
+ *
+ * `student.registrationStatus` is pending | approved | rejected (what the Forge
+ * Manager decided). `student.account` is present only once approval created or
+ * attached an account. `student.incubation.applied` is true ONLY when a real
+ * `incubation_applications` row exists for that account — registering is never
+ * treated as having applied to anything.
+ */
+export async function lookupStudentByApplicationId(applicationId) {
+  const matches = await registration.findStudentByApplicationId(applicationId)
+
+  if (matches.length === 0) return { found: false, reason: 'no_match', student: null }
+  if (matches.length > 1) {
+    return { found: false, reason: 'ambiguous', matches: matches.length, student: null }
+  }
+
+  const row = matches[0]
+
+  // Founder/incubation participation is reported ONLY from a genuine row, and
+  // only when an account exists to own one. No account → nothing to join.
+  let incubation = { applied: false, status: null, statusLabel: null }
+  if (row.approvedUserId) {
+    const status = await registration.findLatestIncubationStatusByUserId(row.approvedUserId)
+    if (status) {
+      incubation = { applied: true, status, statusLabel: INCUBATION_STATUS_LABELS[status] ?? status }
+    }
+  }
+
+  const student = {
+    studentApplicationId: row.studentApplicationId,
+    registrationReference: row.reference,
+    category: row.roleCategory,
+    categoryLabel: REGISTRATION_ROLE_LABEL[row.roleCategory] ?? row.roleCategory,
+    registrationStatus: row.status,
+    submittedAt: row.createdAt,
+    accountCreated: Boolean(row.account),
+    account: row.account
+      ? {
+          appId: row.account.appId,
+          active: row.account.status === 'active',
+          status: row.account.status,
+          passwordChangeRequired: row.account.mustChangePassword,
+        }
+      : null,
+    incubation,
+  }
+
+  return { found: true, student }
 }
 
 /* -------------------------------------------------------------------------- */

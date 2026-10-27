@@ -118,6 +118,29 @@ export const uploadsConfig = Object.freeze({
   maxDocumentBytes: integer('UPLOAD_MAX_DOCUMENT_BYTES', 10 * 1024 * 1024),
 })
 
+/**
+ * University Student verification (public /register, Atlas Student only).
+ *
+ * The upstream check at ATLAS SkillTech requires an `X-App-Key`, so the call is
+ * made SERVER-SIDE only and the key is read here — never with a `NEXT_PUBLIC_`
+ * prefix, so it can never reach the browser bundle. The key is `optional`
+ * rather than `required`: a missing key must not crash the whole app at
+ * startup, but the verification service treats "no key" as a verification
+ * failure and fails closed, so no student is ever let through unverified.
+ *
+ * The supplied key (`…change-in-production`) is a UAT placeholder; production
+ * must set its own value. `STUDENT_CHECK_API_URL` lets a deployment point at the
+ * production host without a code change; it defaults to the UAT endpoint.
+ */
+export const studentCheckConfig = Object.freeze({
+  apiUrl: optional(
+    'STUDENT_CHECK_API_URL',
+    'https://uat-dashboard.atlasskilltech.app/api/app/student-check/exists'
+  ),
+  apiKey: optional('STUDENT_CHECK_API_KEY'),
+  timeoutMs: integer('STUDENT_CHECK_TIMEOUT_MS', 6000),
+})
+
 /** Credentials-safe summary for health checks and error reporting. */
 export function describeDbTarget() {
   return `${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`
