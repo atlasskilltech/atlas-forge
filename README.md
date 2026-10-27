@@ -216,6 +216,6 @@ atlas-forge/
 - **[`docs/accessibility.md`](docs/accessibility.md)** — accessibility notes.
 - **[`AGENTS.md`](AGENTS.md)** — notes for AI coding agents working in this repo.
 
----
+----
 
 <sub>ATLAS Forge · Product Development Centre · ATLAS SkillTech University</sub>

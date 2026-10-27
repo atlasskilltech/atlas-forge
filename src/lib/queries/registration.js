@@ -45,6 +45,37 @@ export const COUNT_RECENT_BY_IP = `
 `
 
 /* -------------------------------------------------------------------------- */
+/* Public read-only API (/api/public/registrations)                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The public, cross-domain, no-auth read API.
+ *
+ * SELECTS A FIXED, SAFE SUBSET OF COLUMNS ONLY. It deliberately never touches
+ * `phone`, `details_json`, `source_ip`, `user_agent`, the review/audit columns
+ * or the auto-increment `id` — the public identifier is the random `reference`,
+ * chosen (see migration 009) precisely so the count of registrations is not
+ * revealed. Add a column here only after weighing that anyone can read it.
+ *
+ * The optional status filter uses the same `(? IS NULL OR …)` pattern as the
+ * review query, so a NULL first parameter means "no filter". Pagination is
+ * appended by `withPagination` in the repository, never by string building here.
+ */
+export const SELECT_PUBLIC_REGISTRATIONS = `
+  SELECT r.reference, r.full_name, r.email, r.role_category, r.status, r.created_at
+    FROM registration_requests r
+   WHERE (? IS NULL OR r.status = ?)
+   ORDER BY r.created_at DESC, r.id DESC
+`
+
+/** Total rows matching the same optional status filter, for page metadata. */
+export const COUNT_PUBLIC_REGISTRATIONS = `
+  SELECT COUNT(*) AS total
+    FROM registration_requests
+   WHERE (? IS NULL OR status = ?)
+`
+
+/* -------------------------------------------------------------------------- */
 /* Forge Manager review                                                       */
 /* -------------------------------------------------------------------------- */
 

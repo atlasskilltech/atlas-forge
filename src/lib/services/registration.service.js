@@ -12,6 +12,7 @@ import {
   OPEN_TO_INVESTING_VALUES,
   PREFERRED_AUDIENCE_VALUES,
   REGISTRATION_LIMITS,
+  REGISTRATION_ROLE_LABEL,
   REGISTRATION_ROLE_VALUES,
   SCHOOL_VALUES,
   SEEKING_MENTORSHIP_VALUES,
@@ -448,6 +449,43 @@ export async function submit(input = {}, { sourceIp = '', userAgent = null } = {
   await registrationEmails.sendPendingRegistrationEmail({ to: email, fullName, reference })
 
   return { reference }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Public read-only API (/api/public/registrations)                           */
+/* -------------------------------------------------------------------------- */
+
+/** The statuses a public caller may filter by — the full set of ENUM values. */
+export const PUBLIC_REGISTRATION_STATUSES = Object.freeze(['pending', 'approved', 'rejected'])
+
+/**
+ * A page of registrations for the unauthenticated, cross-domain public API.
+ *
+ * Read-only, and sharply narrower than the Forge Manager's `list`: it returns a
+ * hand-picked, safe subset of fields and nothing more. No account, role or
+ * access is ever touched. Callers pass an already-validated, already-bounded
+ * `{ status, limit, offset }`; shaping the query string into those values is the
+ * route's job.
+ *
+ * @returns {Promise<{ registrations: object[], total: number }>}
+ */
+export async function listPublic({ status = null, limit = null, offset = null } = {}) {
+  const [rows, total] = await Promise.all([
+    registration.findPublic({ status, limit, offset }),
+    registration.countPublic({ status }),
+  ])
+
+  const registrations = rows.map((row) => ({
+    reference: row.reference,
+    name: row.fullName,
+    email: row.email,
+    category: row.roleCategory,
+    categoryLabel: REGISTRATION_ROLE_LABEL[row.roleCategory] ?? row.roleCategory,
+    status: row.status,
+    submittedAt: row.createdAt,
+  }))
+
+  return { registrations, total }
 }
 
 /* -------------------------------------------------------------------------- */

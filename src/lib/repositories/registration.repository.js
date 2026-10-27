@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { execute, insert, query, queryOne, queryValue } from '@/lib/db'
+import { withPagination } from '@/lib/queries/pagination'
 import * as sql from '@/lib/queries/registration'
 import { bool, iso, num, pair } from '@/lib/utils/rows'
 
@@ -83,6 +84,36 @@ export function create({
 
 /** `COUNT(*)` comes back as a number already — `queryValue` returns the scalar. */
 const count = async (statement, params) => Number((await queryValue(statement, params)) ?? 0)
+
+/* -------------------------------------------------------------------------- */
+/* Public read-only API                                                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The safe-subset row shape for the public API. Mirrors exactly the columns
+ * SELECT_PUBLIC_REGISTRATIONS returns — no phone, no details, no audit fields,
+ * and no internal id. Kept separate from `toRegistration` so the public path
+ * can never accidentally inherit a sensitive field added to the full mapper.
+ */
+const toPublicRegistration = (row) => ({
+  reference: row.reference,
+  fullName: row.full_name,
+  email: row.email,
+  roleCategory: row.role_category,
+  status: row.status,
+  createdAt: iso(row.created_at),
+})
+
+/** A page of public registrations, newest first, optionally filtered by status. */
+export async function findPublic({ status = null, limit = null, offset = null } = {}) {
+  const statement = withPagination(sql.SELECT_PUBLIC_REGISTRATIONS, { limit, offset })
+  const rows = await query(statement, [...pair(status)])
+  return rows.map(toPublicRegistration)
+}
+
+/** Total public registrations matching the same optional status filter. */
+export const countPublic = ({ status = null } = {}) =>
+  count(sql.COUNT_PUBLIC_REGISTRATIONS, [...pair(status)])
 
 export const countPendingByEmail = (email) => count(sql.COUNT_PENDING_BY_EMAIL, [email])
 
