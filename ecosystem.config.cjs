@@ -42,8 +42,10 @@ module.exports = {
       max_memory_restart: '512M',
       env: {
         NODE_ENV: 'production',
-        // `next start` defaults to 3000; override here or in the shell env.
-        PORT: 3000,
+        // Production listens on 3412; the Caddy reverse proxy forwards
+        // atlasforge.in -> 127.0.0.1:3412. Keep this in sync with the
+        // `reverse_proxy` target in the Caddyfile.
+        PORT: 3412,
       },
     },
   ],

@@ -113,8 +113,18 @@ pm2 start ecosystem.config.cjs
 pm2 save            # persist the process list (pair with `pm2 startup`)
 ```
 
-The app listens on port `3000` by default; override with `PORT` in the
-ecosystem file or the shell environment.
+Under PM2 the app listens on port `3412` (set in the ecosystem file); a Caddy
+reverse proxy terminates TLS and forwards `atlasforge.in` to
+`127.0.0.1:3412`. Keep the `PORT` in the ecosystem file and the
+`reverse_proxy` target in the Caddyfile in sync. (`npm run dev` still uses the
+Next default of `3000`.)
+
+```caddy
+# /etc/caddy/Caddyfile
+atlasforge.in, www.atlasforge.in {
+    reverse_proxy 127.0.0.1:3412
+}
+```
 
 ## Environment configuration
 
