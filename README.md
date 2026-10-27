@@ -98,6 +98,24 @@ npm run build
 npm run start
 ```
 
+### Running under PM2
+
+Do **not** start PM2 by pointing it at the project folder
+(`pm2 start atlas-forge`) — PM2 would try to `require()` the directory and die
+with `Error: Cannot find module '.../atlas-forge'` (`MODULE_NOT_FOUND`). A
+Next.js app has to be launched through `next start`, which is what the bundled
+[`ecosystem.config.cjs`](ecosystem.config.cjs) does:
+
+```bash
+npm ci
+npm run build
+pm2 start ecosystem.config.cjs
+pm2 save            # persist the process list (pair with `pm2 startup`)
+```
+
+The app listens on port `3000` by default; override with `PORT` in the
+ecosystem file or the shell environment.
+
 ## Environment configuration
 
 Configuration lives entirely in `.env.local` (gitignored) — moving to another
