@@ -98,6 +98,37 @@ npm run build
 npm run start
 ```
 
+### Running under PM2
+
+Do **not** start PM2 by pointing it at the project folder
+(`pm2 start atlas-forge`) — PM2 would try to `require()` the directory and die
+with `Error: Cannot find module '.../atlas-forge'` (`MODULE_NOT_FOUND`). A
+Next.js app has to be launched through `next start`, which is what the bundled
+[`ecosystem.config.cjs`](ecosystem.config.cjs) does:
+
+```bash
+npm ci
+npm run build
+pm2 start ecosystem.config.cjs
+pm2 save            # persist the process list (pair with `pm2 startup`)
+```
+
+Under PM2 the app's configuration — including `PORT` — comes from the
+server's `.env` in the project root. The ecosystem file launches Next via
+`node --env-file=.env`, because a bare `next start` does **not** read `PORT`
+from `.env` (it fixes its listen port from the real environment before its own
+dotenv loader runs). Set `PORT=3412` in `.env`; a Caddy reverse proxy
+terminates TLS and forwards `atlasforge.in` to `127.0.0.1:3412`. Keep the
+`PORT` in `.env` and the `reverse_proxy` target in the Caddyfile in sync.
+(`npm run dev` still uses the Next default of `3000`.)
+
+```caddy
+# /etc/caddy/Caddyfile
+atlasforge.in, www.atlasforge.in {
+    reverse_proxy 127.0.0.1:3412
+}
+```
+
 ## Environment configuration
 
 Configuration lives entirely in `.env.local` (gitignored) — moving to another
