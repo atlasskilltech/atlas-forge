@@ -13,6 +13,15 @@
  * as `npm run start` does. This file hands PM2 that binary directly so it owns
  * a single real server process (clean start/stop/reload and signal handling).
  *
+ * Config comes from the server's `.env` in the project root. We launch Next
+ * through `node --env-file=.env` (see `node_args`) rather than a bare
+ * `next start`, because `next start` does NOT read `PORT` from `.env`: it
+ * picks its listen port from the real process environment at CLI launch, and
+ * its own dotenv loader only runs afterwards (too late for the port). Loading
+ * `.env` with `--env-file` puts every value — PORT included — into the
+ * environment BEFORE Next boots, so `.env` is the single source of truth.
+ * Requires Node >= 20.6 (Next 16 already needs a newer Node, so this is safe).
+ *
  * Deploy flow (run from the project root):
  *     npm ci
  *     npm run build
@@ -29,6 +38,11 @@ module.exports = {
       // Next's CLI, not the directory. Relative to `cwd` below.
       script: './node_modules/next/dist/bin/next',
       args: 'start',
+      // Run the CLI under Node with the project's `.env` loaded first, so the
+      // whole file (PORT, DB_*, SESSION_SECRET, SMTP_*, ...) is in the
+      // environment before Next starts. Path is relative to `cwd`.
+      interpreter: 'node',
+      node_args: '--env-file=.env',
       cwd: __dirname,
       // Next runs its own single HTTP server; cluster mode does not apply.
       exec_mode: 'fork',
@@ -41,11 +55,11 @@ module.exports = {
       // Restart if the process balloons past this (tune to the host).
       max_memory_restart: '512M',
       env: {
+        // NODE_ENV is forced here (not in `.env`) so production is never left
+        // to chance. PM2's env wins over `--env-file`, which is why PORT is
+        // deliberately NOT set here — it must come from `.env` (currently
+        // 3412, matching the Caddy `reverse_proxy 127.0.0.1:3412` target).
         NODE_ENV: 'production',
-        // Production listens on 3412; the Caddy reverse proxy forwards
-        // atlasforge.in -> 127.0.0.1:3412. Keep this in sync with the
-        // `reverse_proxy` target in the Caddyfile.
-        PORT: 3412,
       },
     },
   ],

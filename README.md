@@ -113,11 +113,14 @@ pm2 start ecosystem.config.cjs
 pm2 save            # persist the process list (pair with `pm2 startup`)
 ```
 
-Under PM2 the app listens on port `3412` (set in the ecosystem file); a Caddy
-reverse proxy terminates TLS and forwards `atlasforge.in` to
-`127.0.0.1:3412`. Keep the `PORT` in the ecosystem file and the
-`reverse_proxy` target in the Caddyfile in sync. (`npm run dev` still uses the
-Next default of `3000`.)
+Under PM2 the app's configuration — including `PORT` — comes from the
+server's `.env` in the project root. The ecosystem file launches Next via
+`node --env-file=.env`, because a bare `next start` does **not** read `PORT`
+from `.env` (it fixes its listen port from the real environment before its own
+dotenv loader runs). Set `PORT=3412` in `.env`; a Caddy reverse proxy
+terminates TLS and forwards `atlasforge.in` to `127.0.0.1:3412`. Keep the
+`PORT` in `.env` and the `reverse_proxy` target in the Caddyfile in sync.
+(`npm run dev` still uses the Next default of `3000`.)
 
 ```caddy
 # /etc/caddy/Caddyfile
