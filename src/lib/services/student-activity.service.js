@@ -13,7 +13,7 @@ import * as repo from '@/lib/repositories/student-activity.repository'
  *
  *   currentState — the authoritative snapshot right now (registration, account,
  *                  roles, incubation, startups, founder access).
- *   activity     — dated events, oldest first: milestones derived from real
+ *   activity     — dated events, newest first: milestones derived from real
  *                  relational timestamps plus the audit-log entries. Nothing is
  *                  synthesised; an event exists only if a row with that date does.
  *   meta         — counts, pagination and an honest statement of coverage.
@@ -33,7 +33,9 @@ const INCUBATION_STATUS_LABELS = Object.freeze({
 /** Push an event only when it has a real timestamp. */
 function addEvent(events, at, type, category, description, status = null) {
   if (!at) return
-  events.push({ at, type, category, description, status })
+  // `seq` is the build order — used ONLY as a deterministic tiebreaker for
+  // events that share a timestamp, and stripped before the events are returned.
+  events.push({ seq: events.length, at, type, category, description, status })
 }
 
 function buildActivity({ registration, bundle, audit }) {
@@ -97,9 +99,18 @@ function buildActivity({ registration, bundle, audit }) {
     addEvent(events, entry.createdAt, 'audit', entry.module, entry.action, entry.status)
   }
 
-  // Oldest first; a stable tiebreaker keeps same-timestamp events deterministic.
-  events.sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0))
-  return events
+  // Newest first. Equal timestamps fall back to build order (later-built event
+  // first) — a deterministic secondary key, so a given dataset always paginates
+  // identically with no event duplicated or skipped between pages. `seq` is
+  // internal and is dropped from the returned events.
+  events.sort((a, b) => (a.at === b.at ? b.seq - a.seq : a.at < b.at ? 1 : -1))
+  return events.map(({ at, type, category, description, status }) => ({
+    at,
+    type,
+    category,
+    description,
+    status,
+  }))
 }
 
 function buildCurrentState({ registration, bundle }) {

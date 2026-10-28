@@ -105,7 +105,10 @@ try {
 
   // Promote the SAME registration to an approved student with an account + activity.
   const userId = await insertUser({ appId: `AFM-SATEST-${TAG}`, email: `${MARK}-acct@studentcheck.test` })
-  await db.query('UPDATE registration_requests SET status = "approved", approved_user_id = ?, reviewed_at = NOW() WHERE id = ?', [userId, pendingRegId])
+  // Push the submission timestamp an hour into the past so registration.submitted
+  // is unambiguously the OLDEST event; everything else clusters at NOW() (ties),
+  // which also exercises the deterministic tiebreaker.
+  await db.query('UPDATE registration_requests SET status = "approved", approved_user_id = ?, reviewed_at = NOW(), created_at = (NOW() - INTERVAL 1 HOUR) WHERE id = ?', [userId, pendingRegId])
   await grantRole(userId)
   await db.query(
     "INSERT INTO incubation_applications (applicant_user_id, idea_name, status, submitted_at) VALUES (?, 'SYNTHETIC Idea', 'under_review', NOW())",
@@ -128,7 +131,10 @@ try {
   const types = (data?.activity ?? []).map((e) => e.type)
   check('activity: has submitted+approved+account+role+incubation+founder+audit', ['registration.submitted', 'registration.approved', 'account.created', 'role.granted', 'incubation.submitted', 'founder_access.granted', 'audit'].every((t) => types.includes(t)), types.join(','))
   const atList = (data?.activity ?? []).map((e) => e.at)
-  check('activity: chronological (oldest first)', atList.every((v, i) => i === 0 || atList[i - 1] <= v))
+  const maxAt = atList.reduce((m, v) => (v > m ? v : m), atList[0])
+  check('activity: newest first (descending by timestamp)', atList.every((v, i) => i === 0 || atList[i - 1] >= v))
+  check('activity: newest event is first', data?.activity?.[0]?.at === maxAt)
+  check('activity: oldest event (registration.submitted) is last on one page', data?.activity?.[data.activity.length - 1]?.type === 'registration.submitted')
   check('activity: registration decision not double-counted as audit', !(data?.activity ?? []).some((e) => e.type === 'audit' && /Approved registration/.test(e.description)))
   check('meta: activityCount matches returned (single page)', data?.meta?.activityCount === (data?.activity ?? []).length)
 
@@ -144,14 +150,24 @@ try {
   const iso = await call(`/api/public/student-activity?applicationId=${APP_ID}`)
   check('isolation: other student not included', !JSON.stringify(iso.json).includes(`AFM-ISO-${TAG}`) && !JSON.stringify(iso.json).includes('Signed in ISO'))
 
-  /* ---- Pagination ------------------------------------------------------- */
-  const p1 = await call(`/api/public/student-activity?applicationId=${APP_ID}&perPage=1&page=1`)
-  const p2 = await call(`/api/public/student-activity?applicationId=${APP_ID}&perPage=1&page=2`)
-  check('pagination: perPage=1 returns one event', (p1.json?.data?.activity ?? []).length === 1)
-  check('pagination: totalPages = activityCount', p1.json?.data?.meta?.totalPages === p1.json?.data?.meta?.activityCount)
-  // Compare the event itself, not its timestamp: synthetic rows share one NOW()
-  // timestamp, so distinct events on different pages can carry the same `at`.
-  check('pagination: page 2 returns a different event', JSON.stringify(p1.json?.data?.activity?.[0]) !== JSON.stringify(p2.json?.data?.activity?.[0]))
+  /* ---- Pagination: stable, consistent with newest-first ----------------- */
+  // Canonical single-page order (the NOW() cluster gives several identical
+  // timestamps, so this exercises the deterministic tiebreaker).
+  const whole = await call(`/api/public/student-activity?applicationId=${APP_ID}&perPage=100`)
+  const onePage = (whole.json?.data?.activity ?? []).map((e) => `${e.type}@${e.at}`)
+  const count = whole.json?.data?.meta?.activityCount ?? 0
+  check('pagination: totalPages = activityCount at perPage=1', count >= 2)
+
+  const paged = []
+  let onePerPageOk = true
+  for (let pg = 1; pg <= count; pg += 1) {
+    const r = await call(`/api/public/student-activity?applicationId=${APP_ID}&perPage=1&page=${pg}`)
+    const ev = r.json?.data?.activity ?? []
+    if (ev.length !== 1) onePerPageOk = false
+    paged.push(`${ev[0]?.type}@${ev[0]?.at}`)
+  }
+  check('pagination: every perPage=1 page returns exactly one event', onePerPageOk)
+  check('pagination: pages reassemble the full newest-first order (no dup/skip, stable under identical timestamps)', JSON.stringify(paged) === JSON.stringify(onePage))
 
   /* ---- Ambiguity -------------------------------------------------------- */
   await insertRegistration({ appId: APP_ID, email: `${MARK}-dup@studentcheck.test`, status: 'pending' })
