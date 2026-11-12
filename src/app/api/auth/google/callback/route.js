@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { isProduction } from '@/lib/config/env'
+import { googleAuthConfig, isProduction } from '@/lib/config/env'
 import { writeSession } from '@/lib/auth/session'
 import {
   GoogleAuthError,
@@ -42,8 +42,8 @@ function sanitizeNext(raw) {
   return raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : null
 }
 
-function redirectToLogin(request, errorCode) {
-  const url = new URL('/login', request.url)
+function redirectToLogin(errorCode) {
+  const url = new URL('/login', googleAuthConfig.origin)
   url.searchParams.set('error', errorCode)
   return clearTemp(NextResponse.redirect(url))
 }
@@ -52,7 +52,7 @@ export async function GET(request) {
   const params = new URL(request.url).searchParams
 
   // The user cancelled, or Google declined (e.g. error=access_denied).
-  if (params.get('error')) return redirectToLogin(request, 'google_cancelled')
+  if (params.get('error')) return redirectToLogin('google_cancelled')
 
   const code = params.get('code')
   const state = params.get('state')
@@ -62,7 +62,7 @@ export async function GET(request) {
 
   // CSRF: the state Google echoes back must match the one we set at /start.
   if (!state || !cookieState || state !== cookieState) {
-    return redirectToLogin(request, 'google_state')
+    return redirectToLogin('google_state')
   }
 
   let identity
@@ -71,7 +71,7 @@ export async function GET(request) {
     identity = await resolveEligibleUser(email)
   } catch (error) {
     const reason = error instanceof GoogleAuthError ? error.reason : 'google_failed'
-    return redirectToLogin(request, reason)
+    return redirectToLogin(reason)
   }
 
   // The exact call password login uses. `cookies().set` inside writeSession is
@@ -84,6 +84,6 @@ export async function GET(request) {
 
   // Same destination as password login; multi-role users still pass through
   // /select-role, and a forced-password-change user is redirected on from there.
-  const destination = new URL(next ?? '/select-role', request.url)
+  const destination = new URL(next ?? '/select-role', googleAuthConfig.origin)
   return clearTemp(NextResponse.redirect(destination))
 }

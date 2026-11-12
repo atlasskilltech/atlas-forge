@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import { NextResponse } from 'next/server'
-import { isProduction } from '@/lib/config/env'
+import { googleAuthConfig, isProduction } from '@/lib/config/env'
 import { buildAuthUrl, isEnabled } from '@/lib/services/google-auth.service'
 
 /**
@@ -36,7 +36,7 @@ function sanitizeNext(raw) {
 }
 
 export async function GET(request) {
-  const loginUrl = new URL('/login', request.url)
+  const loginUrl = new URL('/login', googleAuthConfig.origin)
 
   if (!isEnabled()) {
     loginUrl.searchParams.set('error', 'google_unavailable')

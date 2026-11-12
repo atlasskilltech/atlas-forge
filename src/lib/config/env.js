@@ -164,10 +164,28 @@ const googleSiteUrl = (
   process.env.NEXT_PUBLIC_SITE_URL || 'https://www.atlasforge.in'
 ).replace(/\/+$/, '')
 
+/** Origin of `url`, or `fallback` when it is not an absolute URL — never throws,
+ * because this module is imported app-wide and a throw would stop startup. */
+function originOf(url, fallback) {
+  try {
+    return new URL(url).origin
+  } catch {
+    return fallback
+  }
+}
+
+const googleRedirectUri =
+  optional('GOOGLE_REDIRECT_URI') || `${googleSiteUrl}/api/auth/google/callback`
+
 export const googleAuthConfig = Object.freeze({
   clientId: googleClientId,
   clientSecret: googleClientSecret,
-  redirectUri: optional('GOOGLE_REDIRECT_URI') || `${googleSiteUrl}/api/auth/google/callback`,
+  redirectUri: googleRedirectUri,
+  // Public origin for the browser redirects the Google routes issue. Behind the
+  // reverse proxy `request.url` is the internal http://localhost:3412, so it
+  // must not be used to build them. This is the origin Google returns to, so the
+  // session cookie set at the callback belongs to the same site.
+  origin: originOf(googleRedirectUri, googleSiteUrl),
   enabled: Boolean(googleClientId && googleClientSecret),
 })
 
