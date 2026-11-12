@@ -22,6 +22,7 @@ const ROLE_SUMMARY = [
   { slug: ROLES.FORGE_MANAGER, icon: '🛠️', title: 'Forge Manager', detail: 'Oversee incubator · Approve content' },
   { slug: ROLES.BACKEND_MANAGER, icon: '⚙️', title: 'Backend Manager', detail: 'Platform settings · User management' },
   { slug: ROLES.SUPER_ADMIN, icon: '👁️', title: 'Super Admin', detail: 'Read-only platform visibility' },
+  { slug: ROLES.NETWORK_MEMBER, icon: '🌐', title: 'Network Member', detail: 'Member of the ATLAS Forge network' },
 ]
 
 /**

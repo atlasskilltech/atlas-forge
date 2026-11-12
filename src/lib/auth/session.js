@@ -27,7 +27,7 @@ function sign(encodedPayload) {
 }
 
 /** Serialise and sign. Returns the cookie value. */
-export function seal({ userId, role }) {
+export function seal({ userId, role, viaGoogle = false }) {
   const nowSeconds = Math.floor(Date.now() / 1000)
   const payload = {
     uid: userId,
@@ -35,6 +35,13 @@ export function seal({ userId, role }) {
     iat: nowSeconds,
     exp: nowSeconds + sessionConfig.ttlSeconds,
   }
+  // Mark a Google-authenticated session so the forced password-change gate can
+  // exempt it — Google has already proven the user's identity, so there is no
+  // temporary App ID password for them to rotate. The marker is part of the
+  // signed payload, so a password session can neither add nor flip it without
+  // the secret; it is omitted (not set to 0) for password logins, leaving their
+  // cookie byte-for-byte as before.
+  if (viaGoogle) payload.g = 1
   const encoded = b64(JSON.stringify(payload))
   return `${encoded}.${sign(encoded)}`
 }
@@ -68,7 +75,12 @@ export function unseal(value) {
   if (typeof payload?.uid !== 'number' || typeof payload?.exp !== 'number') return null
   if (payload.exp * 1000 <= Date.now()) return null
 
-  return { userId: payload.uid, role: payload.role ?? null, expiresAt: payload.exp }
+  return {
+    userId: payload.uid,
+    role: payload.role ?? null,
+    viaGoogle: payload.g === 1,
+    expiresAt: payload.exp,
+  }
 }
 
 const COOKIE_OPTIONS = {
@@ -85,9 +97,9 @@ export async function readSession() {
 }
 
 /** Write the session cookie. Only a Route Handler or Server Action may call this. */
-export async function writeSession({ userId, role }) {
+export async function writeSession({ userId, role, viaGoogle = false }) {
   const store = await cookies()
-  store.set(sessionConfig.cookieName, seal({ userId, role }), {
+  store.set(sessionConfig.cookieName, seal({ userId, role, viaGoogle }), {
     ...COOKIE_OPTIONS,
     maxAge: sessionConfig.ttlSeconds,
   })

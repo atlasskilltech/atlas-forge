@@ -53,7 +53,15 @@ export const getIdentity = cache(async () => {
 export async function requireIdentity({ allowPasswordChange = false } = {}) {
   const identity = await getIdentity()
   if (!identity) throw new UnauthorizedError('Sign in to continue.')
-  if (!allowPasswordChange && identity.user.mustChangePassword) {
+  // A Google-authenticated session is exempt from the forced change: Google has
+  // already proven the user's identity, so there is no temporary App ID password
+  // for them to rotate. `viaGoogle` lives in the signed cookie, so a password
+  // session cannot forge it; App ID logins are unaffected and still forced.
+  if (
+    !allowPasswordChange &&
+    identity.user.mustChangePassword &&
+    !identity.session?.viaGoogle
+  ) {
     throw new PasswordChangeRequiredError()
   }
   return identity
@@ -84,8 +92,17 @@ export async function requireIdentityOrRedirect(returnTo, { allowPasswordChange 
   if (!identity) redirect(loginUrl(returnTo))
   // A user mid forced-change is held on the change-password screen; the page
   // that renders that screen passes `allowPasswordChange` so it is not bounced
-  // away from the one place it is allowed to be.
-  if (!allowPasswordChange && identity.user.mustChangePassword) redirect(CHANGE_PASSWORD_PATH)
+  // away from the one place it is allowed to be. A Google-authenticated session
+  // (`viaGoogle`, signed into the cookie) is exempt entirely — Google proved the
+  // identity, so there is no temporary password to rotate; App ID logins are
+  // still forced to `/change-password` exactly as before.
+  if (
+    !allowPasswordChange &&
+    identity.user.mustChangePassword &&
+    !identity.session?.viaGoogle
+  ) {
+    redirect(CHANGE_PASSWORD_PATH)
+  }
   return identity
 }
 

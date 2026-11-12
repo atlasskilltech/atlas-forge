@@ -1,3 +1,5 @@
+import { createHmac } from 'node:crypto'
+
 /**
  * Verification of the Google Sign-In HTTP surface.
  *
@@ -193,6 +195,171 @@ check(
   'callback: error redirect never leaks a code or token in its target',
   !/id_token|access_token|client_secret/i.test(location(cancelled) + location(noStateCookie))
 )
+
+/* -------------------------------------------------------------------------- */
+/* Forced password-change exemption for Google sessions (viaGoogle)           */
+/* -------------------------------------------------------------------------- */
+
+// These prove the guard's behaviour directly, without a live Google round-trip,
+// by minting the SAME signed session cookie the server issues — using the
+// server's own SESSION_SECRET from this run's env. A cookie forged WITHOUT that
+// secret is rejected, which is exactly what the forgery check asserts. A
+// synthetic active user (must_change_password = 1) is created and removed in
+// teardown; the seeded tables are left exactly as found.
+
+const SECRET = process.env.SESSION_SECRET
+let db = null
+if (!SECRET) {
+  skipped('viaGoogle forced-change checks', 'SESSION_SECRET not set in this run')
+} else {
+  try {
+    const mysql = (await import('mysql2/promise')).default
+    db = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      port: Number(process.env.DB_PORT ?? 3306),
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD ?? '',
+      database: process.env.DB_NAME,
+    })
+  } catch (error) {
+    skipped('viaGoogle forced-change checks', `DB unavailable — ${error.message}`)
+  }
+}
+
+if (db) {
+  // Production build → the cookie name carries the `__Host-` prefix. The server
+  // reads it from the Cookie header by name; `__Host-`/Secure are browser send
+  // rules and do not affect this manual request.
+  const base = process.env.SESSION_COOKIE_NAME || 'atlas_forge_session'
+  const COOKIE_NAME = base.startsWith('__Host-') ? base : `__Host-${base}`
+  const b64 = (buffer) => Buffer.from(buffer).toString('base64url')
+
+  /** Mint a session cookie exactly as `seal()` does, optionally viaGoogle. */
+  function mkCookie({ uid, role, viaGoogle = false, forgeG = false }) {
+    const now = Math.floor(Date.now() / 1000)
+    const payload = { uid, role: role ?? null, iat: now, exp: now + 3600 }
+    if (viaGoogle) payload.g = 1
+    const encoded = b64(JSON.stringify(payload))
+    const sig = createHmac('sha256', SECRET).update(encoded).digest('base64url')
+    if (forgeG) {
+      // Inject g:1 AFTER signing: the signature no longer matches the payload, so
+      // the server must reject it — a password session cannot forge viaGoogle.
+      const tampered = b64(JSON.stringify({ ...payload, g: 1 }))
+      return `${tampered}.${sig}`
+    }
+    return `${encoded}.${sig}`
+  }
+
+  async function land(cookieValue) {
+    const res = await fetch(`${BASE}/select-role`, {
+      method: 'GET',
+      redirect: 'manual',
+      headers: { Cookie: `${COOKIE_NAME}=${cookieValue}` },
+    })
+    const loc = res.headers.get('location') ?? ''
+    const body = loc ? '' : await res.text().catch(() => '')
+    return { status: res.status, where: `${loc} ${body}` }
+  }
+  const hits = (result, path) => result.where.includes(path)
+
+  const one = async (sql, params = []) => (await db.query(sql, params))[0][0]
+  const run = (sql, params = []) => db.execute(sql, params)
+
+  const before = await one(
+    'SELECT (SELECT COUNT(*) FROM users) AS users, (SELECT COUNT(*) FROM user_roles) AS roles'
+  )
+
+  const APP_ID = 'ATL-0000-GAUTH'
+  const EMAIL = '__gauth_probe__@atlas.local'
+  // Idempotent: clear any leftover from an interrupted run (cascades to roles).
+  await run('DELETE FROM users WHERE app_id = ? OR email = ?', [APP_ID, EMAIL])
+
+  const studentRole = await one('SELECT id FROM roles WHERE slug = ?', ['student'])
+  const founderRole = await one('SELECT id FROM roles WHERE slug = ?', ['founder'])
+
+  try {
+    const [inserted] = await run(
+      `INSERT INTO users (app_id, full_name, email, password_hash, status, must_change_password)
+       VALUES (?, ?, ?, ?, 'active', 1)`,
+      [APP_ID, 'Google Auth Probe', EMAIL, 'unusable-no-login']
+    )
+    const uid = inserted.insertId
+    await run('INSERT INTO user_roles (user_id, role_id, is_primary) VALUES (?, ?, 1)', [
+      uid,
+      studentRole.id,
+    ])
+
+    // 1 + single-role routing: Google session, must_change_password = 1 → straight
+    // to the role dashboard, never /change-password.
+    const g1 = await land(mkCookie({ uid, role: 'student', viaGoogle: true }))
+    check(
+      'Google session + must_change_password=1 is NOT forced to /change-password',
+      !hits(g1, '/change-password'),
+      g1.where.slice(0, 80)
+    )
+    check(
+      'Google single-role user lands on their dashboard (/student/home)',
+      hits(g1, '/student/home'),
+      g1.where.slice(0, 80)
+    )
+
+    // 3 + 4: a password-style session (no viaGoogle) with the same flag is STILL
+    // forced to change — lacking the marker cannot bypass the gate.
+    const p1 = await land(mkCookie({ uid, role: 'student' }))
+    check(
+      'App ID (non-Google) session + must_change_password=1 is still forced to /change-password',
+      hits(p1, '/change-password'),
+      p1.where.slice(0, 80)
+    )
+
+    // 4: a forged viaGoogle (g:1 injected after signing) fails the signature and
+    // is rejected as no session → /login. viaGoogle cannot be forged by a client.
+    const forged = await land(mkCookie({ uid, role: 'student', forgeG: true }))
+    check(
+      'a forged viaGoogle marker is rejected (bad signature → /login), cannot bypass',
+      hits(forged, '/login') && !hits(forged, '/student/home'),
+      forged.where.slice(0, 80)
+    )
+
+    // 2: clear the flag → a normal Google session still works unchanged.
+    await run('UPDATE users SET must_change_password = 0 WHERE id = ?', [uid])
+    const g0 = await land(mkCookie({ uid, role: 'student', viaGoogle: true }))
+    check(
+      'Google session + must_change_password=0 lands on the dashboard normally',
+      hits(g0, '/student/home') && !hits(g0, '/change-password'),
+      g0.where.slice(0, 80)
+    )
+
+    // 7: multi-role — add a second role; the user now sees the picker (200) with
+    // only their assigned role dashboards, still not forced to change a password.
+    await run('INSERT INTO user_roles (user_id, role_id, is_primary) VALUES (?, ?, 0)', [
+      uid,
+      founderRole.id,
+    ])
+    const multi = await land(mkCookie({ uid, role: 'student', viaGoogle: true }))
+    check(
+      'multi-role Google user reaches the role picker (200), not /change-password',
+      multi.status === 200 && !hits(multi, '/change-password'),
+      `status=${multi.status}`
+    )
+    check(
+      'multi-role picker shows only assigned roles (student + founder, not super-admin)',
+      hits(multi, '/student/home') && hits(multi, '/founder/home') && !hits(multi, '/admin/overview'),
+      ''
+    )
+  } finally {
+    await run('DELETE FROM users WHERE app_id = ? OR email = ?', [APP_ID, EMAIL])
+    const after = await one(
+      'SELECT (SELECT COUNT(*) FROM users) AS users, (SELECT COUNT(*) FROM user_roles) AS roles'
+    )
+    check(
+      'teardown — synthetic user removed, seeded tables untouched',
+      Number(after.users) === Number(before.users) && Number(after.roles) === Number(before.roles),
+      `users=${after.users}/${before.users} roles=${after.roles}/${before.roles}`
+    )
+    await db.end()
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 /* Report                                                                     */

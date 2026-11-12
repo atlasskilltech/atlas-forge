@@ -31,7 +31,7 @@ jobs:
             git pull origin main
 
             npm ci
-            npm run build || true
+            npm run build
 
             pm2 reload atlas-forge || pm2 start --name atlas-forge
             pm2 save

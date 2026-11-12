@@ -17,9 +17,11 @@ import {
  * (`writeSession`). Any failure becomes a safe `/login?error=<code>` redirect —
  * never a token detail, stack or the client secret.
  *
- * `must_change_password` is unchanged: the session is issued here, and the guard
- * sends a flagged user to `/change-password` on their first protected request,
- * exactly as after a password login.
+ * The session is marked `viaGoogle`, so the forced password-change gate exempts
+ * it: a Google-verified user is never sent to `/change-password` — there is no
+ * temporary App ID password for them to rotate. `must_change_password` itself is
+ * left untouched in the database, so an App ID login with a temporary password is
+ * still forced to change it, exactly as before.
  */
 
 const OAUTH_COOKIES = ['g_oauth_state', 'g_oauth_nonce', 'g_oauth_next']
@@ -80,10 +82,13 @@ export async function GET(request) {
   await writeSession({
     userId: identity.user.id,
     role: identity.defaultRole?.slug ?? null,
+    // Marks the session Google-authenticated so the forced password-change gate
+    // exempts it. `must_change_password` is left untouched in the database.
+    viaGoogle: true,
   })
 
-  // Same destination as password login; multi-role users still pass through
-  // /select-role, and a forced-password-change user is redirected on from there.
+  // Same destination as password login; /select-role sends a single-role user
+  // straight to their dashboard and a multi-role user to the role picker.
   const destination = new URL(next ?? '/select-role', googleAuthConfig.origin)
   return clearTemp(NextResponse.redirect(destination))
 }
