@@ -1,8 +1,11 @@
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import RoleSelectCard from '@/components/auth/RoleSelectCard'
 import { BrandLogo } from '@/components/ui'
-import { ROLE_LIST } from '@/config/roles'
+import { ROLE_HOME } from '@/config/navigation'
+import { ROLE_LIST, ROLES } from '@/config/roles'
 import { siteConfig } from '@/config/site'
+import { requireIdentityOrRedirect } from '@/lib/auth/guard'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -14,11 +17,11 @@ export const metadata = buildMetadata({
 
 /** Reference: /reference/mast ui/Login/Role Select.png — left panel summary list. */
 const ROLE_SUMMARY = [
-  { icon: '🎓', title: 'Students', detail: 'Flag availability · Browse jobs & projects' },
-  { icon: '🚀', title: 'Founders', detail: 'Manage startup · Post jobs · Find talent' },
-  { icon: '🛠️', title: 'Forge Manager', detail: 'Oversee incubator · Approve content' },
-  { icon: '⚙️', title: 'Backend Manager', detail: 'Platform settings · User management' },
-  { icon: '👁️', title: 'Super Admin', detail: 'Read-only platform visibility' },
+  { slug: ROLES.STUDENT, icon: '🎓', title: 'Students', detail: 'Flag availability · Browse jobs & projects' },
+  { slug: ROLES.FOUNDER, icon: '🚀', title: 'Founders', detail: 'Manage startup · Post jobs · Find talent' },
+  { slug: ROLES.FORGE_MANAGER, icon: '🛠️', title: 'Forge Manager', detail: 'Oversee incubator · Approve content' },
+  { slug: ROLES.BACKEND_MANAGER, icon: '⚙️', title: 'Backend Manager', detail: 'Platform settings · User management' },
+  { slug: ROLES.SUPER_ADMIN, icon: '👁️', title: 'Super Admin', detail: 'Read-only platform visibility' },
 ]
 
 /**
@@ -29,7 +32,26 @@ const ROLE_SUMMARY = [
  * desktop, so it is authored twice and toggled — only ever one is in the
  * accessibility tree.
  */
-export default function SelectRolePage() {
+export default async function SelectRolePage() {
+  // Both password login and Google Sign-In land here. Resolve the real identity
+  // (anonymous → /login, forced password change → /change-password), then:
+  //   • exactly one role → go straight to that role's dashboard (no picker);
+  //   • several roles    → show the picker, limited to the roles actually held.
+  // Every dashboard still enforces its role server-side (requireRoleOrRedirect),
+  // so this client-visible routing never grants access on its own.
+  const identity = await requireIdentityOrRedirect('/select-role')
+  const held = identity.roles
+
+  if (held.length === 1) redirect(ROLE_HOME[held[0].slug] ?? '/login')
+  if (held.length === 0) redirect('/login')
+
+  const assignedRoles = ROLE_LIST.filter((role) =>
+    held.some((heldRole) => heldRole.slug === role.id)
+  )
+  const assignedSummary = ROLE_SUMMARY.filter((item) =>
+    held.some((heldRole) => heldRole.slug === item.slug)
+  )
+
   return (
     <main
       id="main-content"
@@ -71,7 +93,7 @@ export default function SelectRolePage() {
         <hr className="hidden w-[360px] border-0 border-t border-[#343849] lg:mt-[clamp(14px,5.222vh,47px)] lg:block" />
 
         <ul className="hidden w-full lg:mt-[clamp(8px,2vh,18px)] lg:block lg:space-y-[clamp(8px,2.889vh,26px)]">
-          {ROLE_SUMMARY.map((role) => (
+          {assignedSummary.map((role) => (
             <li key={role.title} className="flex gap-[15px]">
               <span aria-hidden="true" className="w-5 shrink-0 text-base leading-6">
                 {role.icon}
@@ -97,7 +119,7 @@ export default function SelectRolePage() {
         </p>
 
         <ul className="space-y-4 lg:mt-[clamp(10px,3.222vh,29px)] lg:grid lg:max-w-[726px] lg:grid-cols-2 lg:gap-[clamp(8px,1.778vh,16px)] lg:space-y-0">
-          {ROLE_LIST.map((role) => (
+          {assignedRoles.map((role) => (
             <li key={role.id}>
               <RoleSelectCard role={role} />
             </li>

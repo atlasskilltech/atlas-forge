@@ -22,6 +22,17 @@ export const SELECT_USER_BY_APP_ID = `
    WHERE u.app_id = ? AND u.deleted_at IS NULL
 `
 
+/**
+ * A live (not soft-deleted) account by email — the Google Sign-In match.
+ *
+ * Email matching is case-insensitive at the collation level, so an address
+ * stored as `Name@x.com` still matches Google's lowercased `name@x.com`.
+ */
+export const SELECT_USER_BY_EMAIL = `
+  SELECT ${USER_FIELDS} FROM users u
+   WHERE u.email = ? AND u.deleted_at IS NULL
+`
+
 /** Includes the hash — only the auth service may call this. */
 export const SELECT_USER_CREDENTIALS = `
   SELECT u.id, u.app_id, u.email, u.full_name, u.password_hash, u.status

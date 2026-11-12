@@ -141,6 +141,36 @@ export const studentCheckConfig = Object.freeze({
   timeoutMs: integer('STUDENT_CHECK_TIMEOUT_MS', 6000),
 })
 
+/**
+ * Google Sign-In (optional).
+ *
+ * A SEPARATE Google OAuth 2.0 Web client dedicated to ATLAS Forge. Both the id
+ * and the secret are read SERVER-SIDE only — never with a `NEXT_PUBLIC_` prefix,
+ * so the secret can never reach the browser bundle. When either is missing the
+ * feature is simply off: the login button is hidden and the routes report
+ * "unavailable", so an environment that has not configured Google keeps working.
+ *
+ * `redirectUri` must match — byte for byte — a URI registered on the Google
+ * client. It is derived from `NEXT_PUBLIC_SITE_URL` (`…/api/auth/google/callback`)
+ * unless `GOOGLE_REDIRECT_URI` overrides it. In production `NEXT_PUBLIC_SITE_URL`
+ * is `https://www.atlasforge.in`, so the derived value is
+ * `https://www.atlasforge.in/api/auth/google/callback`; the fallback below is the
+ * same canonical production domain, used only if the variable is somehow unset.
+ */
+const googleClientId = optional('GOOGLE_CLIENT_ID')
+const googleClientSecret = optional('GOOGLE_CLIENT_SECRET')
+// Trailing slashes trimmed so the joined callback path never doubles a slash.
+const googleSiteUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://www.atlasforge.in'
+).replace(/\/+$/, '')
+
+export const googleAuthConfig = Object.freeze({
+  clientId: googleClientId,
+  clientSecret: googleClientSecret,
+  redirectUri: optional('GOOGLE_REDIRECT_URI') || `${googleSiteUrl}/api/auth/google/callback`,
+  enabled: Boolean(googleClientId && googleClientSecret),
+})
+
 /** Credentials-safe summary for health checks and error reporting. */
 export function describeDbTarget() {
   return `${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`

@@ -37,10 +37,12 @@
     "test:pagination": "node --env-file=.env.local scripts/verify-pagination.mjs",
     "test:student-verification": "node --env-file=.env.local scripts/verify-student-verification.mjs",
     "test:student-activity": "node --env-file=.env.local scripts/verify-student-activity.mjs",
+    "test:auth:google": "node --env-file=.env.local scripts/verify-google-auth.mjs",
     "db:reset": "npm run db:schema -- --force && npm run db:reference && npm run db:seed"
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "google-auth-library": "^11.3.4",
     "mysql2": "^3.23.2",
     "next": "^16.0.0",
     "nodemailer": "^10.0.15",

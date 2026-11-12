@@ -1,6 +1,7 @@
 import LoginForm from '@/components/auth/LoginForm'
 import { BrandLogo } from '@/components/ui'
 import { siteConfig } from '@/config/site'
+import { googleAuthConfig } from '@/lib/config/env'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -8,6 +9,21 @@ export const metadata = buildMetadata({
   description: `Sign in to ${siteConfig.name} with your ATLAS SkillTech University App ID.`,
   path: '/login',
 })
+
+/**
+ * Friendly copy for the `?error=` codes the Google callback redirects back with.
+ * An unknown code shows nothing — we never echo an arbitrary query value.
+ */
+const GOOGLE_ERROR_MESSAGES = {
+  google_unavailable: 'Google sign-in is not available right now. Use your App ID and password.',
+  google_cancelled: 'Google sign-in was cancelled.',
+  google_state: 'Google sign-in could not be verified. Please try again.',
+  google_unverified: 'That Google email is not verified, so it can’t be used to sign in.',
+  google_no_account:
+    'No ATLAS Forge account is linked to that Google email. Sign in with your App ID, or contact the Forge Manager.',
+  google_inactive: 'This account is not active. Contact the Forge Manager.',
+  google_failed: 'Google sign-in didn’t work. Please try again or use your App ID and password.',
+}
 
 /** Reference: /reference/mast ui/Login Screen.png — left dark panel value props. */
 const HIGHLIGHTS = [
@@ -24,7 +40,16 @@ const HIGHLIGHTS = [
  * One DOM tree drives both layouts so the form is never duplicated: the brand
  * panel is a centred header on mobile and the left column on desktop.
  */
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }) {
+  const sp = await searchParams
+  const googleError = sp?.error ? (GOOGLE_ERROR_MESSAGES[sp.error] ?? null) : null
+  // Only ever carry a path on this site, so the parameter cannot bounce a user
+  // to another domain after Google sign-in.
+  const googleNext =
+    typeof sp?.next === 'string' && sp.next.startsWith('/') && !sp.next.startsWith('//')
+      ? sp.next
+      : null
+
   return (
     <main
       id="main-content"
@@ -81,7 +106,11 @@ export default function LoginPage() {
             Use your Student App ID and password to log in.
           </p>
 
-          <LoginForm />
+          <LoginForm
+            googleEnabled={googleAuthConfig.enabled}
+            googleError={googleError}
+            googleNext={googleNext}
+          />
 
           <p className="mt-3.5 text-[13px] leading-[15px] text-muted lg:mt-[23px] lg:max-w-[551px] lg:leading-[17px]">
             <span className="lg:hidden">Can&apos;t sign in? Contact Mihir Pawar</span>

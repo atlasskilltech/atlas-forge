@@ -73,6 +73,16 @@ export async function findByEmailAny(email) {
 }
 
 /**
+ * A live account by email, as a full user object — the Google Sign-In lookup.
+ * Unlike `findByEmailAny`, this excludes soft-deleted rows and returns the
+ * complete user (so the caller can read status and build the identity).
+ */
+export async function findByEmail(email) {
+  const row = await queryOne(sql.SELECT_USER_BY_EMAIL, [email])
+  return row ? toUser(row) : null
+}
+
+/**
  * The next free App ID for the given year, in the platform's `ATL-<year>-NNNN`
  * format. Runs on the caller's transaction connection so the `FOR UPDATE` lock
  * serialises concurrent account creation.

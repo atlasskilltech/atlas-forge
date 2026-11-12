@@ -79,6 +79,17 @@ const before = await one(
 const highWater = Number(before.id)
 const attemptsBefore = Number(before.total)
 
+// Integrity baseline for the seeded tables. The suite must leave users, activity
+// logs and error logs exactly as it found them — whatever the database's size.
+// Captured up front and compared in the teardown, rather than asserting fixed
+// row counts, which break the moment the database is seeded differently or real
+// accounts exist alongside the fixtures.
+const seedBefore = await one(`
+  SELECT (SELECT COUNT(*) FROM users)         AS users,
+         (SELECT COUNT(*) FROM activity_logs) AS activity,
+         (SELECT COUNT(*) FROM error_logs)    AS errors
+`)
+
 /* -------------------------------------------------------------------------- */
 /* Security headers                                                           */
 /* -------------------------------------------------------------------------- */
@@ -245,9 +256,12 @@ const after = await one(`
 await db.end()
 
 check('teardown - attempt log cleared and seeded data untouched',
-  Number(after.attempts) === attemptsBefore && Number(after.users) === 15 &&
-    Number(after.activity) === 10 && Number(after.errors) === 0,
-  `attempts=${after.attempts} users=${after.users} activity=${after.activity} errors=${after.errors}`)
+  Number(after.attempts) === attemptsBefore &&
+    Number(after.users) === Number(seedBefore.users) &&
+    Number(after.activity) === Number(seedBefore.activity) &&
+    Number(after.errors) === Number(seedBefore.errors),
+  `attempts=${after.attempts}/${attemptsBefore} users=${after.users}/${seedBefore.users} ` +
+    `activity=${after.activity}/${seedBefore.activity} errors=${after.errors}/${seedBefore.errors} (after/before)`)
 
 /* -------------------------------------------------------------------------- */
 
