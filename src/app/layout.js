@@ -1,15 +1,19 @@
-import { Inter } from 'next/font/google'
+import localFont from 'next/font/local'
 import { siteConfig } from '@/config/site'
 import { organizationJsonLd } from '@/lib/seo'
 import './globals.css'
 
-const inter = Inter({
-  subsets: ['latin'],
+// Inter is self-hosted (latin subset, variable 400–700) instead of loaded via
+// next/font/google: on the production server Google Fonts returns
+// fonts.gstatic.com/l/font?kit=…&… URLs that Turbopack's font loader cannot
+// resolve, which failed `next build`. Self-hosting also removes the build's
+// network dependency on Google Fonts.
+const inter = localFont({
+  src: './fonts/inter-latin-var.woff2',
+  weight: '400 700',
+  style: 'normal',
   display: 'swap',
   variable: '--font-inter',
-  // The UI only ever uses these four weights — trimming the rest keeps the
-  // font payload (and therefore LCP) small.
-  weight: ['400', '500', '600', '700'],
 })
 
 export const metadata = {

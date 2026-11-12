@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Roboto } from 'next/font/google'
+import { roboto } from '@/app/fonts/roboto'
 import RegisterForm from '@/components/landing/RegisterForm'
 import { buildMetadata } from '@/lib/seo'
 
@@ -18,13 +18,6 @@ import { buildMetadata } from '@/lib/seo'
  * A submission here will become a PENDING registration request that a Forge
  * Manager reviews before any account is created — wired up in later phases.
  */
-const roboto = Roboto({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-roboto',
-  weight: ['400', '500', '700'],
-})
-
 export const metadata = buildMetadata({
   title: 'Register',
   description:

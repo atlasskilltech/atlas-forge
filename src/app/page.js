@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Roboto } from 'next/font/google'
+import { roboto } from '@/app/fonts/roboto'
 import EnquiryButton from '@/components/landing/EnquiryButton'
 import EnquiryProvider from '@/components/landing/EnquiryProvider'
 import FaqSection from '@/components/landing/FaqSection'
@@ -31,13 +31,6 @@ import { buildMetadata } from '@/lib/seo'
  * changes typeface, and next/font self-hosts the file so the CSP needs no
  * new origin.
  */
-const roboto = Roboto({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-roboto',
-  weight: ['400', '500', '700'],
-})
-
 export const metadata = {
   ...buildMetadata({
     title: 'From sketch to shelf',
