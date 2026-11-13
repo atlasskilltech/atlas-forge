@@ -171,7 +171,29 @@ See [`.env.example`](.env.example) for the full, documented list.
 ## Database
 
 The schema targets **MySQL 8 / MariaDB 10.4+** (InnoDB, `utf8mb4`). SQL lives in
-[`database/`](database):
+[`database/`](database).
+
+### Table names: the `forge_` prefix
+
+Production shares one database with Research Portal (`research_*`), Atlas News
+(`atlasnews_*`) and Employment Survey, so **every ATLAS Forge table is named
+`forge_<name>`** (46 tables). The physical names are defined in exactly one
+place, [`src/lib/queries/tables.mjs`](src/lib/queries/tables.mjs); all SQL uses
+the map:
+
+```js
+import { T } from '@/lib/queries/tables.mjs'
+const SQL = `SELECT ... FROM ${T.users} u JOIN ${T.user_roles} ur ON ...`
+```
+
+`npm run check:tables` fails on any unprefixed table reference, and the deploy
+runs it. Databases created before the prefix are converted once by migration
+013 (`npm run db:prefix` — plan by default, `-- --apply`, `-- --rollback
+--apply`): one atomic `RENAME TABLE` of all 46 tables, verified before and
+after; `scripts/deploy.sh` runs it automatically, with a verified backup, the
+first time it meets a legacy database. Until then the SQL scripts refuse to run.
+
+Files:
 
 - `schema.sql` — full schema (a **destructive** rebuild; drops and recreates tables)
 - `reference-data.sql` — reference/lookup data
@@ -212,6 +234,10 @@ Seed sign-in accounts are documented in [`docs/WORKFLOW.md`](docs/WORKFLOW.md#10
 | `npm run start` | Serve the production build |
 | `npm run lint` | Run ESLint |
 | `npm run db:check` | Read-only check: connection, Forge tables present, env-file conflicts |
+| `npm run check:tables` | Static guard: no unprefixed Forge table names in code or SQL |
+| `npm run db:investigate` | Read-only report: table layout, row counts, fingerprints, other apps' tables |
+| `npm run db:prefix` | Migration 013 (`forge_` prefix): plan, `-- --apply`, `-- --rollback --apply` |
+| `npm run db:queries` | PREPAREs every application SQL statement (executes nothing) |
 | `npm run db:reset` | Rebuild schema + reference data + seed |
 | `npm run db:migrate` | Apply a migration |
 | `npm run db:verify` | Verify the live schema |
