@@ -55,6 +55,8 @@ register(
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
+import { T } from '../src/lib/queries/tables.mjs'
+
 const pass = []
 const fail = []
 const check = (name, ok, detail = '') =>
@@ -74,19 +76,19 @@ const meera = await usersRepo.findByAppId('ATL-2019-0004')
 async function fingerprint() {
   return queryOne(`
     SELECT
-      (SELECT COUNT(*) FROM users)                  AS users,
-      (SELECT COUNT(*) FROM user_roles)             AS user_roles,
-      (SELECT COUNT(*) FROM listings)               AS listings,
-      (SELECT COUNT(*) FROM approvals)              AS approvals,
-      (SELECT COUNT(*) FROM applications)           AS applications,
-      (SELECT COUNT(*) FROM concierge_contacts)     AS contacts,
-      (SELECT COUNT(*) FROM mentorship_sessions)    AS sessions,
-      (SELECT COUNT(*) FROM founder_access_grants)  AS grants,
-      (SELECT COUNT(*) FROM startups)               AS startups,
-      (SELECT COUNT(*) FROM activity_logs)          AS activity,
-      (SELECT COUNT(*) FROM notifications)          AS notifications,
+      (SELECT COUNT(*) FROM ${T.users})                  AS users,
+      (SELECT COUNT(*) FROM ${T.user_roles})             AS user_roles,
+      (SELECT COUNT(*) FROM ${T.listings})               AS listings,
+      (SELECT COUNT(*) FROM ${T.approvals})              AS approvals,
+      (SELECT COUNT(*) FROM ${T.applications})           AS applications,
+      (SELECT COUNT(*) FROM ${T.concierge_contacts})     AS contacts,
+      (SELECT COUNT(*) FROM ${T.mentorship_sessions})    AS sessions,
+      (SELECT COUNT(*) FROM ${T.founder_access_grants})  AS grants,
+      (SELECT COUNT(*) FROM ${T.startups})               AS startups,
+      (SELECT COUNT(*) FROM ${T.activity_logs})          AS activity,
+      (SELECT COUNT(*) FROM ${T.notifications})          AS notifications,
       (SELECT GROUP_CONCAT(CONCAT(setting_key, '=', setting_value) ORDER BY setting_key)
-         FROM platform_settings)                    AS settings
+         FROM ${T.platform_settings})                    AS settings
   `)
 }
 

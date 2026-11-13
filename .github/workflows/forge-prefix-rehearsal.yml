@@ -1,0 +1,70 @@
+name: ATLAS Forge — prefix migration backup + rehearsal (no production change)
+
+# Runs ONLY when this file or the rehearsal script changes on the feature
+# branch (manual dispatch would need the file on main). Never runs on main and
+# never deploys.
+#
+# On the EC2 server (scripts/ops/prefix-backup-rehearsal.sh):
+#   - production DB is only READ: investigation + content hashes in READ ONLY
+#     transactions, and a consistent `mariadb-dump --single-transaction`
+#     (no table or global locks) of the 46 Forge tables and of the whole DB
+#   - backups are stored in ~/forge-migration/backups (mode 600, sha256)
+#   - they are restored into an ISOLATED throw-away MariaDB 10.11 container
+#     (127.0.0.1 only, tmpfs, random credentials) and compared row-for-row
+#   - the full rename + rollback is rehearsed on that restored copy
+#   - the container is removed; production is re-checked as still unchanged
+# It does NOT touch PM2, .env, the app directory, or production schema/data.
+# All server output is filtered through redact.cjs.
+
+on:
+  push:
+    branches:
+      - claude/exciting-knuth-mix0o9
+    paths:
+      - .github/workflows/forge-prefix-rehearsal.yml
+      - scripts/ops/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: forge-prod-ops
+  cancel-in-progress: false
+
+jobs:
+  rehearse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Backup, restore-verify and rehearse on EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          EC2_HOST="$(printf '%s' "$EC2_HOST" | tr -d '[:space:]')"
+          EC2_USER="$(printf '%s' "$EC2_USER" | tr -d '[:space:]')"
+          KEY="$RUNNER_TEMP/ec2_key"
+          (umask 077; printf '%s\n' "$EC2_KEY" > "$KEY")
+          trap 'rm -f "$KEY"' EXIT
+          SSH=(ssh -i "$KEY" -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=30 "$EC2_USER@$EC2_HOST")
+          DIAG="/tmp/forge-rehearsal-${GITHUB_RUN_ID}"
+
+          tar czf - scripts/lib scripts/ops scripts/check-db.mjs scripts/verify-schema.mjs \
+                    scripts/investigate-prefix.mjs scripts/migrate-forge-prefix.mjs scripts/verify-queries.mjs \
+                    src/lib database/schema.sql database/migrations \
+            | "${SSH[@]}" "umask 077; mkdir -p '$DIAG' && tar xzf - -C '$DIAG'"
+
+          "${SSH[@]}" "DIAG='$DIAG' RUN_ID='${GITHUB_RUN_ID}' bash -s" <<'REMOTE'
+          set -uo pipefail
+          APP="$HOME/atlas-forge"
+          trap 'rm -rf -- "$DIAG"' EXIT
+          main() { DIAG="$DIAG" APP="$APP" RUN_ID="$RUN_ID" bash "$DIAG/scripts/ops/prefix-backup-rehearsal.sh"; }
+          main </dev/null 2>&1 | node "$DIAG/scripts/ops/redact.cjs" "$APP/.env"
+          rc=${PIPESTATUS[0]}
+          echo; echo "== exit code: $rc  (temporary files in $DIAG removed on exit)"
+          exit "$rc"
+          REMOTE

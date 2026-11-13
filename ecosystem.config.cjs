@@ -22,11 +22,11 @@
  * environment BEFORE Next boots, so `.env` is the single source of truth.
  * Requires Node >= 20.6 (Next 16 already needs a newer Node, so this is safe).
  *
- * Deploy flow (run from the project root):
- *     npm ci
- *     npm run build
- *     pm2 start ecosystem.config.cjs
- *     pm2 save            # persist across reboots (with `pm2 startup`)
+ * Deploy flow: `bash scripts/deploy.sh` (what the GitHub workflow runs). It
+ * builds, then DELETES and re-creates the PM2 process from this file. A plain
+ * `pm2 reload atlas-forge` is not enough: it keeps whatever script, node_args
+ * and environment the process was first started with, so changes here would
+ * never take effect.
  *
  * Use `.cjs` so the file is always evaluated as CommonJS, independent of any
  * future `"type": "module"` in package.json — PM2 config files are CommonJS.
@@ -54,6 +54,16 @@ module.exports = {
       restart_delay: 2000,
       // Restart if the process balloons past this (tune to the host).
       max_memory_restart: '512M',
+      // `.env` must be the ONLY source of the app's settings. Node's
+      // `--env-file` never overrides a variable that is already set, so any
+      // DB_* (etc.) left in the shell that runs `pm2 start/restart`, or stored
+      // in PM2's dump from an earlier start, would silently beat `.env`. Drop
+      // every app-owned variable from the inherited shell env so only `.env`
+      // can supply them. (Array form: removes variables matching these names.)
+      filter_env: [
+        'DB_', 'SESSION_', 'SMTP_', 'MAIL_', 'GOOGLE_', 'STUDENT_CHECK_',
+        'UPLOAD_', 'AUTH_RATE_LIMIT_', 'NEXT_PUBLIC_', 'LOG_LEVEL', 'PORT',
+      ],
       env: {
         // NODE_ENV is forced here (not in `.env`) so production is never left
         // to chance. PM2's env wins over `--env-file`, which is why PORT is

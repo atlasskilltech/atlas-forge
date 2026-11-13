@@ -2,7 +2,7 @@
 -- 005 · Alumni mentors from the 2026 alumni mentorship form
 --
 --   npm run db:migrate migrations/005_alumni_mentors.sql
---   node --env-file=.env.local scripts/import-alumni-mentors.mjs --commit
+--   node --env-file=.env scripts/import-alumni-mentors.mjs --commit
 --
 -- Adds the profile fields an alumni mentor needs, and the mentorship-area
 -- vocabulary the form collected, to the EXISTING mentors system. There is no
@@ -41,11 +41,11 @@ SET @add_alumni_columns = (
     EXISTS(
       SELECT 1 FROM information_schema.COLUMNS
        WHERE TABLE_SCHEMA = DATABASE()
-         AND TABLE_NAME   = 'mentors'
+         AND TABLE_NAME   = 'forge_mentors'
          AND COLUMN_NAME  = 'email'
     ),
     'SELECT 1',
-    'ALTER TABLE mentors
+    'ALTER TABLE forge_mentors
        ADD COLUMN email                  VARCHAR(255)      NULL DEFAULT NULL AFTER full_name,
        ADD COLUMN phone                  VARCHAR(32)       NULL DEFAULT NULL AFTER email,
        ADD COLUMN linkedin_url           VARCHAR(255)      NULL DEFAULT NULL AFTER phone,
@@ -74,11 +74,11 @@ SET @add_email_key = (
     EXISTS(
       SELECT 1 FROM information_schema.STATISTICS
        WHERE TABLE_SCHEMA = DATABASE()
-         AND TABLE_NAME   = 'mentors'
+         AND TABLE_NAME   = 'forge_mentors'
          AND INDEX_NAME   = 'uq_mentors_email'
     ),
     'SELECT 1',
-    'ALTER TABLE mentors ADD UNIQUE KEY uq_mentors_email (email)'
+    'ALTER TABLE forge_mentors ADD UNIQUE KEY uq_mentors_email (email)'
   )
 );
 PREPARE add_email_key FROM @add_email_key;
@@ -90,7 +90,7 @@ DEALLOCATE PREPARE add_email_key;
 -- fine-grained ("Figma", "UI/UX") and drives student-to-listing matching,
 -- while these are ten coarse buckets a mentor picks from. Merging them would
 -- put "Career & Personal Development" in the student skills picker.
-CREATE TABLE IF NOT EXISTS mentorship_areas (
+CREATE TABLE IF NOT EXISTS forge_mentorship_areas (
   id         BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
   slug       VARCHAR(64)       NOT NULL,
   name       VARCHAR(96)       NOT NULL,
@@ -104,16 +104,16 @@ CREATE TABLE IF NOT EXISTS mentorship_areas (
 
 -- Which areas a mentor covers. Same shape as `mentor_skills`; the composite
 -- primary key is what makes re-importing a mentor's areas a no-op.
-CREATE TABLE IF NOT EXISTS mentor_mentorship_areas (
+CREATE TABLE IF NOT EXISTS forge_mentor_mentorship_areas (
   mentor_id  BIGINT UNSIGNED NOT NULL,
   area_id    BIGINT UNSIGNED NOT NULL,
   created_at TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (mentor_id, area_id),
   KEY idx_mentor_areas_area (area_id),
   CONSTRAINT fk_mentor_areas_mentor FOREIGN KEY (mentor_id)
-    REFERENCES mentors (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_mentors (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_mentor_areas_area FOREIGN KEY (area_id)
-    REFERENCES mentorship_areas (id) ON DELETE CASCADE ON UPDATE CASCADE
+    REFERENCES forge_mentorship_areas (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---- 4. The ten areas the form offered ------------------------------------
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS mentor_mentorship_areas (
 -- 'sector-specific' is stored under its short display name; the form's
 -- parenthetical list (Fintech, Edtech, Healthtech, ...) is helper text rather
 -- than part of the category name, and would overflow VARCHAR(96).
-INSERT INTO mentorship_areas (slug, name, sort_order) VALUES
+INSERT INTO forge_mentorship_areas (slug, name, sort_order) VALUES
   ('design-creative',         'Design & Creative',             1),
   ('business-strategy',       'Business & Strategy',           2),
   ('career-development',      'Career & Personal Development', 3),

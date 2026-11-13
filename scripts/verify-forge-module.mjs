@@ -11,6 +11,8 @@
 import { register } from 'node:module'
 import { pathToFileURL } from 'node:url'
 
+import { T } from '../src/lib/queries/tables.mjs'
+
 register(
   'data:text/javascript,' +
     encodeURIComponent(`
@@ -206,20 +208,20 @@ check('getUsers — a founder’s mobile row names their startup',
 
 // ---- approving a listing ---------------------------------------------------
 const pendingListing = queue.items.find((item) => !item.decision && item.kind === 'job')
-const beforeStatus = await queryValue('SELECT status FROM listings WHERE id = ?', [
+const beforeStatus = await queryValue(`SELECT status FROM ${T.listings} WHERE id = ?`, [
   pendingListing.listingId,
 ])
 
 await forge.decideListing(mihir, { listingId: pendingListing.listingId, decision: 'approved' })
 
-const afterStatus = await queryValue('SELECT status FROM listings WHERE id = ?', [
+const afterStatus = await queryValue(`SELECT status FROM ${T.listings} WHERE id = ?`, [
   pendingListing.listingId,
 ])
 check('decideListing — the listing goes live', afterStatus === 'live', `${beforeStatus} → ${afterStatus}`)
 
 const decisionRow = await queryOne(
   `SELECT a.decision, a.is_override, r.slug
-     FROM approvals a JOIN roles r ON r.id = a.decided_as_role_id
+     FROM ${T.approvals} a JOIN ${T.roles} r ON r.id = a.decided_as_role_id
     WHERE a.listing_id = ?`,
   [pendingListing.listingId]
 )
@@ -229,13 +231,13 @@ check('decideListing — recorded as the Forge Manager',
 check('decideListing — not marked as an override', Number(decisionRow.is_override) === 0)
 
 const notified = await queryValue(
-  "SELECT COUNT(*) FROM notifications WHERE entity_type = 'listing' AND entity_id = ?",
+  `SELECT COUNT(*) FROM ${T.notifications} WHERE entity_type = 'listing' AND entity_id = ?`,
   [pendingListing.listingId]
 )
 check('decideListing — the founder is notified', Number(notified) === 1)
 
 const audited = await queryValue(
-  "SELECT COUNT(*) FROM activity_logs WHERE entity_type = 'listing' AND entity_id = ? AND actor_user_id = ?",
+  `SELECT COUNT(*) FROM ${T.activity_logs} WHERE entity_type = 'listing' AND entity_id = ? AND actor_user_id = ?`,
   [pendingListing.listingId, mihir.id]
 )
 check('decideListing — written to the audit trail', Number(audited) === 1)
@@ -262,21 +264,21 @@ check('decideListing — a listing that does not exist is 404',
   missingListing?.constructor?.name === 'NotFoundError')
 
 // Reverse it.
-await execute('DELETE FROM approvals WHERE listing_id = ?', [pendingListing.listingId])
-await execute('UPDATE listings SET status = ? WHERE id = ?', [beforeStatus, pendingListing.listingId])
+await execute(`DELETE FROM ${T.approvals} WHERE listing_id = ?`, [pendingListing.listingId])
+await execute(`UPDATE ${T.listings} SET status = ? WHERE id = ?`, [beforeStatus, pendingListing.listingId])
 await execute(
-  "DELETE FROM notifications WHERE entity_type = 'listing' AND entity_id = ? AND user_id <> 0",
+  `DELETE FROM ${T.notifications} WHERE entity_type = 'listing' AND entity_id = ? AND user_id <> 0`,
   [pendingListing.listingId]
 )
 await execute(
-  "DELETE FROM activity_logs WHERE entity_type = 'listing' AND entity_id = ? AND actor_user_id = ?",
+  `DELETE FROM ${T.activity_logs} WHERE entity_type = 'listing' AND entity_id = ? AND actor_user_id = ?`,
   [pendingListing.listingId, mihir.id]
 )
 
 // ---- assigning a mentor ----------------------------------------------------
 const openRequest = mentorship.requests[0]
 const mentorChoice = mentorship.mentors[0]
-const sessionsBefore = await queryValue('SELECT COUNT(*) FROM mentorship_sessions')
+const sessionsBefore = await queryValue(`SELECT COUNT(*) FROM ${T.mentorship_sessions}`)
 
 await forge.assignMentor(mihir, {
   requestId: openRequest.requestId,
@@ -284,18 +286,18 @@ await forge.assignMentor(mihir, {
   scheduledAt: '2026-09-01T10:00:00Z',
 })
 
-const requestStatus = await queryValue('SELECT status FROM mentorship_requests WHERE id = ?', [
+const requestStatus = await queryValue(`SELECT status FROM ${T.mentorship_requests} WHERE id = ?`, [
   openRequest.requestId,
 ])
 check('assignMentor — the request is closed', requestStatus === 'assigned', requestStatus)
 
-const sessionsAfter = await queryValue('SELECT COUNT(*) FROM mentorship_sessions')
+const sessionsAfter = await queryValue(`SELECT COUNT(*) FROM ${T.mentorship_sessions}`)
 check('assignMentor — a scheduled session is created',
   Number(sessionsAfter) === Number(sessionsBefore) + 1,
   `${sessionsBefore} → ${sessionsAfter}`)
 
 const studentNotified = await queryValue(
-  "SELECT COUNT(*) FROM notifications WHERE entity_type = 'mentorship_request' AND entity_id = ?",
+  `SELECT COUNT(*) FROM ${T.notifications} WHERE entity_type = 'mentorship_request' AND entity_id = ?`,
   [openRequest.requestId]
 )
 check('assignMentor — the student is notified', Number(studentNotified) === 1)
@@ -316,46 +318,46 @@ check('assignMentor — a mentor who does not exist is 404',
 
 // Reverse it.
 await execute(
-  'DELETE FROM mentorship_sessions WHERE request_id = ? AND assigned_by = ?',
+  `DELETE FROM ${T.mentorship_sessions} WHERE request_id = ? AND assigned_by = ?`,
   [openRequest.requestId, mihir.id]
 )
-await execute('UPDATE mentorship_requests SET status = ? WHERE id = ?', [
+await execute(`UPDATE ${T.mentorship_requests} SET status = ? WHERE id = ?`, [
   'requested',
   openRequest.requestId,
 ])
 await execute(
-  "DELETE FROM notifications WHERE entity_type = 'mentorship_request' AND entity_id = ?",
+  `DELETE FROM ${T.notifications} WHERE entity_type = 'mentorship_request' AND entity_id = ?`,
   [openRequest.requestId]
 )
 await execute(
-  "DELETE FROM activity_logs WHERE entity_type = 'mentorship_request' AND entity_id = ? AND actor_user_id = ?",
+  `DELETE FROM ${T.activity_logs} WHERE entity_type = 'mentorship_request' AND entity_id = ? AND actor_user_id = ?`,
   [openRequest.requestId, mihir.id]
 )
 
 // ---- granting founder access ----------------------------------------------
 const ungranted = incubation.applications.find((application) => !application.granted)
 const applicantId = await queryValue(
-  'SELECT applicant_user_id FROM incubation_applications WHERE id = ?',
+  `SELECT applicant_user_id FROM ${T.incubation_applications} WHERE id = ?`,
   [ungranted.applicationId]
 )
 
 await forge.grantFounderAccess(mihir, { applicationId: ungranted.applicationId })
 
 const applicationStatus = await queryValue(
-  'SELECT status FROM incubation_applications WHERE id = ?',
+  `SELECT status FROM ${T.incubation_applications} WHERE id = ?`,
   [ungranted.applicationId]
 )
 check('grantFounderAccess — the application is approved', applicationStatus === 'approved',
   applicationStatus)
 
 const grantRow = await queryValue(
-  'SELECT COUNT(*) FROM founder_access_grants WHERE incubation_application_id = ? AND revoked_at IS NULL',
+  `SELECT COUNT(*) FROM ${T.founder_access_grants} WHERE incubation_application_id = ? AND revoked_at IS NULL`,
   [ungranted.applicationId]
 )
 check('grantFounderAccess — a grant is recorded', Number(grantRow) === 1)
 
 const roleRow = await queryValue(
-  `SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id
+  `SELECT COUNT(*) FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
     WHERE ur.user_id = ? AND r.slug = 'founder' AND ur.revoked_at IS NULL`,
   [applicantId]
 )
@@ -373,40 +375,40 @@ check('grantFounderAccess — an application that does not exist is 404',
   badApplication?.constructor?.name === 'NotFoundError')
 
 // Reverse it.
-await execute('DELETE FROM founder_access_grants WHERE incubation_application_id = ?', [
+await execute(`DELETE FROM ${T.founder_access_grants} WHERE incubation_application_id = ?`, [
   ungranted.applicationId,
 ])
 await execute(
-  `DELETE ur FROM user_roles ur JOIN roles r ON r.id = ur.role_id
+  `DELETE ur FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
     WHERE ur.user_id = ? AND r.slug = 'founder'`,
   [applicantId]
 )
 await execute(
-  'UPDATE incubation_applications SET status = ?, reviewed_at = NULL, reviewed_by = NULL WHERE id = ?',
+  `UPDATE ${T.incubation_applications} SET status = ?, reviewed_at = NULL, reviewed_by = NULL WHERE id = ?`,
   [ungranted.status === 'Pending' ? 'pending' : 'under_review', ungranted.applicationId]
 )
-await execute("DELETE FROM notifications WHERE type = 'access' AND user_id = ?", [applicantId])
+await execute(`DELETE FROM ${T.notifications} WHERE type = 'access' AND user_id = ?`, [applicantId])
 await execute(
-  "DELETE FROM activity_logs WHERE entity_type = 'incubation_application' AND entity_id = ? AND actor_user_id = ?",
+  `DELETE FROM ${T.activity_logs} WHERE entity_type = 'incubation_application' AND entity_id = ? AND actor_user_id = ?`,
   [ungranted.applicationId, mihir.id]
 )
 
 // ---- featuring a startup ---------------------------------------------------
 const unfeatured = projects.projects.find((project) => !project.featured)
 await forge.setFeatured(mihir, { startupId: unfeatured.startupId, featured: true })
-const featuredNow = await queryValue('SELECT is_featured FROM startups WHERE id = ?', [
+const featuredNow = await queryValue(`SELECT is_featured FROM ${T.startups} WHERE id = ?`, [
   unfeatured.startupId,
 ])
 check('setFeatured — the flag is written', Number(featuredNow) === 1)
 
 await forge.setFeatured(mihir, { startupId: unfeatured.startupId, featured: false })
-const featuredAgain = await queryValue('SELECT is_featured FROM startups WHERE id = ?', [
+const featuredAgain = await queryValue(`SELECT is_featured FROM ${T.startups} WHERE id = ?`, [
   unfeatured.startupId,
 ])
 check('setFeatured — and can be turned off again', Number(featuredAgain) === 0)
 
 await execute(
-  "DELETE FROM activity_logs WHERE entity_type = 'startup' AND entity_id = ? AND actor_user_id = ?",
+  `DELETE FROM ${T.activity_logs} WHERE entity_type = 'startup' AND entity_id = ? AND actor_user_id = ?`,
   [unfeatured.startupId, mihir.id]
 )
 

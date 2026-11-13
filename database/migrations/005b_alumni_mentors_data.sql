@@ -30,7 +30,7 @@
 -- work so far is rolled back rather than left half-applied.
 --
 -- To undo everything this file did:
---   DELETE FROM mentors WHERE import_source = 'alumni-form-2026-08';
+--   DELETE FROM forge_mentors WHERE import_source = 'alumni-form-2026-08';
 --   (the area links follow via ON DELETE CASCADE)
 -- ===========================================================================
 
@@ -42,21 +42,21 @@ START TRANSACTION;
 -- Scoped to rows this import owns. A mentor entered by hand keeps their areas.
 -- ---------------------------------------------------------------------------
 DELETE mma
-  FROM mentor_mentorship_areas mma
-  JOIN mentors m ON m.id = mma.mentor_id
+  FROM forge_mentor_mentorship_areas mma
+  JOIN forge_mentors m ON m.id = mma.mentor_id
  WHERE m.import_source = 'alumni-form-2026-08';
 
 -- ---------------------------------------------------------------------------
 -- 2. The 70 alumni mentors
 --
--- `mentor_type_id` is looked up from `mentor_types` by slug. If that subquery
+-- `mentor_type_id` is looked up from forge_mentor_types by slug. If that subquery
 -- returns NULL the INSERT fails on the NOT NULL column rather than storing a
--- mentor with no type — check `SELECT id FROM mentor_types WHERE slug='alumni'`
+-- mentor with no type — check `SELECT id FROM forge_mentor_types WHERE slug='alumni'`
 -- returns a row before running this.
 -- ---------------------------------------------------------------------------
 
 -- 1. Aakanksha Mistry
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -65,7 +65,7 @@ VALUES
    'Proprietor at Perspective Inc', 'Mumbai', 'Interior design',
    2020, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-27 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AM', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AM', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -75,7 +75,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 2. Aamena K
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -84,7 +84,7 @@ VALUES
    'Marketing Executive', 'Mumbai', 'Fashion design',
    2025, 'Other', '0-2 years', 'maybe',
    'alumni-form-2026-08', '2026-08-01 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AK', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AK', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -94,7 +94,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 3. Aashi Lath
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -103,7 +103,7 @@ VALUES
    'UX designer in TATA AIA Life Insurance', 'Mumbai', 'Communication design',
    2020, 'Other', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-06-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AL', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AL', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -113,7 +113,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 4. Aashka Dave
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -122,7 +122,7 @@ VALUES
    'Associate Designer, The Circle India', 'Mumbai', 'B.Des in Communication Design',
    2025, 'Other', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AD', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AD', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -132,7 +132,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 5. Adeeti Shukla
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -141,7 +141,7 @@ VALUES
    'UI UX Specialist at LTM', 'Mumbai', 'Communication Design',
    2025, 'Technology', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -151,7 +151,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 6. Aditi Jaisinghani
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -160,7 +160,7 @@ VALUES
    'Founder', 'Indore', 'Fashion Communication & Styling',
    2020, 'Manufacturing', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-26 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AJ', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AJ', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -170,7 +170,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 7. Aditya Pai
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -179,7 +179,7 @@ VALUES
    'Founder at Misfits', 'Mumbai', 'Product design',
    2022, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-07-03 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AP', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AP', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -189,7 +189,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 8. Aishwarya Mukim
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -198,7 +198,7 @@ VALUES
    'Pursuing as pastry chef', 'Mumbai', 'Fashion design',
    2023, 'Other', NULL, 'yes',
    'alumni-form-2026-08', '2026-07-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AM', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AM', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -208,7 +208,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 9. Akruti Bagla
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -217,7 +217,7 @@ VALUES
    'Lead UX Designer at Lemon Yellow', 'Mumbai', 'Communication Design',
    2020, 'Technology', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-06-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AB', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AB', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -227,7 +227,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 10. Amrutha Mahesh
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -236,7 +236,7 @@ VALUES
    'Founder, Gutsee', 'Mumbai', 'Fashion communication & styling',
    2021, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-26 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AM', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AM', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -246,7 +246,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 11. Anantika Sethi
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -255,7 +255,7 @@ VALUES
    'UX designer at Google', 'San Francisco', 'Communication design',
    2021, 'Technology', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -265,7 +265,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 12. Anik Jain
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -274,7 +274,7 @@ VALUES
    'Founder & Creative Director of DZINR', 'Mumbai', 'Visual communication design',
    2024, 'Consulting', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-07-02 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AJ', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AJ', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -284,7 +284,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 13. Anjali Kothari
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -293,7 +293,7 @@ VALUES
    'Self Employed and teaching students and employees art of Public Speaking', 'Mumbai', 'Fashion Communication and Styling',
    2020, 'Education', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AK', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AK', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -303,7 +303,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 14. Anjali Maheshwari
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -312,7 +312,7 @@ VALUES
    'Communication Design Freelancer', 'Jaipur', 'Communication Design',
    2023, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-07-11 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AM', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AM', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -322,7 +322,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 15. Anushka Kadam
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -331,7 +331,7 @@ VALUES
    'Founder of vanilla studio', 'Pune', 'Fashion Design',
    2025, 'Other', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AK', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AK', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -341,7 +341,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 16. Anvaya Namjoshi
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -350,7 +350,7 @@ VALUES
    'Senior Manager- The Minimalist', 'Mumbai', 'Fashion Communication & Styling',
    2023, 'Other', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-07-05 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AN', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AN', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -360,7 +360,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 17. Aparna A
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -369,7 +369,7 @@ VALUES
    'Amazon, Human Rights & Sustainability', '`Mumbai', 'FCS',
    2021, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-08-05 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AA', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AA', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -379,7 +379,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 18. Ayush Apte
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -388,7 +388,7 @@ VALUES
    'User experience designer @ playground strategy & Design', 'Pune', 'Product design',
    2025, 'Consulting', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AA', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AA', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -398,7 +398,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 19. Ayush Vijoy
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -407,7 +407,7 @@ VALUES
    'Product Designer at NxtQube', 'Nashik', 'Product Design',
    2025, 'Technology', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'AV', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'AV', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -417,7 +417,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 20. Crystal Princw
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -426,7 +426,7 @@ VALUES
    'UX Designer at LTIMindtree (worked for 2 years)', 'Sydney', 'Master of Interaction Design (2026-2028) from University Of Technology Sydney',
    2024, 'Consulting', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-07-05 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'CP', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'CP', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -436,7 +436,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 21. Delaina Fernandes
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -445,7 +445,7 @@ VALUES
    'Industrial Designer at Antonio Lanzillo Design studio', 'Milan,Italy', 'Product Design',
    2022, 'Other', '3-5 years', 'maybe',
    'alumni-form-2026-08', '2026-07-04 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'DF', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'DF', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -455,7 +455,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 22. Disha Shah
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -464,7 +464,7 @@ VALUES
    'Freelancer, Vanya Studio', 'Kolkata', 'Strategic Design and Management',
    2021, 'Consulting', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-07-01 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'DS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'DS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -474,7 +474,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 23. Drashti Shah
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -483,7 +483,7 @@ VALUES
    'reD Architects - Junior Interior Designer', 'Mumbai', 'Interior Design',
    2021, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-07-08 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'DS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'DS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -493,7 +493,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 24. Harshavi Jain
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -502,7 +502,7 @@ VALUES
    'Founder at Lesscare', 'mumbai', 'Fashion communication',
    2022, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'HJ', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'HJ', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -512,7 +512,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 25. Hemani Bhalotia
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -521,7 +521,7 @@ VALUES
    'Founder, Enclothe', 'Kolkata', 'FD',
    2021, 'Manufacturing', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'HB', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'HB', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -531,7 +531,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 26. Hetvi Bhavin Shah
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -540,7 +540,7 @@ VALUES
    'Principal Designer | Forms And Spaces', 'Mumbai', 'Interior Design',
    2020, 'Consulting', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-06-26 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'HS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'HS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -550,7 +550,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 27. Jainam Chheda
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -559,7 +559,7 @@ VALUES
    'Business Development', 'Mumbai', 'Interior Designing',
    2022, 'Other', '3-5 years', 'maybe',
    'alumni-form-2026-08', '2026-06-27 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'JC', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'JC', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -569,7 +569,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 28. Kasvi Shangari
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -578,7 +578,7 @@ VALUES
    'Head of department, Spice PR', 'Mumbai', 'Fashion communication & styling',
    2021, 'Other', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-06-30 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'KS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'KS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -588,7 +588,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 29. Keisha Bajaj
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -597,7 +597,7 @@ VALUES
    'Proprietor', 'Mumbai', 'Fashion Communication & Styling',
    2023, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-07-17 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'KB', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'KB', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -607,7 +607,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 30. Khushi Karve
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -616,7 +616,7 @@ VALUES
    'brand planner at chlorophyll', 'Mumbai', 'SDM',
    2024, 'Consulting', '0-2 years', 'maybe',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'KK', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'KK', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -626,7 +626,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 31. Khushi Khurana
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -635,7 +635,7 @@ VALUES
    'Merchandising/manufacturing', 'mumbai', 'Fashion design',
    2023, 'Other', '0-2 years', 'maybe',
    'alumni-form-2026-08', '2026-06-26 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'KK', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'KK', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -645,7 +645,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 32. Khushi Mittal
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -654,7 +654,7 @@ VALUES
    'Family business', 'Ludhiana', 'Strategic Design Management',
    2025, 'Manufacturing', '0-2 years', 'maybe',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'KM', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'KM', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -664,7 +664,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 33. khushi shah
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -673,7 +673,7 @@ VALUES
    'Founder @ Step by PS', 'Mumbai', 'SDM',
    2023, 'Other', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'KS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'KS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -683,7 +683,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 34. Khushi Walani
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -692,7 +692,7 @@ VALUES
    'Communication Designer at APRE Art House', 'Mumbai', 'B.Des (Communication Design)',
    2025, 'Other', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-07-02 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'KW', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'KW', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -702,7 +702,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 35. Megha Dagliya
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -711,7 +711,7 @@ VALUES
    'Self employed at M/S Dagliya Brothers', 'Nathdwara', 'Fashion Designing',
    2021, 'Manufacturing', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-26 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'MD', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'MD', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -721,7 +721,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 36. Mihir Mehta
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -730,7 +730,7 @@ VALUES
    'UI UX Designer Deloitte USI', 'Pune', 'Product Design',
    2025, 'Consulting', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-06-30 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'MM', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'MM', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -740,7 +740,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 37. Mihir pawar
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -749,7 +749,7 @@ VALUES
    'atlas Test', 'Mumbai', 'BDes',
    2024, 'Technology', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-24 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'MP', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'MP', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -759,7 +759,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 38. Mukul Gehaney
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -768,7 +768,7 @@ VALUES
    'Product manager - ArtisanCraft', 'Mumbai', 'Product design',
    2021, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'MG', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'MG', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -778,7 +778,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 39. Nancy Deepak Bhai Amin
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -787,7 +787,7 @@ VALUES
    'CEO', 'Kolkata', 'Fashion Communication and Styling',
    2022, 'Manufacturing', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-07-06 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'NA', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'NA', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -797,7 +797,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 40. Nidhi Santwani
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -806,7 +806,7 @@ VALUES
    'Joined as co-founder at Sanard Shipping Solutions', 'Gandhidham', 'Entrepreneur',
    2024, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-07-02 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'NS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'NS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -816,7 +816,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 41. Niharika Arora
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -825,7 +825,7 @@ VALUES
    'Going for masters abroad', 'Mumbai', 'Communication Design',
    2023, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'NA', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'NA', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -835,7 +835,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 42. Niyati Agarwal
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -844,7 +844,7 @@ VALUES
    'Freelancer', 'Mumbai', 'Fashion design',
    2021, 'Other', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-06-26 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'NA', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'NA', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -854,7 +854,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 43. Prakriti Jain
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -863,7 +863,7 @@ VALUES
    'Co-Founder, The Heritage Trail Cafe Shimla', 'Shimla', 'Communication Design',
    2023, 'Other', '3-5 years', 'maybe',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'PJ', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'PJ', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -873,7 +873,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 44. PranayRaj Singh
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -882,7 +882,7 @@ VALUES
    'Founder- PRSDESIGNS', 'New Delhi', 'B.Voc Interior Design',
    2024, 'Other', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'PS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'PS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -892,7 +892,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 45. Priyanka Shewani
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -901,7 +901,7 @@ VALUES
    'Founder House of TAVANJO', 'Vadodara Gujarat', 'Fashion Communication and Styling',
    2023, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-07-17 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'PS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'PS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -911,7 +911,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 46. Rajvi Parikh
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -920,7 +920,7 @@ VALUES
    'Founder at Ptato design', 'Pune', 'Product Design',
    2021, 'Consulting', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'RP', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'RP', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -930,7 +930,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 47. Ramya Satish
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -939,7 +939,7 @@ VALUES
    'Independent Artist', 'Barcelona // Mumbai', 'Sculpture',
    2019, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'RS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'RS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -949,7 +949,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 48. Rashmita Sancheti
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -958,7 +958,7 @@ VALUES
    'Associate Product Manager - InMobi', 'Bengaluru', 'Fashion Design',
    2022, 'Technology', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-26 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'RS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'RS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -968,7 +968,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 49. Rhea Gore
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -977,7 +977,7 @@ VALUES
    'Art Director at Leo Burnett', 'Mumbai', 'Communication design',
    2023, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-30 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'RG', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'RG', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -987,7 +987,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 50. Rhea Makhija
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -996,7 +996,7 @@ VALUES
    'Product design @ IBM', 'Bangalore', 'Product design',
    2021, 'Technology', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'RM', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'RM', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1006,7 +1006,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 51. Rishika Singh
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1015,7 +1015,7 @@ VALUES
    'Art Director and Founder at Studio Superlative', 'Mumbai', 'Communication Design',
    2023, 'Consulting', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-07-08 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'RS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'RS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1025,7 +1025,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 52. Riya Agarwal
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1034,7 +1034,7 @@ VALUES
    'Co-Founder at Elemente', 'Mumbai', 'Fashion Design',
    2020, 'Other', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-08-02 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'RA', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'RA', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1044,7 +1044,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 53. Riya Roy
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1053,7 +1053,7 @@ VALUES
    'Associate director at yellow', 'Mumbai', 'Interior design',
    2018, 'Other', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-06-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'RR', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'RR', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1063,7 +1063,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 54. Rukaiya Vohra
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1072,7 +1072,7 @@ VALUES
    'User Experience Intern', 'Savannah', 'Product Design',
    2024, 'Technology', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-06-27 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'RV', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'RV', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1082,7 +1082,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 55. Rutuja Malve
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1091,7 +1091,7 @@ VALUES
    'glad U Came PR executive', 'Mumbai', 'FcS',
    2025, 'Other', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'RM', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'RM', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1101,7 +1101,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 56. Sachi Chordia
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1110,7 +1110,7 @@ VALUES
    'Fashion merchandiser at Marsil, currently free lancing', 'Chennai', 'Fashion Designing',
    2023, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-07-02 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'SC', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'SC', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1120,7 +1120,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 57. Saniya Oswal
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1129,7 +1129,7 @@ VALUES
    'Creative Producer - By The Gram', 'Mumbai', 'FCS',
    2025, 'Other', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'SO', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'SO', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1139,7 +1139,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 58. Sanyukta Mathure
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1148,7 +1148,7 @@ VALUES
    'Senior Researcher, Jigsaw Brand Consultants', 'Mumbai', 'Communication Design',
    2022, 'Consulting', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-30 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'SM', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'SM', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1158,7 +1158,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 59. Saumya Maloo
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1167,7 +1167,7 @@ VALUES
    'Strategic projects - Founder’s Office', 'Dubai', 'Strategic Design Management',
    2021, 'Finance', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-07-24 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'SM', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'SM', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1177,7 +1177,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 60. Shihij Kaw
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1186,7 +1186,7 @@ VALUES
    'Assistant interior stylist/ designer', 'Mumbai', 'FCS',
    2023, 'Other', '0-2 years', 'maybe',
    'alumni-form-2026-08', '2026-07-14 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'SK', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'SK', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1196,7 +1196,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 61. Shruthi Venkatesh
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1205,7 +1205,7 @@ VALUES
    'Freelance / Founder - Unplug', 'Bengaluru', 'Communication Design',
    2022, 'Other', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-07-13 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'SV', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'SV', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1215,7 +1215,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 62. Shruti Misra
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1224,7 +1224,7 @@ VALUES
    'TATA Trent (Ex)', 'Mumbai', 'Fashion Communication and Styling',
    2024, 'Other', '0-2 years', 'yes',
    'alumni-form-2026-08', '2026-07-01 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'SM', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'SM', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1234,7 +1234,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 63. Shruti Sharma
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1243,7 +1243,7 @@ VALUES
    'co - founder', 'mumbai', 'product design',
    2019, 'Other', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-07-08 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'SS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'SS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1253,7 +1253,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 64. Shubh Hamirwasia
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1262,7 +1262,7 @@ VALUES
    'Freelance', 'Mumbai', 'Communication Design',
    2022, 'Healthcare', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-06-30 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'SH', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'SH', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1272,7 +1272,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 65. Shubham Gahlot
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1281,7 +1281,7 @@ VALUES
    'Senior Industrial Designer / Auriquant Design', 'Mumbai', 'Product design',
    2021, 'Other', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-06-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'SG', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'SG', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1291,7 +1291,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 66. Snehal Shelar
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1300,7 +1300,7 @@ VALUES
    'Interior designer at Hipcouch', 'Mumbai', 'Interior design',
    2020, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-06-29 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'SS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'SS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1310,7 +1310,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 67. Sushruta Basak
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1319,7 +1319,7 @@ VALUES
    'Founder', 'Mumbai', 'Communication Design',
    2022, 'Technology', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-06-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'SB', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'SB', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1329,7 +1329,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 68. Tanvi Walanj
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1338,7 +1338,7 @@ VALUES
    'Graphic Designer, Ellucian', 'Washington DC, United States', 'Communication Design',
    2020, 'Other', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-08-07 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'TW', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'TW', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1348,7 +1348,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 69. Trishala Kachhara
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1357,7 +1357,7 @@ VALUES
    'Founder of Studio 11', 'Paris', 'Communication Design',
    2018, 'Other', '6-10 years', 'yes',
    'alumni-form-2026-08', '2026-06-25 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'TK', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'TK', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1367,7 +1367,7 @@ ON DUPLICATE KEY UPDATE
   initials = VALUES(initials);
 
 -- 70. Vadanya Shrotriya
-INSERT INTO mentors
+INSERT INTO forge_mentors
   (full_name, email, phone, linkedin_url, role_title, city, course,
    graduation_year, industry, experience_band, mentoring_availability,
    import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -1376,7 +1376,7 @@ VALUES
    'Account growth manger at ps&co, visiting faculty at isdi, entrepreneur', 'Mumbai', 'Communication Design',
    2020, 'Other', '3-5 years', 'yes',
    'alumni-form-2026-08', '2026-07-23 00:00:00',
-   (SELECT id FROM mentor_types WHERE slug = 'alumni'), 'VS', 'primary')
+   (SELECT id FROM forge_mentor_types WHERE slug = 'alumni'), 'VS', 'primary')
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name), phone = VALUES(phone), linkedin_url = VALUES(linkedin_url),
   role_title = VALUES(role_title), city = VALUES(city), course = VALUES(course),
@@ -1394,731 +1394,731 @@ ON DUPLICATE KEY UPDATE
 -- ---------------------------------------------------------------------------
 
 -- Aakanksha Mistry
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aakanksha.mistry98@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aakanksha.mistry98@gmail.com' AND a.slug = 'career-development';
 
 -- Aamena K
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aamenakotwala03@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aamenakotwala03@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aamenakotwala03@gmail.com' AND a.slug = 'marketing-growth';
 
 -- Aashi Lath
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aashilath123@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aashilath123@gmail.com' AND a.slug = 'design-creative';
 
 -- Aashka Dave
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aashkadave1309@gmail.com' AND a.slug = 'design-creative';
 
 -- Adeeti Shukla
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'adeetishukla08@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'adeetishukla08@gmail.com' AND a.slug = 'finance-fundraising';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'adeetishukla08@gmail.com' AND a.slug = 'sector-specific';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'adeetishukla08@gmail.com' AND a.slug = 'career-development';
 
 -- Aditi Jaisinghani
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aditi.jaisgh@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aditi.jaisgh@gmail.com' AND a.slug = 'design-creative';
 
 -- Aditya Pai
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aditya@drinkmisfits.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aditya@drinkmisfits.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aditya@drinkmisfits.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aditya@drinkmisfits.com' AND a.slug = 'marketing-growth';
 
 -- Aishwarya Mukim
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'aishwaryamukim@gmail.com' AND a.slug = 'design-creative';
 
 -- Akruti Bagla
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'baglaakruti1@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'baglaakruti1@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'baglaakruti1@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'baglaakruti1@gmail.com' AND a.slug = 'marketing-growth';
 
 -- Amrutha Mahesh
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'amrutha.m1999@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'amrutha.m1999@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'amrutha.m1999@gmail.com' AND a.slug = 'marketing-growth';
 
 -- Anantika Sethi
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anantika1603@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anantika1603@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anantika1603@gmail.com' AND a.slug = 'career-development';
 
 -- Anik Jain
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anikjaindesign@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anikjaindesign@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anikjaindesign@gmail.com' AND a.slug = 'sales-bizdev';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anikjaindesign@gmail.com' AND a.slug = 'career-development';
 
 -- Anjali Kothari
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anjalikothari2012@gmail.com' AND a.slug = 'hr-culture';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anjalikothari2012@gmail.com' AND a.slug = 'sector-specific';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anjalikothari2012@gmail.com' AND a.slug = 'career-development';
 
 -- Anjali Maheshwari
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anjali.m.work@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anjali.m.work@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anjali.m.work@gmail.com' AND a.slug = 'career-development';
 
 -- Anushka Kadam
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'kadamanu02@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'kadamanu02@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'kadamanu02@gmail.com' AND a.slug = 'career-development';
 
 -- Anvaya Namjoshi
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'anvaya.namjoshi22@gmail.com' AND a.slug = 'marketing-growth';
 
 -- Aparna A — listed no mentorship areas
 
 -- Ayush Apte
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'ayushapte1312@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'ayushapte1312@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'ayushapte1312@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'ayushapte1312@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'ayushapte1312@gmail.com' AND a.slug = 'career-development';
 
 -- Ayush Vijoy
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'ayushzzz1224@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'ayushzzz1224@gmail.com' AND a.slug = 'design-creative';
 
 -- Crystal Princw
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'crystalprincedesign@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'crystalprincedesign@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'crystalprincedesign@gmail.com' AND a.slug = 'career-development';
 
 -- Delaina Fernandes
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'delaina2000@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'delaina2000@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'delaina2000@gmail.com' AND a.slug = 'design-creative';
 
 -- Disha Shah
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'dishashah66@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'dishashah66@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'dishashah66@gmail.com' AND a.slug = 'sales-bizdev';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'dishashah66@gmail.com' AND a.slug = 'sector-specific';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'dishashah66@gmail.com' AND a.slug = 'career-development';
 
 -- Drashti Shah
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'drashtishah342@gmail.com' AND a.slug = 'design-creative';
 
 -- Harshavi Jain
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'harshavi1321@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'harshavi1321@gmail.com' AND a.slug = 'sales-bizdev';
 
 -- Hemani Bhalotia
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'bhalotiahemani@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'bhalotiahemani@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'bhalotiahemani@gmail.com' AND a.slug = 'sales-bizdev';
 
 -- Hetvi Bhavin Shah
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'hetvishah1398@gmail.com' AND a.slug = 'design-creative';
 
 -- Jainam Chheda
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'jainamchheda8@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'jainamchheda8@gmail.com' AND a.slug = 'marketing-growth';
 
 -- Kasvi Shangari — listed no mentorship areas
 
 -- Keisha Bajaj
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'keishabajaj.kb@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'keishabajaj.kb@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'keishabajaj.kb@gmail.com' AND a.slug = 'sales-bizdev';
 
 -- Khushi Karve
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'khushi.t.karve@gmail.com' AND a.slug = 'career-development';
 
 -- Khushi Khurana
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'khushikaur41099@gmail.com' AND a.slug = 'design-creative';
 
 -- Khushi Mittal
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'khushikmittal@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'khushikmittal@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'khushikmittal@gmail.com' AND a.slug = 'sales-bizdev';
 
 -- khushi shah
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'shahkhushi2001@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'shahkhushi2001@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'shahkhushi2001@gmail.com' AND a.slug = 'sales-bizdev';
 
 -- Khushi Walani
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'khushi.walani@gmail.com' AND a.slug = 'design-creative';
 
 -- Megha Dagliya
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'meghadagliya67@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'meghadagliya67@gmail.com' AND a.slug = 'career-development';
 
 -- Mihir Mehta
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'mihir.mehta03@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'mihir.mehta03@gmail.com' AND a.slug = 'finance-fundraising';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'mihir.mehta03@gmail.com' AND a.slug = 'operations-supply-chain';
 
 -- Mihir pawar
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'mihir57pawar@gmail.com' AND a.slug = 'marketing-growth';
 
 -- Mukul Gehaney
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'mukulgehaney@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'mukulgehaney@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'mukulgehaney@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'mukulgehaney@gmail.com' AND a.slug = 'career-development';
 
 -- Nancy Deepak Bhai Amin
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'amin.nancy16@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'amin.nancy16@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'amin.nancy16@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'amin.nancy16@gmail.com' AND a.slug = 'sales-bizdev';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'amin.nancy16@gmail.com' AND a.slug = 'operations-supply-chain';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'amin.nancy16@gmail.com' AND a.slug = 'career-development';
 
 -- Nidhi Santwani
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'nidhi.santwani@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'nidhi.santwani@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'nidhi.santwani@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'nidhi.santwani@gmail.com' AND a.slug = 'sales-bizdev';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'nidhi.santwani@gmail.com' AND a.slug = 'operations-supply-chain';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'nidhi.santwani@gmail.com' AND a.slug = 'hr-culture';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'nidhi.santwani@gmail.com' AND a.slug = 'career-development';
 
 -- Niharika Arora
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'niharika.gemeloart@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'niharika.gemeloart@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'niharika.gemeloart@gmail.com' AND a.slug = 'career-development';
 
 -- Niyati Agarwal — listed no mentorship areas
 
 -- Prakriti Jain
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'prakritijain060601@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'prakritijain060601@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'prakritijain060601@gmail.com' AND a.slug = 'career-development';
 
 -- PranayRaj Singh
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'pranay24isdi@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'pranay24isdi@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'pranay24isdi@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'pranay24isdi@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'pranay24isdi@gmail.com' AND a.slug = 'sales-bizdev';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'pranay24isdi@gmail.com' AND a.slug = 'hr-culture';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'pranay24isdi@gmail.com' AND a.slug = 'career-development';
 
 -- Priyanka Shewani
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'priyankashewani.ps@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'priyankashewani.ps@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'priyankashewani.ps@gmail.com' AND a.slug = 'marketing-growth';
 
 -- Rajvi Parikh
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'parikhrajvi3@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'parikhrajvi3@gmail.com' AND a.slug = 'design-creative';
 
 -- Ramya Satish
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'figurati.art@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'figurati.art@gmail.com' AND a.slug = 'career-development';
 
 -- Rashmita Sancheti
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sanchetiria@gmail.con' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sanchetiria@gmail.con' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sanchetiria@gmail.con' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sanchetiria@gmail.con' AND a.slug = 'sector-specific';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sanchetiria@gmail.con' AND a.slug = 'career-development';
 
 -- Rhea Gore
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'rheadgore@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'rheadgore@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'rheadgore@gmail.com' AND a.slug = 'career-development';
 
 -- Rhea Makhija
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'rheamakhija29@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'rheamakhija29@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'rheamakhija29@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'rheamakhija29@gmail.com' AND a.slug = 'career-development';
 
 -- Rishika Singh
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'rishikarsinghh@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'rishikarsinghh@gmail.com' AND a.slug = 'design-creative';
 
 -- Riya Agarwal
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'riyagarwal.98@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'riyagarwal.98@gmail.com' AND a.slug = 'career-development';
 
 -- Riya Roy
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'riya@yellowad.in' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'riya@yellowad.in' AND a.slug = 'marketing-growth';
 
 -- Rukaiya Vohra
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'rvohraf@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'rvohraf@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'rvohraf@gmail.com' AND a.slug = 'design-creative';
 
 -- Rutuja Malve
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'rutujamalve874@gmail.com' AND a.slug = 'design-creative';
 
 -- Sachi Chordia
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'chordiasachi@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'chordiasachi@gmail.com' AND a.slug = 'sales-bizdev';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'chordiasachi@gmail.com' AND a.slug = 'career-development';
 
 -- Saniya Oswal
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'saniyaoswal18@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'saniyaoswal18@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'saniyaoswal18@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'saniyaoswal18@gmail.com' AND a.slug = 'hr-culture';
 
 -- Sanyukta Mathure
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sanyumathure@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sanyumathure@gmail.com' AND a.slug = 'career-development';
 
 -- Saumya Maloo
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'saumyamaloo@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'saumyamaloo@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'saumyamaloo@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'saumyamaloo@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'saumyamaloo@gmail.com' AND a.slug = 'finance-fundraising';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'saumyamaloo@gmail.com' AND a.slug = 'operations-supply-chain';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'saumyamaloo@gmail.com' AND a.slug = 'sector-specific';
 
 -- Shihij Kaw
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'shihij.kaw@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'shihij.kaw@gmail.com' AND a.slug = 'hr-culture';
 
 -- Shruthi Venkatesh
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'contact@shruthivenkatesh.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'contact@shruthivenkatesh.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'contact@shruthivenkatesh.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'contact@shruthivenkatesh.com' AND a.slug = 'sales-bizdev';
 
 -- Shruti Misra
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'shrutimisra555@gmail.com' AND a.slug = 'career-development';
 
 -- Shruti Sharma
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'shrutis.sharma95@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'shrutis.sharma95@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'shrutis.sharma95@gmail.com' AND a.slug = 'career-development';
 
 -- Shubh Hamirwasia
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'shubbu1105@live.in' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'shubbu1105@live.in' AND a.slug = 'marketing-growth';
 
 -- Shubham Gahlot
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'nanni.gahlot124ng@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'nanni.gahlot124ng@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'nanni.gahlot124ng@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'nanni.gahlot124ng@gmail.com' AND a.slug = 'career-development';
 
 -- Snehal Shelar
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'snehalshelar2002@gmail.com' AND a.slug = 'design-creative';
 
 -- Sushruta Basak
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sushruta.basak@gmail.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sushruta.basak@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sushruta.basak@gmail.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sushruta.basak@gmail.com' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sushruta.basak@gmail.com' AND a.slug = 'finance-fundraising';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sushruta.basak@gmail.com' AND a.slug = 'sales-bizdev';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'sushruta.basak@gmail.com' AND a.slug = 'career-development';
 
 -- Tanvi Walanj
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'tanviwalanj@gmail.com' AND a.slug = 'product-technology';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'tanviwalanj@gmail.com' AND a.slug = 'design-creative';
 
 -- Trishala Kachhara
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'trishala@itsstudio11.com' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'trishala@itsstudio11.com' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'trishala@itsstudio11.com' AND a.slug = 'sales-bizdev';
 
 -- Vadanya Shrotriya
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'vadanyaa@yahoo.co.in' AND a.slug = 'business-strategy';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'vadanyaa@yahoo.co.in' AND a.slug = 'design-creative';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'vadanyaa@yahoo.co.in' AND a.slug = 'marketing-growth';
-INSERT IGNORE INTO mentor_mentorship_areas (mentor_id, area_id)
-SELECT m.id, a.id FROM mentors m JOIN mentorship_areas a
+INSERT IGNORE INTO forge_mentor_mentorship_areas (mentor_id, area_id)
+SELECT m.id, a.id FROM forge_mentors m JOIN forge_mentorship_areas a
  WHERE m.email = 'vadanyaa@yahoo.co.in' AND a.slug = 'career-development';
 
 COMMIT;
@@ -2126,19 +2126,19 @@ COMMIT;
 -- ===========================================================================
 -- Verify — run these afterwards and check every number
 --
---   SELECT COUNT(*) FROM mentors;                                        -- previous count + 70
---   SELECT COUNT(*) FROM mentors WHERE import_source = 'alumni-form-2026-08';  -- 70
---   SELECT COUNT(*) FROM mentors WHERE import_source IS NULL;            -- unchanged
---   SELECT COUNT(*) FROM mentor_mentorship_areas;                        -- 196
+--   SELECT COUNT(*) FROM forge_mentors;                                        -- previous count + 70
+--   SELECT COUNT(*) FROM forge_mentors WHERE import_source = 'alumni-form-2026-08';  -- 70
+--   SELECT COUNT(*) FROM forge_mentors WHERE import_source IS NULL;            -- unchanged
+--   SELECT COUNT(*) FROM forge_mentor_mentorship_areas;                        -- 196
 --
 --   -- what a founder sees (the 62 who answered "Yes", plus any alumni
 --   -- mentor entered by hand):
---   SELECT COUNT(*) FROM mentors m JOIN mentor_types mt ON mt.id = m.mentor_type_id
+--   SELECT COUNT(*) FROM forge_mentors m JOIN forge_mentor_types mt ON mt.id = m.mentor_type_id
 --    WHERE m.deleted_at IS NULL AND m.is_active = TRUE AND mt.slug = 'alumni'
 --      AND (m.mentoring_availability IS NULL OR m.mentoring_availability = 'yes');
 --
 --   -- nobody arrived without a type or with a duplicate email:
---   SELECT COUNT(*) FROM mentors WHERE mentor_type_id IS NULL;           -- 0
---   SELECT email, COUNT(*) FROM mentors WHERE email IS NOT NULL
+--   SELECT COUNT(*) FROM forge_mentors WHERE mentor_type_id IS NULL;           -- 0
+--   SELECT email, COUNT(*) FROM forge_mentors WHERE email IS NOT NULL
 --    GROUP BY email HAVING COUNT(*) > 1;                                 -- no rows
 -- ===========================================================================

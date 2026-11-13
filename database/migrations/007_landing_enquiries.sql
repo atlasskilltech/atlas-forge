@@ -39,7 +39,7 @@
 -- `message` is NULL-able: the reference marks "Tell Us More" as the only
 -- optional field on the form.
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS service_requests (
+CREATE TABLE IF NOT EXISTS forge_service_requests (
   id               BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name             VARCHAR(120)    NOT NULL,
   email            VARCHAR(190)    NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS service_requests (
 -- genuinely different fields, and a shared table would mean every row carries
 -- a NULL for whichever half it is not.
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS partner_requests (
+CREATE TABLE IF NOT EXISTS forge_partner_requests (
   id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name        VARCHAR(120)    NOT NULL,
   email       VARCHAR(190)    NOT NULL,
@@ -92,8 +92,8 @@ CREATE TABLE IF NOT EXISTS partner_requests (
 -- Verify
 --
 --   SHOW TABLES LIKE '%_requests';            -- service_requests, partner_requests
---   DESCRIBE service_requests;                -- 11 columns
---   DESCRIBE partner_requests;                -- 11 columns
---   SELECT COUNT(*) FROM service_requests;    -- 0 until the first submission
---   SELECT COUNT(*) FROM partner_requests;    -- 0 until the first submission
+--   DESCRIBE forge_service_requests;                -- 11 columns
+--   DESCRIBE forge_partner_requests;                -- 11 columns
+--   SELECT COUNT(*) FROM forge_service_requests;    -- 0 until the first submission
+--   SELECT COUNT(*) FROM forge_partner_requests;    -- 0 until the first submission
 -- ===========================================================================

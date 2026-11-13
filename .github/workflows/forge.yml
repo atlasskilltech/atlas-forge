@@ -28,13 +28,16 @@ jobs:
 
             cd /home/ubuntu/atlas-forge
 
+            # The release that is running now: the automatic rollback target.
+            PREV_SHA=$(git rev-parse HEAD)
             git pull origin main
 
-            npm ci
-            npm run build
-
-            pm2 reload atlas-forge || pm2 start --name atlas-forge
-            pm2 save
+            # Preflight, build while the old release serves, short Forge-only
+            # maintenance window (one-time forge_ table-prefix migration with a
+            # verified backup), start, smoke checks; any failure restores
+            # PREV_SHA automatically. Never seeds/resets, drops, truncates or
+            # edits .env. See scripts/deploy.sh.
+            PREV_SHA="$PREV_SHA" bash scripts/deploy.sh
           EOF
 
           rm -f ~/.ssh/key.pem

@@ -14,6 +14,8 @@
 import { register } from 'node:module'
 import { pathToFileURL } from 'node:url'
 
+import { T } from '../src/lib/queries/tables.mjs'
+
 register(
   'data:text/javascript,' +
     encodeURIComponent(`
@@ -203,7 +205,7 @@ const decisions = await queryOne(
      SUM(r.slug = 'forge-manager')   AS forge,
      SUM(r.slug = 'backend-manager') AS backend,
      SUM(a.is_override)              AS overrides
-   FROM approvals a JOIN roles r ON r.id = a.decided_as_role_id
+   FROM ${T.approvals} a JOIN ${T.roles} r ON r.id = a.decided_as_role_id
    WHERE a.listing_id = ?`,
   [rejected.listingId]
 )
@@ -212,7 +214,7 @@ check('override — both decisions survive on the same listing',
   `forge=${decisions.forge} backend=${decisions.backend}`)
 check('override — the later decision is flagged as one', Number(decisions.overrides) === 1)
 
-const listingNow = await queryValue('SELECT status FROM listings WHERE id = ?', [
+const listingNow = await queryValue(`SELECT status FROM ${T.listings} WHERE id = ?`, [
   rejected.listingId,
 ])
 check('override — the listing follows the override', listingNow === 'live', listingNow)
@@ -233,16 +235,16 @@ check('override — an unknown verdict is refused',
 
 // Reverse.
 await execute(
-  `DELETE a FROM approvals a JOIN roles r ON r.id = a.decided_as_role_id
+  `DELETE a FROM ${T.approvals} a JOIN ${T.roles} r ON r.id = a.decided_as_role_id
     WHERE a.listing_id = ? AND r.slug = 'backend-manager'`,
   [rejected.listingId]
 )
-await execute("UPDATE listings SET status = 'rejected' WHERE id = ?", [rejected.listingId])
-await execute("DELETE FROM notifications WHERE entity_type = 'listing' AND entity_id = ?", [
+await execute(`UPDATE ${T.listings} SET status = 'rejected' WHERE id = ?`, [rejected.listingId])
+await execute(`DELETE FROM ${T.notifications} WHERE entity_type = 'listing' AND entity_id = ?`, [
   rejected.listingId,
 ])
 await execute(
-  "DELETE FROM activity_logs WHERE entity_type = 'listing' AND entity_id = ? AND actor_user_id = ?",
+  `DELETE FROM ${T.activity_logs} WHERE entity_type = 'listing' AND entity_id = ? AND actor_user_id = ?`,
   [rejected.listingId, shantanu.id]
 )
 
@@ -255,14 +257,14 @@ const target = byAppId.matched // Riya Kapoor — a student with no founder role
 await backend.grantAccess(shantanu, { userId: target.userId })
 
 const hasRole = await queryValue(
-  `SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id
+  `SELECT COUNT(*) FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
     WHERE ur.user_id = ? AND r.slug = 'founder' AND ur.revoked_at IS NULL`,
   [target.userId]
 )
 check('grantAccess — the founder role is added', Number(hasRole) === 1)
 
 const grantRow = await queryOne(
-  'SELECT granted_by, incubation_application_id FROM founder_access_grants WHERE user_id = ? AND revoked_at IS NULL',
+  `SELECT granted_by, incubation_application_id FROM ${T.founder_access_grants} WHERE user_id = ? AND revoked_at IS NULL`,
   [target.userId]
 )
 check('grantAccess — the grant records who gave it',
@@ -285,14 +287,14 @@ check('grantAccess — the search result now reads as having access',
 await backend.revokeAccess(shantanu, { userId: target.userId })
 
 const roleGone = await queryValue(
-  `SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id
+  `SELECT COUNT(*) FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
     WHERE ur.user_id = ? AND r.slug = 'founder' AND ur.revoked_at IS NULL`,
   [target.userId]
 )
 check('revokeAccess — the founder role is removed', Number(roleGone) === 0)
 
 const grantClosed = await queryValue(
-  'SELECT COUNT(*) FROM founder_access_grants WHERE user_id = ? AND revoked_at IS NOT NULL',
+  `SELECT COUNT(*) FROM ${T.founder_access_grants} WHERE user_id = ? AND revoked_at IS NOT NULL`,
   [target.userId]
 )
 check('revokeAccess — the grant is closed rather than deleted', Number(grantClosed) === 1)
@@ -312,15 +314,15 @@ check('grantAccess — an account that does not exist is 404',
   noSuchUser?.constructor?.name === 'NotFoundError')
 
 // Reverse.
-await execute('DELETE FROM founder_access_grants WHERE user_id = ?', [target.userId])
+await execute(`DELETE FROM ${T.founder_access_grants} WHERE user_id = ?`, [target.userId])
 await execute(
-  `DELETE ur FROM user_roles ur JOIN roles r ON r.id = ur.role_id
+  `DELETE ur FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
     WHERE ur.user_id = ? AND r.slug = 'founder'`,
   [target.userId]
 )
-await execute("DELETE FROM notifications WHERE type = 'access' AND user_id = ?", [target.userId])
+await execute(`DELETE FROM ${T.notifications} WHERE type = 'access' AND user_id = ?`, [target.userId])
 await execute(
-  "DELETE FROM activity_logs WHERE module = 'Access' AND actor_user_id = ?",
+  `DELETE FROM ${T.activity_logs} WHERE module = 'Access' AND actor_user_id = ?`,
   [shantanu.id]
 )
 
@@ -332,7 +334,7 @@ await backend.updateSetting(shantanu, { key: 'contact_log_auto_cc', value: false
 lookups.clearCache()
 
 const stored = await queryValue(
-  'SELECT setting_value FROM platform_settings WHERE setting_key = ?',
+  `SELECT setting_value FROM ${T.platform_settings} WHERE setting_key = ?`,
   ['contact_log_auto_cc']
 )
 check('updateSetting — a boolean is stored as its declared type', stored === 'false', stored)
@@ -356,11 +358,11 @@ check('updateSetting — an unknown key is 404',
   unknownKey?.constructor?.name === 'NotFoundError')
 
 // Reverse.
-await execute('UPDATE platform_settings SET setting_value = ? WHERE setting_key = ?', [
+await execute(`UPDATE ${T.platform_settings} SET setting_value = ? WHERE setting_key = ?`, [
   'true',
   'contact_log_auto_cc',
 ])
-await execute("DELETE FROM activity_logs WHERE module = 'Platform' AND actor_user_id = ?", [
+await execute(`DELETE FROM ${T.activity_logs} WHERE module = 'Platform' AND actor_user_id = ?`, [
   shantanu.id,
 ])
 lookups.clearCache()
@@ -393,20 +395,20 @@ let clearedInside = null
 try {
   await transaction(async (tx) => {
     for (const statement of [
-      'DELETE FROM application_events',
-      'DELETE FROM applications',
-      'DELETE FROM approvals',
-      'DELETE FROM listing_skills',
-      'DELETE FROM listings',
-      'DELETE FROM concierge_contacts',
-      'DELETE FROM posted_needs',
-      'DELETE FROM notifications',
-      'DELETE FROM error_logs',
-      'DELETE FROM activity_logs',
+      `DELETE FROM ${T.application_events}`,
+      `DELETE FROM ${T.applications}`,
+      `DELETE FROM ${T.approvals}`,
+      `DELETE FROM ${T.listing_skills}`,
+      `DELETE FROM ${T.listings}`,
+      `DELETE FROM ${T.concierge_contacts}`,
+      `DELETE FROM ${T.posted_needs}`,
+      `DELETE FROM ${T.notifications}`,
+      `DELETE FROM ${T.error_logs}`,
+      `DELETE FROM ${T.activity_logs}`,
     ]) {
       await execute(statement, [], tx)
     }
-    clearedInside = await queryValue('SELECT COUNT(*) FROM listings', [], tx)
+    clearedInside = await queryValue(`SELECT COUNT(*) FROM ${T.listings}`, [], tx)
     throw new Error('rollback')
   })
 } catch {
@@ -415,11 +417,11 @@ try {
 check('resetPlatform — the delete order satisfies every foreign key',
   Number(clearedInside) === 0, `${clearedInside} listings inside the transaction`)
 
-const survived = await queryValue('SELECT COUNT(*) FROM listings')
+const survived = await queryValue(`SELECT COUNT(*) FROM ${T.listings}`)
 check('resetPlatform — and the rollback left the data untouched', Number(survived) === 7,
   `${survived} listings`)
 
-const usersSurvive = await queryValue('SELECT COUNT(*) FROM users')
+const usersSurvive = await queryValue(`SELECT COUNT(*) FROM ${T.users}`)
 check('resetPlatform — user accounts are outside its scope by design',
   Number(usersSurvive) === 15)
 

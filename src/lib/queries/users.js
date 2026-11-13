@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { T } from '@/lib/queries/tables.mjs'
+
 /**
  * User, role-assignment and student-profile SQL.
  *
@@ -13,12 +15,12 @@ const USER_FIELDS = `
 `
 
 export const SELECT_USER_BY_ID = `
-  SELECT ${USER_FIELDS} FROM users u
+  SELECT ${USER_FIELDS} FROM ${T.users} u
    WHERE u.id = ? AND u.deleted_at IS NULL
 `
 
 export const SELECT_USER_BY_APP_ID = `
-  SELECT ${USER_FIELDS} FROM users u
+  SELECT ${USER_FIELDS} FROM ${T.users} u
    WHERE u.app_id = ? AND u.deleted_at IS NULL
 `
 
@@ -29,14 +31,14 @@ export const SELECT_USER_BY_APP_ID = `
  * stored as `Name@x.com` still matches Google's lowercased `name@x.com`.
  */
 export const SELECT_USER_BY_EMAIL = `
-  SELECT ${USER_FIELDS} FROM users u
+  SELECT ${USER_FIELDS} FROM ${T.users} u
    WHERE u.email = ? AND u.deleted_at IS NULL
 `
 
 /** Includes the hash — only the auth service may call this. */
 export const SELECT_USER_CREDENTIALS = `
   SELECT u.id, u.app_id, u.email, u.full_name, u.password_hash, u.status
-    FROM users u
+    FROM ${T.users} u
    WHERE (u.app_id = ? OR u.email = ?) AND u.deleted_at IS NULL
 `
 
@@ -50,7 +52,7 @@ export const SELECT_USER_CREDENTIALS = `
  */
 export const SELECT_USER_BY_EMAIL_ANY = `
   SELECT u.id, u.app_id, u.status, u.deleted_at
-    FROM users u
+    FROM ${T.users} u
    WHERE u.email = ?
 `
 
@@ -62,7 +64,7 @@ export const SELECT_USER_BY_EMAIL_ANY = `
  * accounts started at once cannot be handed the same sequence number.
  */
 export const SELECT_MAX_APP_ID_FOR_PREFIX = `
-  SELECT app_id FROM users
+  SELECT app_id FROM ${T.users}
    WHERE app_id LIKE ?
    ORDER BY app_id DESC
    LIMIT 1
@@ -72,17 +74,17 @@ export const SELECT_MAX_APP_ID_FOR_PREFIX = `
 export const SELECT_USER_ROLES = `
   SELECT r.id, r.slug, r.name, r.description, r.is_view_only, r.sort_order,
          ur.is_primary, ur.granted_at
-    FROM user_roles ur
-    JOIN roles r ON r.id = ur.role_id
+    FROM ${T.user_roles} ur
+    JOIN ${T.roles} r ON r.id = ur.role_id
    WHERE ur.user_id = ? AND ur.revoked_at IS NULL AND r.is_active = TRUE
    ORDER BY r.sort_order
 `
 
 export const SELECT_USER_PERMISSIONS = `
   SELECT DISTINCT p.slug
-    FROM user_roles ur
-    JOIN role_permissions rp ON rp.role_id = ur.role_id
-    JOIN permissions p       ON p.id = rp.permission_id
+    FROM ${T.user_roles} ur
+    JOIN ${T.role_permissions} rp ON rp.role_id = ur.role_id
+    JOIN ${T.permissions} p       ON p.id = rp.permission_id
    WHERE ur.user_id = ? AND ur.revoked_at IS NULL
 `
 
@@ -90,15 +92,15 @@ export const SELECT_STUDENT_PROFILE = `
   SELECT sp.user_id, sp.programme, sp.year_of_study, sp.hours_per_week,
          sp.work_types, sp.availability_timing, sp.is_available,
          ${USER_FIELDS}
-    FROM student_profiles sp
-    JOIN users u ON u.id = sp.user_id
+    FROM ${T.student_profiles} sp
+    JOIN ${T.users} u ON u.id = sp.user_id
    WHERE sp.user_id = ? AND u.deleted_at IS NULL
 `
 
 export const SELECT_USER_SKILLS = `
   SELECT s.id, s.slug, s.name, s.category
-    FROM student_skills ss
-    JOIN skills s ON s.id = ss.skill_id
+    FROM ${T.student_skills} ss
+    JOIN ${T.skills} s ON s.id = ss.skill_id
    WHERE ss.user_id = ?
    ORDER BY s.name
 `
@@ -114,20 +116,20 @@ export const SELECT_STUDENT_POOL = `
          -- Track record shown on the founder's Concierge detail card. Counted
          -- from contracts, the only record of work actually agreed: an
          -- application or an outreach message is interest, not an engagement.
-         (SELECT COUNT(*) FROM contracts pc
+         (SELECT COUNT(*) FROM ${T.contracts} pc
            WHERE pc.student_user_id = u.id AND pc.deleted_at IS NULL
              AND pc.status = 'completed')                       AS projects_done,
-         (SELECT COUNT(*) FROM contracts ec
+         (SELECT COUNT(*) FROM ${T.contracts} ec
            WHERE ec.student_user_id = u.id AND ec.deleted_at IS NULL
              AND ec.status IN ('active', 'completed'))          AS engagements
-    FROM users u
-    JOIN student_profiles sp ON sp.user_id = u.id
+    FROM ${T.users} u
+    JOIN ${T.student_profiles} sp ON sp.user_id = u.id
    WHERE u.deleted_at IS NULL
      AND u.status = 'active'
      AND (? IS NULL OR sp.is_available = ?)
      AND (? IS NULL OR EXISTS (
-           SELECT 1 FROM student_skills ss
-             JOIN skills sk ON sk.id = ss.skill_id
+           SELECT 1 FROM ${T.student_skills} ss
+             JOIN ${T.skills} sk ON sk.id = ss.skill_id
             WHERE ss.user_id = u.id AND sk.category = ?))
    ORDER BY u.full_name
 `
@@ -136,8 +138,8 @@ export const SELECT_STUDENT_POOL = `
 export function selectSkillsForUsers(placeholders) {
   return `
     SELECT ss.user_id, s.id, s.slug, s.name, s.category
-      FROM student_skills ss
-      JOIN skills s ON s.id = ss.skill_id
+      FROM ${T.student_skills} ss
+      JOIN ${T.skills} s ON s.id = ss.skill_id
      WHERE ss.user_id IN ${placeholders}
      ORDER BY s.name
   `
@@ -148,38 +150,38 @@ export const SELECT_ALL_USERS = `
   SELECT ${USER_FIELDS},
          st.name AS startup_name,
          (SELECT GROUP_CONCAT(r.name ORDER BY r.sort_order SEPARATOR ', ')
-            FROM user_roles ur JOIN roles r ON r.id = ur.role_id
+            FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
            WHERE ur.user_id = u.id AND ur.revoked_at IS NULL) AS role_names,
          -- Slugs as well as names: names are display copy an administrator can
          -- edit, so anything deciding *what a user is* must read the slug.
          (SELECT GROUP_CONCAT(r.slug ORDER BY r.sort_order SEPARATOR ',')
-            FROM user_roles ur JOIN roles r ON r.id = ur.role_id
+            FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
            WHERE ur.user_id = u.id AND ur.revoked_at IS NULL) AS role_slugs,
-         (SELECT r.slug FROM user_roles ur JOIN roles r ON r.id = ur.role_id
+         (SELECT r.slug FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
            WHERE ur.user_id = u.id AND ur.revoked_at IS NULL
            ORDER BY ur.is_primary DESC, r.sort_order LIMIT 1) AS primary_role_slug
-    FROM users u
-    LEFT JOIN startups st ON st.owner_user_id = u.id AND st.deleted_at IS NULL
+    FROM ${T.users} u
+    LEFT JOIN ${T.startups} st ON st.owner_user_id = u.id AND st.deleted_at IS NULL
    WHERE u.deleted_at IS NULL
    ORDER BY u.full_name
 `
 
 export const INSERT_USER = `
-  INSERT INTO users (app_id, full_name, email, password_hash, initials, avatar_tone, bio, status)
+  INSERT INTO ${T.users} (app_id, full_name, email, password_hash, initials, avatar_tone, bio, status)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 export const UPDATE_USER_PROFILE = `
-  UPDATE users SET full_name = ?, email = ?, bio = ?
+  UPDATE ${T.users} SET full_name = ?, email = ?, bio = ?
    WHERE id = ? AND deleted_at IS NULL
 `
 
 export const UPDATE_LAST_ACTIVE = `
-  UPDATE users SET last_active_at = NOW() WHERE id = ?
+  UPDATE ${T.users} SET last_active_at = NOW() WHERE id = ?
 `
 
 export const UPSERT_STUDENT_PROFILE = `
-  INSERT INTO student_profiles
+  INSERT INTO ${T.student_profiles}
     (user_id, programme, year_of_study, hours_per_week, work_types, availability_timing, is_available)
   VALUES (?, ?, ?, ?, ?, ?, ?)
   ON DUPLICATE KEY UPDATE
@@ -189,28 +191,28 @@ export const UPSERT_STUDENT_PROFILE = `
 `
 
 export const UPDATE_AVAILABILITY = `
-  UPDATE student_profiles
+  UPDATE ${T.student_profiles}
      SET is_available = ?, hours_per_week = ?, work_types = ?, availability_timing = ?
    WHERE user_id = ?
 `
 
-export const DELETE_USER_SKILLS = `DELETE FROM student_skills WHERE user_id = ?`
+export const DELETE_USER_SKILLS = `DELETE FROM ${T.student_skills} WHERE user_id = ?`
 
 export const INSERT_USER_SKILL = `
-  INSERT IGNORE INTO student_skills (user_id, skill_id) VALUES (?, ?)
+  INSERT IGNORE INTO ${T.student_skills} (user_id, skill_id) VALUES (?, ?)
 `
 
 export const GRANT_ROLE = `
-  INSERT INTO user_roles (user_id, role_id, is_primary, granted_by)
+  INSERT INTO ${T.user_roles} (user_id, role_id, is_primary, granted_by)
   VALUES (?, ?, ?, ?)
   ON DUPLICATE KEY UPDATE revoked_at = NULL, granted_by = VALUES(granted_by), granted_at = NOW()
 `
 
 export const REVOKE_ROLE = `
-  UPDATE user_roles SET revoked_at = NOW()
+  UPDATE ${T.user_roles} SET revoked_at = NOW()
    WHERE user_id = ? AND role_id = ? AND revoked_at IS NULL
 `
 
 export const SOFT_DELETE_USER = `
-  UPDATE users SET deleted_at = NOW(), status = 'inactive' WHERE id = ? AND deleted_at IS NULL
+  UPDATE ${T.users} SET deleted_at = NOW(), status = 'inactive' WHERE id = ? AND deleted_at IS NULL
 `

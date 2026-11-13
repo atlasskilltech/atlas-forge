@@ -43,7 +43,7 @@ function getTransport() {
   const env = mailEnv()
   if (!isConfigured(env)) {
     throw new Error(
-      'SMTP is not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS and MAIL_FROM in .env.local.'
+      'SMTP is not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS and MAIL_FROM in .env.'
     )
   }
   if (!globalThis[CACHE_KEY]) {

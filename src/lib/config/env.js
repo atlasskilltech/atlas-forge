@@ -7,7 +7,7 @@ import { resolveSessionCookieName } from '@/lib/auth/cookie-name'
  * Validated, typed access to environment configuration.
  *
  * Every value the data layer needs is read here and nowhere else, so pointing
- * the application at a different MySQL server is purely an `.env.local` change.
+ * the application at a different MySQL server is purely a change to the project `.env`.
  * Reading a missing required variable throws at startup with a message naming
  * the variable, rather than surfacing later as an opaque connection error.
  */
@@ -17,7 +17,7 @@ function required(name) {
   if (value === undefined || value === null || value === '') {
     throw new Error(
       `Missing required environment variable ${name}. ` +
-        'Copy .env.example to .env.local and fill it in.'
+        'Copy .env.example to .env and fill it in.'
     )
   }
   return value

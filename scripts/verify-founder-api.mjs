@@ -1,3 +1,5 @@
+import { T } from '../src/lib/queries/tables.mjs'
+
 /**
  * End-to-end verification of the Founder HTTP surface.
  *
@@ -78,9 +80,9 @@ const marks = await mysqlEarly.createConnection({
   database: process.env.DB_NAME,
 })
 const [[highWater]] = await marks.execute(`
-  SELECT COALESCE((SELECT MAX(id) FROM application_events), 0) AS events,
-         COALESCE((SELECT MAX(id) FROM notifications), 0)      AS notifications,
-         COALESCE((SELECT MAX(id) FROM activity_logs), 0)      AS activity
+  SELECT COALESCE((SELECT MAX(id) FROM ${T.application_events}), 0) AS events,
+         COALESCE((SELECT MAX(id) FROM ${T.notifications}), 0)      AS notifications,
+         COALESCE((SELECT MAX(id) FROM ${T.activity_logs}), 0)      AS activity
 `)
 await marks.end()
 const eventHighWater = highWater.events
@@ -344,48 +346,48 @@ const connection = await mysql.createConnection({
 })
 
 if (postedBody?.data?.listingId) {
-  await connection.execute('DELETE FROM listing_skills WHERE listing_id = ?', [
+  await connection.execute(`DELETE FROM ${T.listing_skills} WHERE listing_id = ?`, [
     postedBody.data.listingId,
   ])
-  await connection.execute('DELETE FROM listings WHERE id = ?', [postedBody.data.listingId])
+  await connection.execute(`DELETE FROM ${T.listings} WHERE id = ?`, [postedBody.data.listingId])
 }
 if (contactedBody?.data?.contactId) {
   await connection.execute(
-    "DELETE FROM notifications WHERE entity_type = 'concierge_contact' AND entity_id = ?",
+    `DELETE FROM ${T.notifications} WHERE entity_type = 'concierge_contact' AND entity_id = ?`,
     [contactedBody.data.contactId]
   )
-  await connection.execute('DELETE FROM concierge_contacts WHERE id = ?', [
+  await connection.execute(`DELETE FROM ${T.concierge_contacts} WHERE id = ?`, [
     contactedBody.data.contactId,
   ])
 }
-await connection.execute("DELETE FROM activity_logs WHERE action LIKE '%__api_probe__%'")
-await connection.execute("DELETE FROM activity_logs WHERE action = 'Contacted Anjali Rao via Service'")
+await connection.execute(`DELETE FROM ${T.activity_logs} WHERE action LIKE '%__api_probe__%'`)
+await connection.execute(`DELETE FROM ${T.activity_logs} WHERE action = 'Contacted Anjali Rao via Service'`)
 
 // The pipeline moves: return the application to the status the seed set, and
 // drop the history, notifications and audit rows those moves produced.
 if (applicant?.applicationId) {
-  await connection.execute("UPDATE applications SET status = 'under_review' WHERE id = ?", [
+  await connection.execute(`UPDATE ${T.applications} SET status = 'under_review' WHERE id = ?`, [
     applicant.applicationId,
   ])
   await connection.execute(
-    'DELETE FROM application_events WHERE application_id = ? AND id > ?',
+    `DELETE FROM ${T.application_events} WHERE application_id = ? AND id > ?`,
     [applicant.applicationId, eventHighWater]
   )
   await connection.execute(
-    "DELETE FROM notifications WHERE entity_type = 'application' AND entity_id = ? AND id > ?",
+    `DELETE FROM ${T.notifications} WHERE entity_type = 'application' AND entity_id = ? AND id > ?`,
     [applicant.applicationId, notificationHighWater]
   )
   await connection.execute(
-    "DELETE FROM activity_logs WHERE entity_type = 'application' AND entity_id = ? AND id > ?",
+    `DELETE FROM ${T.activity_logs} WHERE entity_type = 'application' AND entity_id = ? AND id > ?`,
     [applicant.applicationId, activityHighWater]
   )
 }
 
 const [[counts]] = await connection.execute(`
-  SELECT (SELECT COUNT(*) FROM listings WHERE title LIKE '__api_probe__%') AS probes,
-         (SELECT COUNT(*) FROM concierge_contacts)                         AS contacts,
-         (SELECT COUNT(*) FROM application_events)                         AS events,
-         (SELECT COUNT(*) FROM activity_logs)                              AS activity
+  SELECT (SELECT COUNT(*) FROM ${T.listings} WHERE title LIKE '__api_probe__%') AS probes,
+         (SELECT COUNT(*) FROM ${T.concierge_contacts})                         AS contacts,
+         (SELECT COUNT(*) FROM ${T.application_events})                         AS events,
+         (SELECT COUNT(*) FROM ${T.activity_logs})                              AS activity
 `)
 await connection.end()
 

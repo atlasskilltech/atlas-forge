@@ -79,7 +79,7 @@ permissions:
 npm install
 
 # 2. Create your local environment file
-cp .env.example .env.local
+cp .env.example .env
 #    then fill in SESSION_SECRET and the DB_* values (see below)
 
 # 3. Bootstrap the database (schema + reference data + seed accounts)
@@ -107,10 +107,20 @@ Next.js app has to be launched through `next start`, which is what the bundled
 [`ecosystem.config.cjs`](ecosystem.config.cjs) does:
 
 ```bash
-npm ci
-npm run build
-pm2 start ecosystem.config.cjs
-pm2 save            # persist the process list (pair with `pm2 startup`)
+bash scripts/deploy.sh   # what the GitHub workflow runs after `git pull`
+```
+
+`scripts/deploy.sh` checks `.env`, runs `npm ci` and `npm run build`, then
+**deletes and re-creates** the PM2 process from `ecosystem.config.cjs` and runs
+the read-only `npm run db:check`. Do not use `pm2 reload atlas-forge` to pick up
+configuration changes: a reload keeps the script, `node_args` and environment
+the process was first started with.
+
+On start the app logs the database it resolved (never the password) and
+whether it could reach it:
+
+```bash
+pm2 logs atlas-forge --lines 50 --nostream | grep "\[atlas-forge\] database"
 ```
 
 Under PM2 the app's configuration — including `PORT` — comes from the
@@ -131,8 +141,15 @@ atlasforge.in, www.atlasforge.in {
 
 ## Environment configuration
 
-Configuration lives entirely in `.env.local` (gitignored) — moving to another
-MySQL server should require changing only that file, never application code.
+Configuration lives entirely in the project's **`.env`** (gitignored). It is
+the single source of truth: PM2 starts the app with `node --env-file=.env`, and
+every `npm run db:*` / `test:*` script loads the same file. Moving to another
+MySQL server should require changing only `.env`, never application code.
+
+Do not put settings in `.env.local`, `.env.production` or
+`.env.production.local`. Next.js also reads those; values in `.env` win, but a
+key `.env` lacks would be taken from them. `npm run db:check` fails if one of
+them supplies a `DB_*` value `.env` does not define.
 Copy [`.env.example`](.env.example) and fill in the values. Key settings:
 
 | Variable | Purpose |
@@ -154,7 +171,29 @@ See [`.env.example`](.env.example) for the full, documented list.
 ## Database
 
 The schema targets **MySQL 8 / MariaDB 10.4+** (InnoDB, `utf8mb4`). SQL lives in
-[`database/`](database):
+[`database/`](database).
+
+### Table names: the `forge_` prefix
+
+Production shares one database with Research Portal (`research_*`), Atlas News
+(`atlasnews_*`) and Employment Survey, so **every ATLAS Forge table is named
+`forge_<name>`** (46 tables). The physical names are defined in exactly one
+place, [`src/lib/queries/tables.mjs`](src/lib/queries/tables.mjs); all SQL uses
+the map:
+
+```js
+import { T } from '@/lib/queries/tables.mjs'
+const SQL = `SELECT ... FROM ${T.users} u JOIN ${T.user_roles} ur ON ...`
+```
+
+`npm run check:tables` fails on any unprefixed table reference, and the deploy
+runs it. Databases created before the prefix are converted once by migration
+013 (`npm run db:prefix` — plan by default, `-- --apply`, `-- --rollback
+--apply`): one atomic `RENAME TABLE` of all 46 tables, verified before and
+after; `scripts/deploy.sh` runs it automatically, with a verified backup, the
+first time it meets a legacy database. Until then the SQL scripts refuse to run.
+
+Files:
 
 - `schema.sql` — full schema (a **destructive** rebuild; drops and recreates tables)
 - `reference-data.sql` — reference/lookup data
@@ -170,8 +209,19 @@ npm run db:migrate    # apply a migration file from database/migrations/
 npm run db:verify     # verify the live schema matches expectations
 ```
 
-> ⚠️ `db:schema` / `db:reset` are destructive full rebuilds — use them to
-> bootstrap or reset an environment, never to patch a populated database.
+> ⚠️ `db:schema` / `db:reset` are destructive full rebuilds for a dedicated
+> development database. Production shares its MySQL database with other
+> applications (Atlas News, Research Portal), so the scripts enforce:
+>
+> - SQL only ever runs against `DB_NAME`; a file containing `USE` or
+>   `CREATE/ALTER/DROP DATABASE` is refused.
+> - `db:schema` (and so `db:reset`) refuses — even with `--force` — when the
+>   database holds any table that is not ATLAS Forge's.
+> - `db:seed` (demo accounts) is refused on such a shared database.
+> - Every write is refused if a table with a Forge name exists but is not
+>   Forge's (for example another application's `users` table).
+>
+> Production changes go through `npm run db:migrate -- migrations/<file>.sql`.
 
 Seed sign-in accounts are documented in [`docs/WORKFLOW.md`](docs/WORKFLOW.md#10-seed-accounts).
 
@@ -183,7 +233,11 @@ Seed sign-in accounts are documented in [`docs/WORKFLOW.md`](docs/WORKFLOW.md#10
 | `npm run build` | Production build |
 | `npm run start` | Serve the production build |
 | `npm run lint` | Run ESLint |
-| `npm run db:check` | Check database connectivity |
+| `npm run db:check` | Read-only check: connection, Forge tables present, env-file conflicts |
+| `npm run check:tables` | Static guard: no unprefixed Forge table names in code or SQL |
+| `npm run db:investigate` | Read-only report: table layout, row counts, fingerprints, other apps' tables |
+| `npm run db:prefix` | Migration 013 (`forge_` prefix): plan, `-- --apply`, `-- --rollback --apply` |
+| `npm run db:queries` | PREPAREs every application SQL statement (executes nothing) |
 | `npm run db:reset` | Rebuild schema + reference data + seed |
 | `npm run db:migrate` | Apply a migration |
 | `npm run db:verify` | Verify the live schema |

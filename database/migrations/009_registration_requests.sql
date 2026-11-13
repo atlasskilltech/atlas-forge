@@ -43,7 +43,7 @@
 -- Idempotent: CREATE TABLE IF NOT EXISTS only. Re-running is a no-op.
 -- ===========================================================================
 
-CREATE TABLE IF NOT EXISTS registration_requests (
+CREATE TABLE IF NOT EXISTS forge_registration_requests (
   id                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   reference          VARCHAR(24)     NOT NULL,
 
@@ -89,17 +89,17 @@ CREATE TABLE IF NOT EXISTS registration_requests (
   KEY idx_registration_role (approved_role_id),
 
   CONSTRAINT fk_registration_reviewer FOREIGN KEY (reviewed_by)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_registration_user FOREIGN KEY (approved_user_id)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_registration_role FOREIGN KEY (approved_role_id)
-    REFERENCES roles (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_roles (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ===========================================================================
 -- Verify
 --
 --   SHOW TABLES LIKE 'registration_requests';
---   DESCRIBE registration_requests;                 -- 19 columns
---   SELECT COUNT(*) FROM registration_requests;     -- 0 until the first submission
+--   DESCRIBE forge_registration_requests;                 -- 19 columns
+--   SELECT COUNT(*) FROM forge_registration_requests;     -- 0 until the first submission
 -- ===========================================================================

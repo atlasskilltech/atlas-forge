@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { T } from '@/lib/queries/tables.mjs'
+
 /**
  * Compliance & Documents SQL.
  *
@@ -26,11 +28,11 @@ export const SELECT_STARTUP_CHECKLIST = `
   SELECT c.id AS category_id, c.slug AS category_slug, c.name AS category_name,
          c.description AS category_description, c.tier, c.accepted_types, c.sort_order,
          ${DOCUMENT_FIELDS}
-    FROM document_categories c
-    LEFT JOIN startup_documents d
+    FROM ${T.document_categories} c
+    LEFT JOIN ${T.startup_documents} d
       ON d.category_id = c.id AND d.startup_id = ?
      AND d.is_current = TRUE AND d.deleted_at IS NULL
-    LEFT JOIN users u ON u.id = d.uploaded_by
+    LEFT JOIN ${T.users} u ON u.id = d.uploaded_by
    WHERE c.is_active = TRUE
    ORDER BY c.sort_order
 `
@@ -38,9 +40,9 @@ export const SELECT_STARTUP_CHECKLIST = `
 /** Every current document for one startup — what "Download all" packs. */
 export const SELECT_CURRENT_DOCUMENTS = `
   SELECT ${DOCUMENT_FIELDS}, c.slug AS category_slug, c.name AS category_name, c.sort_order
-    FROM startup_documents d
-    JOIN document_categories c ON c.id = d.category_id
-    LEFT JOIN users u ON u.id = d.uploaded_by
+    FROM ${T.startup_documents} d
+    JOIN ${T.document_categories} c ON c.id = d.category_id
+    LEFT JOIN ${T.users} u ON u.id = d.uploaded_by
    WHERE d.startup_id = ? AND d.is_current = TRUE AND d.deleted_at IS NULL
    ORDER BY c.sort_order
 `
@@ -54,24 +56,24 @@ export const SELECT_CURRENT_DOCUMENTS = `
 export const SELECT_DOCUMENT_BY_ID = `
   SELECT ${DOCUMENT_FIELDS}, c.slug AS category_slug, c.name AS category_name,
          s.slug AS startup_slug, s.name AS startup_name, s.owner_user_id
-    FROM startup_documents d
-    JOIN document_categories c ON c.id = d.category_id
-    JOIN startups s           ON s.id = d.startup_id
-    LEFT JOIN users u         ON u.id = d.uploaded_by
+    FROM ${T.startup_documents} d
+    JOIN ${T.document_categories} c ON c.id = d.category_id
+    JOIN ${T.startups} s           ON s.id = d.startup_id
+    LEFT JOIN ${T.users} u         ON u.id = d.uploaded_by
    WHERE d.id = ? AND d.deleted_at IS NULL
 `
 
 /** Version history for one slot, newest first. Powers the audit trail. */
 export const SELECT_DOCUMENT_HISTORY = `
   SELECT ${DOCUMENT_FIELDS}
-    FROM startup_documents d
-    LEFT JOIN users u ON u.id = d.uploaded_by
+    FROM ${T.startup_documents} d
+    LEFT JOIN ${T.users} u ON u.id = d.uploaded_by
    WHERE d.startup_id = ? AND d.category_id = ? AND d.deleted_at IS NULL
    ORDER BY d.created_at DESC
 `
 
 export const INSERT_DOCUMENT = `
-  INSERT INTO startup_documents
+  INSERT INTO ${T.startup_documents}
     (startup_id, category_id, stored_name, original_name, mime_type,
      byte_size, checksum, uploaded_by, is_current)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)
@@ -84,7 +86,7 @@ export const INSERT_DOCUMENT = `
  * "current rows only".
  */
 export const SUPERSEDE_CURRENT_DOCUMENT = `
-  UPDATE startup_documents
+  UPDATE ${T.startup_documents}
      SET is_current = FALSE, replaced_at = CURRENT_TIMESTAMP
    WHERE startup_id = ? AND category_id = ? AND is_current = TRUE AND deleted_at IS NULL
 `
@@ -92,18 +94,18 @@ export const SUPERSEDE_CURRENT_DOCUMENT = `
 /** How complete each startup's vault is — the staff overview. */
 export const SELECT_COMPLIANCE_SUMMARY = `
   SELECT s.id, s.slug, s.name, s.initial, s.avatar_tone, s.logo_url, s.status,
-         (SELECT COUNT(*) FROM startup_documents d
+         (SELECT COUNT(*) FROM ${T.startup_documents} d
            WHERE d.startup_id = s.id AND d.is_current = TRUE AND d.deleted_at IS NULL)
            AS uploaded_total,
-         (SELECT COUNT(*) FROM startup_documents d
-            JOIN document_categories c ON c.id = d.category_id
+         (SELECT COUNT(*) FROM ${T.startup_documents} d
+            JOIN ${T.document_categories} c ON c.id = d.category_id
            WHERE d.startup_id = s.id AND d.is_current = TRUE AND d.deleted_at IS NULL
              AND c.tier = 'core')
            AS uploaded_core,
-         (SELECT MAX(d.created_at) FROM startup_documents d
+         (SELECT MAX(d.created_at) FROM ${T.startup_documents} d
            WHERE d.startup_id = s.id AND d.deleted_at IS NULL)
            AS last_upload_at
-    FROM startups s
+    FROM ${T.startups} s
    WHERE s.deleted_at IS NULL
    ORDER BY s.name
 `

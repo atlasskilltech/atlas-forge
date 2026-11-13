@@ -12,57 +12,56 @@
 -- database/migrations/.
 -- ===========================================================================
 
-ALTER DATABASE `atlas-forge-dashboard`
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-USE `atlas-forge-dashboard`;
+-- No USE / ALTER DATABASE here on purpose: the apply script opens the
+-- connection on DB_NAME from .env, so this file only ever touches that
+-- database (which may be shared with other applications).
 
 SET FOREIGN_KEY_CHECKS = 0;
 
-DROP TABLE IF EXISTS outsider_incubation_applications;
-DROP TABLE IF EXISTS partner_requests;
-DROP TABLE IF EXISTS service_requests;
-DROP TABLE IF EXISTS messages;
-DROP TABLE IF EXISTS notifications;
-DROP TABLE IF EXISTS error_logs;
-DROP TABLE IF EXISTS activity_logs;
-DROP TABLE IF EXISTS platform_settings;
-DROP TABLE IF EXISTS contracts;
-DROP TABLE IF EXISTS founder_access_grants;
-DROP TABLE IF EXISTS application_readiness;
-DROP TABLE IF EXISTS incubation_applications;
-DROP TABLE IF EXISTS readiness_items;
-DROP TABLE IF EXISTS startup_documents;
-DROP TABLE IF EXISTS document_categories;
-DROP TABLE IF EXISTS mentorship_sessions;
-DROP TABLE IF EXISTS mentorship_requests;
-DROP TABLE IF EXISTS mentor_mentorship_areas;
-DROP TABLE IF EXISTS mentorship_areas;
-DROP TABLE IF EXISTS mentor_skills;
-DROP TABLE IF EXISTS mentors;
-DROP TABLE IF EXISTS mentor_types;
-DROP TABLE IF EXISTS posted_needs;
-DROP TABLE IF EXISTS concierge_contacts;
-DROP TABLE IF EXISTS approvals;
-DROP TABLE IF EXISTS application_events;
-DROP TABLE IF EXISTS applications;
-DROP TABLE IF EXISTS listing_skills;
-DROP TABLE IF EXISTS listings;
-DROP TABLE IF EXISTS contract_types;
-DROP TABLE IF EXISTS listing_types;
-DROP TABLE IF EXISTS startup_members;
-DROP TABLE IF EXISTS startups;
-DROP TABLE IF EXISTS stages;
-DROP TABLE IF EXISTS industries;
-DROP TABLE IF EXISTS student_skills;
-DROP TABLE IF EXISTS student_profiles;
-DROP TABLE IF EXISTS skills;
-DROP TABLE IF EXISTS sessions;
-DROP TABLE IF EXISTS user_roles;
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS role_permissions;
-DROP TABLE IF EXISTS permissions;
-DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS forge_outsider_incubation_applications;
+DROP TABLE IF EXISTS forge_partner_requests;
+DROP TABLE IF EXISTS forge_service_requests;
+DROP TABLE IF EXISTS forge_messages;
+DROP TABLE IF EXISTS forge_notifications;
+DROP TABLE IF EXISTS forge_error_logs;
+DROP TABLE IF EXISTS forge_activity_logs;
+DROP TABLE IF EXISTS forge_platform_settings;
+DROP TABLE IF EXISTS forge_contracts;
+DROP TABLE IF EXISTS forge_founder_access_grants;
+DROP TABLE IF EXISTS forge_application_readiness;
+DROP TABLE IF EXISTS forge_incubation_applications;
+DROP TABLE IF EXISTS forge_readiness_items;
+DROP TABLE IF EXISTS forge_startup_documents;
+DROP TABLE IF EXISTS forge_document_categories;
+DROP TABLE IF EXISTS forge_mentorship_sessions;
+DROP TABLE IF EXISTS forge_mentorship_requests;
+DROP TABLE IF EXISTS forge_mentor_mentorship_areas;
+DROP TABLE IF EXISTS forge_mentorship_areas;
+DROP TABLE IF EXISTS forge_mentor_skills;
+DROP TABLE IF EXISTS forge_mentors;
+DROP TABLE IF EXISTS forge_mentor_types;
+DROP TABLE IF EXISTS forge_posted_needs;
+DROP TABLE IF EXISTS forge_concierge_contacts;
+DROP TABLE IF EXISTS forge_approvals;
+DROP TABLE IF EXISTS forge_application_events;
+DROP TABLE IF EXISTS forge_applications;
+DROP TABLE IF EXISTS forge_listing_skills;
+DROP TABLE IF EXISTS forge_listings;
+DROP TABLE IF EXISTS forge_contract_types;
+DROP TABLE IF EXISTS forge_listing_types;
+DROP TABLE IF EXISTS forge_startup_members;
+DROP TABLE IF EXISTS forge_startups;
+DROP TABLE IF EXISTS forge_stages;
+DROP TABLE IF EXISTS forge_industries;
+DROP TABLE IF EXISTS forge_student_skills;
+DROP TABLE IF EXISTS forge_student_profiles;
+DROP TABLE IF EXISTS forge_skills;
+DROP TABLE IF EXISTS forge_sessions;
+DROP TABLE IF EXISTS forge_user_roles;
+DROP TABLE IF EXISTS forge_users;
+DROP TABLE IF EXISTS forge_role_permissions;
+DROP TABLE IF EXISTS forge_permissions;
+DROP TABLE IF EXISTS forge_roles;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -71,7 +70,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- 1 · IDENTITY & ACCESS CONTROL
 -- ===========================================================================
 
-CREATE TABLE roles (
+CREATE TABLE forge_roles (
   id            BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
   slug          VARCHAR(64)       NOT NULL,
   name          VARCHAR(120)      NOT NULL,
@@ -85,7 +84,7 @@ CREATE TABLE roles (
   UNIQUE KEY uq_roles_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE permissions (
+CREATE TABLE forge_permissions (
   id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   slug        VARCHAR(96)     NOT NULL,
   name        VARCHAR(120)    NOT NULL,
@@ -97,19 +96,19 @@ CREATE TABLE permissions (
   KEY idx_permissions_module (module)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE role_permissions (
+CREATE TABLE forge_role_permissions (
   role_id       BIGINT UNSIGNED NOT NULL,
   permission_id BIGINT UNSIGNED NOT NULL,
   created_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (role_id, permission_id),
   KEY idx_role_permissions_permission (permission_id),
   CONSTRAINT fk_role_permissions_role FOREIGN KEY (role_id)
-    REFERENCES roles (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_roles (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_role_permissions_permission FOREIGN KEY (permission_id)
-    REFERENCES permissions (id) ON DELETE CASCADE ON UPDATE CASCADE
+    REFERENCES forge_permissions (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE users (
+CREATE TABLE forge_users (
   id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   app_id         VARCHAR(32)     NOT NULL,
   full_name      VARCHAR(160)    NOT NULL,
@@ -133,7 +132,7 @@ CREATE TABLE users (
 
 -- Multiple roles per user. `revoked_at` rather than a delete: losing a role is
 -- a business event we must retain.
-CREATE TABLE user_roles (
+CREATE TABLE forge_user_roles (
   user_id    BIGINT UNSIGNED NOT NULL,
   role_id    BIGINT UNSIGNED NOT NULL,
   is_primary BOOLEAN         NOT NULL DEFAULT FALSE,
@@ -145,15 +144,15 @@ CREATE TABLE user_roles (
   KEY idx_user_roles_active (user_id, revoked_at),
   KEY idx_user_roles_granted_by (granted_by),
   CONSTRAINT fk_user_roles_user FOREIGN KEY (user_id)
-    REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_user_roles_role FOREIGN KEY (role_id)
-    REFERENCES roles (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_roles (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_user_roles_granted_by FOREIGN KEY (granted_by)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- active_role_id records the role chosen on the Role Select screen.
-CREATE TABLE sessions (
+CREATE TABLE forge_sessions (
   id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id        BIGINT UNSIGNED NOT NULL,
   active_role_id BIGINT UNSIGNED NULL,
@@ -168,9 +167,9 @@ CREATE TABLE sessions (
   KEY idx_sessions_expires (expires_at),
   KEY idx_sessions_role (active_role_id),
   CONSTRAINT fk_sessions_user FOREIGN KEY (user_id)
-    REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_sessions_role FOREIGN KEY (active_role_id)
-    REFERENCES roles (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_roles (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -178,7 +177,7 @@ CREATE TABLE sessions (
 -- 2 · STUDENT DOMAIN
 -- ===========================================================================
 
-CREATE TABLE skills (
+CREATE TABLE forge_skills (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   slug       VARCHAR(64)     NOT NULL,
   name       VARCHAR(96)     NOT NULL,
@@ -191,7 +190,7 @@ CREATE TABLE skills (
   KEY idx_skills_category (category)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE student_profiles (
+CREATE TABLE forge_student_profiles (
   user_id             BIGINT UNSIGNED  NOT NULL,
   programme           VARCHAR(120)     NULL,
   year_of_study       TINYINT UNSIGNED NULL,
@@ -204,20 +203,20 @@ CREATE TABLE student_profiles (
   PRIMARY KEY (user_id),
   KEY idx_student_profiles_available (is_available),
   CONSTRAINT fk_student_profiles_user FOREIGN KEY (user_id)
-    REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT chk_student_hours CHECK (hours_per_week IS NULL OR hours_per_week BETWEEN 0 AND 168)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE student_skills (
+CREATE TABLE forge_student_skills (
   user_id    BIGINT UNSIGNED NOT NULL,
   skill_id   BIGINT UNSIGNED NOT NULL,
   created_at TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id, skill_id),
   KEY idx_student_skills_skill (skill_id),
   CONSTRAINT fk_student_skills_user FOREIGN KEY (user_id)
-    REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_student_skills_skill FOREIGN KEY (skill_id)
-    REFERENCES skills (id) ON DELETE CASCADE ON UPDATE CASCADE
+    REFERENCES forge_skills (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -225,7 +224,7 @@ CREATE TABLE student_skills (
 -- 3 · STARTUP DOMAIN
 -- ===========================================================================
 
-CREATE TABLE industries (
+CREATE TABLE forge_industries (
   id         BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
   slug       VARCHAR(64)       NOT NULL,
   name       VARCHAR(96)       NOT NULL,
@@ -237,7 +236,7 @@ CREATE TABLE industries (
   UNIQUE KEY uq_industries_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE stages (
+CREATE TABLE forge_stages (
   id         BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
   slug       VARCHAR(64)       NOT NULL,
   name       VARCHAR(96)       NOT NULL,
@@ -250,7 +249,7 @@ CREATE TABLE stages (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- mentor_id's foreign key is added after `mentors` exists (circular reference).
-CREATE TABLE startups (
+CREATE TABLE forge_startups (
   id                BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
   slug              VARCHAR(96)       NOT NULL,
   name              VARCHAR(160)      NOT NULL,
@@ -282,15 +281,15 @@ CREATE TABLE startups (
   KEY idx_startups_featured (is_featured),
   KEY idx_startups_deleted (deleted_at),
   CONSTRAINT fk_startups_industry FOREIGN KEY (industry_id)
-    REFERENCES industries (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_industries (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_startups_stage FOREIGN KEY (stage_id)
-    REFERENCES stages (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_stages (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_startups_owner FOREIGN KEY (owner_user_id)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT chk_startups_open_roles CHECK (open_roles >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE startup_members (
+CREATE TABLE forge_startup_members (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   startup_id BIGINT UNSIGNED NOT NULL,
   user_id    BIGINT UNSIGNED NOT NULL,
@@ -303,9 +302,9 @@ CREATE TABLE startup_members (
   UNIQUE KEY uq_startup_members (startup_id, user_id),
   KEY idx_startup_members_user (user_id),
   CONSTRAINT fk_startup_members_startup FOREIGN KEY (startup_id)
-    REFERENCES startups (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_startups (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_startup_members_user FOREIGN KEY (user_id)
-    REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -313,7 +312,7 @@ CREATE TABLE startup_members (
 -- 4 · LISTINGS & APPLICATIONS
 -- ===========================================================================
 
-CREATE TABLE document_categories (
+CREATE TABLE forge_document_categories (
   id             BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
   slug           VARCHAR(64)       NOT NULL,
   name           VARCHAR(120)      NOT NULL,
@@ -332,7 +331,7 @@ CREATE TABLE document_categories (
   UNIQUE KEY uq_document_categories_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE startup_documents (
+CREATE TABLE forge_startup_documents (
   id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   startup_id    BIGINT UNSIGNED NOT NULL,
   category_id   BIGINT UNSIGNED NOT NULL,
@@ -356,14 +355,14 @@ CREATE TABLE startup_documents (
   KEY idx_startup_documents_uploader (uploaded_by),
   KEY idx_startup_documents_deleted (deleted_at),
   CONSTRAINT fk_startup_documents_startup FOREIGN KEY (startup_id)
-    REFERENCES startups (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_startups (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_startup_documents_category FOREIGN KEY (category_id)
-    REFERENCES document_categories (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_document_categories (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_startup_documents_uploader FOREIGN KEY (uploaded_by)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE listing_types (
+CREATE TABLE forge_listing_types (
   id         BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
   slug       VARCHAR(64)       NOT NULL,
   name       VARCHAR(96)       NOT NULL,
@@ -375,7 +374,7 @@ CREATE TABLE listing_types (
   UNIQUE KEY uq_listing_types_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE contract_types (
+CREATE TABLE forge_contract_types (
   id         BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
   slug       VARCHAR(64)       NOT NULL,
   name       VARCHAR(96)       NOT NULL,
@@ -389,7 +388,7 @@ CREATE TABLE contract_types (
 
 -- Jobs and collab posts share this table via `type`. startup_id is NULL for a
 -- student collab post, which has no startup behind it.
-CREATE TABLE listings (
+CREATE TABLE forge_listings (
   id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   type              ENUM('job','collab') NOT NULL DEFAULT 'job',
   title             VARCHAR(160)    NOT NULL,
@@ -414,28 +413,28 @@ CREATE TABLE listings (
   KEY idx_listings_listing_type (listing_type_id),
   KEY idx_listings_contract_type (contract_type_id),
   CONSTRAINT fk_listings_startup FOREIGN KEY (startup_id)
-    REFERENCES startups (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_startups (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_listings_created_by FOREIGN KEY (created_by)
-    REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_listings_listing_type FOREIGN KEY (listing_type_id)
-    REFERENCES listing_types (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_listing_types (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_listings_contract_type FOREIGN KEY (contract_type_id)
-    REFERENCES contract_types (id) ON DELETE RESTRICT ON UPDATE CASCADE
+    REFERENCES forge_contract_types (id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE listing_skills (
+CREATE TABLE forge_listing_skills (
   listing_id BIGINT UNSIGNED NOT NULL,
   skill_id   BIGINT UNSIGNED NOT NULL,
   created_at TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (listing_id, skill_id),
   KEY idx_listing_skills_skill (skill_id),
   CONSTRAINT fk_listing_skills_listing FOREIGN KEY (listing_id)
-    REFERENCES listings (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_listings (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_listing_skills_skill FOREIGN KEY (skill_id)
-    REFERENCES skills (id) ON DELETE CASCADE ON UPDATE CASCADE
+    REFERENCES forge_skills (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE applications (
+CREATE TABLE forge_applications (
   id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   listing_id        BIGINT UNSIGNED NOT NULL,
   applicant_user_id BIGINT UNSIGNED NOT NULL,
@@ -454,13 +453,13 @@ CREATE TABLE applications (
   KEY idx_applications_user (applicant_user_id),
   KEY idx_applications_status (status),
   CONSTRAINT fk_applications_listing FOREIGN KEY (listing_id)
-    REFERENCES listings (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_listings (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_applications_user FOREIGN KEY (applicant_user_id)
-    REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Append-only status history.
-CREATE TABLE application_events (
+CREATE TABLE forge_application_events (
   id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   application_id BIGINT UNSIGNED NOT NULL,
   from_status    VARCHAR(32)     NULL,
@@ -472,9 +471,9 @@ CREATE TABLE application_events (
   KEY idx_application_events_app (application_id, created_at),
   KEY idx_application_events_user (changed_by),
   CONSTRAINT fk_application_events_app FOREIGN KEY (application_id)
-    REFERENCES applications (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_applications (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_application_events_user FOREIGN KEY (changed_by)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -484,7 +483,7 @@ CREATE TABLE application_events (
 -- Manager queue show the Forge Manager's decision alongside its own override.
 -- ===========================================================================
 
-CREATE TABLE approvals (
+CREATE TABLE forge_approvals (
   id                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   listing_id         BIGINT UNSIGNED NOT NULL,
   decided_as_role_id BIGINT UNSIGNED NOT NULL,
@@ -500,11 +499,11 @@ CREATE TABLE approvals (
   KEY idx_approvals_decided_by (decided_by),
   KEY idx_approvals_role (decided_as_role_id),
   CONSTRAINT fk_approvals_listing FOREIGN KEY (listing_id)
-    REFERENCES listings (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_listings (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_approvals_role FOREIGN KEY (decided_as_role_id)
-    REFERENCES roles (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_roles (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_approvals_user FOREIGN KEY (decided_by)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -512,7 +511,7 @@ CREATE TABLE approvals (
 -- 6 · CONCIERGE
 -- ===========================================================================
 
-CREATE TABLE concierge_contacts (
+CREATE TABLE forge_concierge_contacts (
   id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   founder_user_id BIGINT UNSIGNED NOT NULL,
   student_user_id BIGINT UNSIGNED NOT NULL,
@@ -533,16 +532,16 @@ CREATE TABLE concierge_contacts (
   KEY idx_concierge_startup (startup_id),
   KEY idx_concierge_cc (cc_user_id),
   CONSTRAINT fk_concierge_founder FOREIGN KEY (founder_user_id)
-    REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_concierge_student FOREIGN KEY (student_user_id)
-    REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_concierge_startup FOREIGN KEY (startup_id)
-    REFERENCES startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_concierge_cc FOREIGN KEY (cc_user_id)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE posted_needs (
+CREATE TABLE forge_posted_needs (
   id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   founder_user_id BIGINT UNSIGNED NOT NULL,
   startup_id      BIGINT UNSIGNED NULL,
@@ -558,9 +557,9 @@ CREATE TABLE posted_needs (
   KEY idx_posted_needs_status (status),
   KEY idx_posted_needs_startup (startup_id),
   CONSTRAINT fk_posted_needs_founder FOREIGN KEY (founder_user_id)
-    REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_posted_needs_startup FOREIGN KEY (startup_id)
-    REFERENCES startups (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_startups (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -568,7 +567,7 @@ CREATE TABLE posted_needs (
 -- 7 · MENTORSHIP
 -- ===========================================================================
 
-CREATE TABLE mentor_types (
+CREATE TABLE forge_mentor_types (
   id         BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
   slug       VARCHAR(64)       NOT NULL,
   name       VARCHAR(96)       NOT NULL,
@@ -581,7 +580,7 @@ CREATE TABLE mentor_types (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- user_id is nullable: external mentors need not hold a platform account.
-CREATE TABLE mentors (
+CREATE TABLE forge_mentors (
   id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id        BIGINT UNSIGNED NULL,
   full_name      VARCHAR(160)    NOT NULL,
@@ -622,32 +621,32 @@ CREATE TABLE mentors (
   UNIQUE KEY uq_mentors_email (email),
   KEY idx_mentors_type (mentor_type_id),
   CONSTRAINT fk_mentors_user FOREIGN KEY (user_id)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_mentors_type FOREIGN KEY (mentor_type_id)
-    REFERENCES mentor_types (id) ON DELETE RESTRICT ON UPDATE CASCADE
+    REFERENCES forge_mentor_types (id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Deferred FK: startups and mentors reference each other.
-ALTER TABLE startups
+ALTER TABLE forge_startups
   ADD CONSTRAINT fk_startups_mentor FOREIGN KEY (mentor_id)
-    REFERENCES mentors (id) ON DELETE SET NULL ON UPDATE CASCADE;
+    REFERENCES forge_mentors (id) ON DELETE SET NULL ON UPDATE CASCADE;
 
-CREATE TABLE mentor_skills (
+CREATE TABLE forge_mentor_skills (
   mentor_id  BIGINT UNSIGNED NOT NULL,
   skill_id   BIGINT UNSIGNED NOT NULL,
   created_at TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (mentor_id, skill_id),
   KEY idx_mentor_skills_skill (skill_id),
   CONSTRAINT fk_mentor_skills_mentor FOREIGN KEY (mentor_id)
-    REFERENCES mentors (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_mentors (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_mentor_skills_skill FOREIGN KEY (skill_id)
-    REFERENCES skills (id) ON DELETE CASCADE ON UPDATE CASCADE
+    REFERENCES forge_skills (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- The ten areas the alumni mentorship form offered. A lookup of its own
 -- rather than rows in `skills`: those are fine-grained and drive
 -- student-to-listing matching, these are coarse buckets a mentor picks from.
-CREATE TABLE mentorship_areas (
+CREATE TABLE forge_mentorship_areas (
   id         BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
   slug       VARCHAR(64)       NOT NULL,
   name       VARCHAR(96)       NOT NULL,
@@ -659,19 +658,19 @@ CREATE TABLE mentorship_areas (
   UNIQUE KEY uq_mentorship_areas_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE mentor_mentorship_areas (
+CREATE TABLE forge_mentor_mentorship_areas (
   mentor_id  BIGINT UNSIGNED NOT NULL,
   area_id    BIGINT UNSIGNED NOT NULL,
   created_at TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (mentor_id, area_id),
   KEY idx_mentor_areas_area (area_id),
   CONSTRAINT fk_mentor_areas_mentor FOREIGN KEY (mentor_id)
-    REFERENCES mentors (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_mentors (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_mentor_areas_area FOREIGN KEY (area_id)
-    REFERENCES mentorship_areas (id) ON DELETE CASCADE ON UPDATE CASCADE
+    REFERENCES forge_mentorship_areas (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE mentorship_requests (
+CREATE TABLE forge_mentorship_requests (
   id                       BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   requester_user_id        BIGINT UNSIGNED NOT NULL,
   startup_id               BIGINT UNSIGNED NULL,
@@ -689,14 +688,14 @@ CREATE TABLE mentorship_requests (
   KEY idx_mentorship_requests_startup (startup_id),
   KEY idx_mentorship_requests_type (preferred_mentor_type_id),
   CONSTRAINT fk_mentorship_requests_user FOREIGN KEY (requester_user_id)
-    REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_mentorship_requests_startup FOREIGN KEY (startup_id)
-    REFERENCES startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_mentorship_requests_type FOREIGN KEY (preferred_mentor_type_id)
-    REFERENCES mentor_types (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_mentor_types (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE mentorship_sessions (
+CREATE TABLE forge_mentorship_sessions (
   id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   request_id     BIGINT UNSIGNED NULL,
   mentor_id      BIGINT UNSIGNED NULL,
@@ -718,15 +717,15 @@ CREATE TABLE mentorship_sessions (
   KEY idx_ms_startup (startup_id),
   KEY idx_ms_assigned_by (assigned_by),
   CONSTRAINT fk_ms_request FOREIGN KEY (request_id)
-    REFERENCES mentorship_requests (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_mentorship_requests (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_ms_mentor FOREIGN KEY (mentor_id)
-    REFERENCES mentors (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_mentors (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_ms_mentee FOREIGN KEY (mentee_user_id)
-    REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_ms_startup FOREIGN KEY (startup_id)
-    REFERENCES startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_ms_assigned_by FOREIGN KEY (assigned_by)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -734,7 +733,7 @@ CREATE TABLE mentorship_sessions (
 -- 8 · INCUBATION
 -- ===========================================================================
 
-CREATE TABLE readiness_items (
+CREATE TABLE forge_readiness_items (
   id         BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
   slug       VARCHAR(64)       NOT NULL,
   name       VARCHAR(120)      NOT NULL,
@@ -747,7 +746,7 @@ CREATE TABLE readiness_items (
   UNIQUE KEY uq_readiness_items_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE incubation_applications (
+CREATE TABLE forge_incubation_applications (
   id                BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
   applicant_user_id BIGINT UNSIGNED  NOT NULL,
   startup_id        BIGINT UNSIGNED  NULL,
@@ -770,19 +769,19 @@ CREATE TABLE incubation_applications (
   KEY idx_incubation_stage (stage_id),
   KEY idx_incubation_reviewer (reviewed_by),
   CONSTRAINT fk_incubation_applicant FOREIGN KEY (applicant_user_id)
-    REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_incubation_startup FOREIGN KEY (startup_id)
-    REFERENCES startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_incubation_stage FOREIGN KEY (stage_id)
-    REFERENCES stages (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_stages (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_incubation_reviewer FOREIGN KEY (reviewed_by)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT chk_incubation_pct CHECK (completion_pct BETWEEN 0 AND 100)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- One row per checklist item per application. The readiness ring is
 -- COUNT(value IS NOT NULL) / COUNT(active readiness_items).
-CREATE TABLE application_readiness (
+CREATE TABLE forge_application_readiness (
   application_id    BIGINT UNSIGNED NOT NULL,
   readiness_item_id BIGINT UNSIGNED NOT NULL,
   value             VARCHAR(500)    NULL,
@@ -791,12 +790,12 @@ CREATE TABLE application_readiness (
   PRIMARY KEY (application_id, readiness_item_id),
   KEY idx_app_readiness_item (readiness_item_id),
   CONSTRAINT fk_app_readiness_app FOREIGN KEY (application_id)
-    REFERENCES incubation_applications (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_incubation_applications (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_app_readiness_item FOREIGN KEY (readiness_item_id)
-    REFERENCES readiness_items (id) ON DELETE CASCADE ON UPDATE CASCADE
+    REFERENCES forge_readiness_items (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE founder_access_grants (
+CREATE TABLE forge_founder_access_grants (
   id                        BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id                   BIGINT UNSIGNED NOT NULL,
   startup_id                BIGINT UNSIGNED NULL,
@@ -815,15 +814,15 @@ CREATE TABLE founder_access_grants (
   KEY idx_grants_granted_by (granted_by),
   KEY idx_grants_revoked_by (revoked_by),
   CONSTRAINT fk_grants_user FOREIGN KEY (user_id)
-    REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_grants_startup FOREIGN KEY (startup_id)
-    REFERENCES startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_grants_application FOREIGN KEY (incubation_application_id)
-    REFERENCES incubation_applications (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_incubation_applications (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_grants_granted_by FOREIGN KEY (granted_by)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_grants_revoked_by FOREIGN KEY (revoked_by)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -831,7 +830,7 @@ CREATE TABLE founder_access_grants (
 -- 9 · PLATFORM OPERATIONS
 -- ===========================================================================
 
-CREATE TABLE contracts (
+CREATE TABLE forge_contracts (
   id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   listing_id      BIGINT UNSIGNED NULL,
   startup_id      BIGINT UNSIGNED NULL,
@@ -852,17 +851,17 @@ CREATE TABLE contracts (
   KEY idx_contracts_listing (listing_id),
   KEY idx_contracts_startup (startup_id),
   CONSTRAINT fk_contracts_listing FOREIGN KEY (listing_id)
-    REFERENCES listings (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_listings (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_contracts_startup FOREIGN KEY (startup_id)
-    REFERENCES startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_contracts_founder FOREIGN KEY (founder_user_id)
-    REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_contracts_student FOREIGN KEY (student_user_id)
-    REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT chk_contracts_dates CHECK (ended_at IS NULL OR started_at IS NULL OR ended_at >= started_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE platform_settings (
+CREATE TABLE forge_platform_settings (
   id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   setting_key   VARCHAR(96)     NOT NULL,
   setting_value TEXT            NULL,
@@ -878,11 +877,11 @@ CREATE TABLE platform_settings (
   KEY idx_platform_settings_group (group_key),
   KEY idx_platform_settings_user (updated_by),
   CONSTRAINT fk_platform_settings_user FOREIGN KEY (updated_by)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Append-only. No updated_at, no deleted_at — the audit trail is immutable.
-CREATE TABLE activity_logs (
+CREATE TABLE forge_activity_logs (
   id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   actor_user_id BIGINT UNSIGNED NULL,
   action        VARCHAR(255)    NOT NULL,
@@ -898,10 +897,10 @@ CREATE TABLE activity_logs (
   KEY idx_activity_actor (actor_user_id),
   KEY idx_activity_entity (entity_type, entity_id),
   CONSTRAINT fk_activity_actor FOREIGN KEY (actor_user_id)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE error_logs (
+CREATE TABLE forge_error_logs (
   id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   level       ENUM('warning','error','critical') NOT NULL DEFAULT 'error',
   message     VARCHAR(500)    NOT NULL,
@@ -915,10 +914,10 @@ CREATE TABLE error_logs (
   KEY idx_error_logs_resolved (resolved_at),
   KEY idx_error_logs_user (user_id),
   CONSTRAINT fk_error_logs_user FOREIGN KEY (user_id)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE notifications (
+CREATE TABLE forge_notifications (
   id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id      BIGINT UNSIGNED NOT NULL,
   type         VARCHAR(64)     NOT NULL,
@@ -934,10 +933,10 @@ CREATE TABLE notifications (
   KEY idx_notifications_user_unread (user_id, read_at),
   KEY idx_notifications_created (created_at),
   CONSTRAINT fk_notifications_user FOREIGN KEY (user_id)
-    REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE messages (
+CREATE TABLE forge_messages (
   id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   sender_user_id    BIGINT UNSIGNED NOT NULL,
   recipient_user_id BIGINT UNSIGNED NOT NULL,
@@ -952,9 +951,9 @@ CREATE TABLE messages (
   KEY idx_messages_recipient (recipient_user_id, read_at),
   KEY idx_messages_sender (sender_user_id),
   CONSTRAINT fk_messages_sender FOREIGN KEY (sender_user_id)
-    REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_messages_recipient FOREIGN KEY (recipient_user_id)
-    REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
@@ -966,7 +965,7 @@ CREATE TABLE messages (
 -- No foreign key to `users` on purpose: attempts against identifiers that do
 -- not exist are precisely the ones worth recording.
 -- ---------------------------------------------------------------------------
-CREATE TABLE login_attempts (
+CREATE TABLE forge_login_attempts (
   id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   identifier  VARCHAR(190)    NOT NULL,
   ip_address  VARCHAR(45)     NOT NULL DEFAULT '',
@@ -988,7 +987,7 @@ CREATE TABLE login_attempts (
 -- Both are fed by anonymous visitors on `/`, so neither has a foreign key to
 -- `users` and neither soft-deletes — see the migration for the reasoning.
 -- ---------------------------------------------------------------------------
-CREATE TABLE service_requests (
+CREATE TABLE forge_service_requests (
   id               BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name             VARCHAR(120)    NOT NULL,
   email            VARCHAR(190)    NOT NULL,
@@ -1007,7 +1006,7 @@ CREATE TABLE service_requests (
   KEY idx_service_requests_ip (source_ip, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE partner_requests (
+CREATE TABLE forge_partner_requests (
   id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name        VARCHAR(120)    NOT NULL,
   email       VARCHAR(190)    NOT NULL,
@@ -1033,10 +1032,8 @@ CREATE TABLE partner_requests (
 -- produces the same shape as a migrated database. A public submission lives
 -- only in this table until a Forge Manager approves it — see the migration.
 -- ---------------------------------------------------------------------------
-CREATE TABLE only.
--- ===========================================================================
 
-CREATE TABLE IF NOT EXISTS outsider_incubation_applications (
+CREATE TABLE IF NOT EXISTS forge_outsider_incubation_applications (
   id                        BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   reference                 VARCHAR(24)     NOT NULL,
 
@@ -1092,15 +1089,15 @@ CREATE TABLE IF NOT EXISTS outsider_incubation_applications (
   KEY idx_outsider_incubation_application (incubation_application_id),
 
   CONSTRAINT fk_outsider_incubation_industry FOREIGN KEY (industry_id)
-    REFERENCES industries (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_industries (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_outsider_incubation_stage FOREIGN KEY (stage_id)
-    REFERENCES stages (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_stages (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_outsider_incubation_reviewer FOREIGN KEY (reviewed_by)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_outsider_incubation_user FOREIGN KEY (approved_user_id)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_outsider_incubation_startup FOREIGN KEY (approved_startup_id)
-    REFERENCES startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_outsider_incubation_application FOREIGN KEY (incubation_application_id)
-    REFERENCES incubation_applications (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_incubation_applications (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,3 +1,5 @@
+import { T } from '../src/lib/queries/tables.mjs'
+
 /**
  * Verifies Phase 5 batch 2: request correlation, input validation and the
  * translation of database rejections into answers the caller can act on.
@@ -68,8 +70,8 @@ const db = await mysql.createConnection({
 const one = async (sql, params = []) => (await db.query(sql, params))[0][0]
 
 const before = await one(`
-  SELECT (SELECT COUNT(*) FROM messages) AS messages,
-         (SELECT COUNT(*) FROM listings) AS listings
+  SELECT (SELECT COUNT(*) FROM ${T.messages}) AS messages,
+         (SELECT COUNT(*) FROM ${T.listings}) AS listings
 `)
 
 const student = jar()
@@ -193,10 +195,10 @@ check('and the message names the column rather than leaking SQL',
 /* -------------------------------------------------------------------------- */
 
 const after = await one(`
-  SELECT (SELECT COUNT(*) FROM messages) AS messages,
-         (SELECT COUNT(*) FROM listings) AS listings
+  SELECT (SELECT COUNT(*) FROM ${T.messages}) AS messages,
+         (SELECT COUNT(*) FROM ${T.listings}) AS listings
 `)
-await db.execute('DELETE FROM login_attempts WHERE succeeded = 1')
+await db.execute(`DELETE FROM ${T.login_attempts} WHERE succeeded = 1`)
 await db.end()
 
 check('every rejected request wrote nothing',

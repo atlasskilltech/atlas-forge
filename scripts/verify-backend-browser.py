@@ -18,7 +18,7 @@ BASE = os.environ.get("BASE_URL", "http://localhost:3100")
 APP_ID = "ATL-2022-0012"
 PASSWORD = "Atlas@2026"
 MYSQL = r"C:\xampp\mysql\bin\mysql.exe"
-DB = "atlas-forge-dashboard"
+DB = os.environ.get("DB_NAME", "atlas-forge-dashboard")  # local XAMPP default
 
 results = []
 
@@ -35,10 +35,10 @@ def sql(statement):
     return out.stdout.strip()
 
 
-hw_approval = sql("SELECT COALESCE(MAX(id), 0) FROM approvals")
-hw_grant = sql("SELECT COALESCE(MAX(id), 0) FROM founder_access_grants")
-hw_activity = sql("SELECT COALESCE(MAX(id), 0) FROM activity_logs")
-hw_notification = sql("SELECT COALESCE(MAX(id), 0) FROM notifications")
+hw_approval = sql("SELECT COALESCE(MAX(id), 0) FROM forge_approvals")
+hw_grant = sql("SELECT COALESCE(MAX(id), 0) FROM forge_founder_access_grants")
+hw_activity = sql("SELECT COALESCE(MAX(id), 0) FROM forge_activity_logs")
+hw_notification = sql("SELECT COALESCE(MAX(id), 0) FROM forge_notifications")
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
@@ -68,7 +68,7 @@ with sync_playwright() as p:
           page.locator("header").first.get_by_label("Shantanu Ghuriani avatar").count() == 1)
 
     # ---- overriding a Forge Manager decision -----------------------------
-    approvals_before = sql("SELECT COUNT(*) FROM approvals")
+    approvals_before = sql("SELECT COUNT(*) FROM forge_approvals")
     page.goto(f"{BASE}/backend/job-queue", wait_until="networkidle")
     page.wait_for_timeout(600)
 
@@ -89,22 +89,22 @@ with sync_playwright() as p:
     page.get_by_role("button", name="Yes, Approve", exact=True).click()
     page.wait_for_timeout(2500)
 
-    approvals_after = sql("SELECT COUNT(*) FROM approvals")
+    approvals_after = sql("SELECT COUNT(*) FROM forge_approvals")
     check("the override reached MySQL", int(approvals_after) == int(approvals_before) + 1,
           f"{approvals_before} -> {approvals_after}")
 
     both = sql(
         "SELECT GROUP_CONCAT(CONCAT(r.slug, '=', a.decision) ORDER BY r.slug) "
-        "FROM approvals a JOIN roles r ON r.id = a.decided_as_role_id "
-        "JOIN listings l ON l.id = a.listing_id "
+        "FROM forge_approvals a JOIN forge_roles r ON r.id = a.decided_as_role_id "
+        "JOIN forge_listings l ON l.id = a.listing_id "
         f"WHERE l.title = '{listing_title}'"
     )
     check("both decisions survive on the same listing",
           both == "backend-manager=approved,forge-manager=rejected", both)
 
     flagged = sql(
-        "SELECT a.is_override FROM approvals a JOIN roles r ON r.id = a.decided_as_role_id "
-        "JOIN listings l ON l.id = a.listing_id "
+        "SELECT a.is_override FROM forge_approvals a JOIN forge_roles r ON r.id = a.decided_as_role_id "
+        "JOIN forge_listings l ON l.id = a.listing_id "
         f"WHERE l.title = '{listing_title}' AND r.slug = 'backend-manager'"
     )
     check("and the later one is flagged as an override", flagged == "1", flagged)
@@ -115,7 +115,7 @@ with sync_playwright() as p:
     check("the FM Decision column still shows the original verdict", "Rejected" in after)
 
     # ---- granting and revoking access ------------------------------------
-    grants_before = sql("SELECT COUNT(*) FROM founder_access_grants WHERE revoked_at IS NULL")
+    grants_before = sql("SELECT COUNT(*) FROM forge_founder_access_grants WHERE revoked_at IS NULL")
     page.goto(f"{BASE}/backend/role-assignments", wait_until="networkidle")
     page.wait_for_timeout(600)
 
@@ -140,13 +140,13 @@ with sync_playwright() as p:
     page.wait_for_timeout(2500)
 
     check("granting confirms", "Founder Access Granted" in page.inner_text("body"))
-    grants_after = sql("SELECT COUNT(*) FROM founder_access_grants WHERE revoked_at IS NULL")
+    grants_after = sql("SELECT COUNT(*) FROM forge_founder_access_grants WHERE revoked_at IS NULL")
     check("the grant reached MySQL", int(grants_after) == int(grants_before) + 1,
           f"{grants_before} -> {grants_after}")
 
     role_added = sql(
-        "SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id "
-        "JOIN users u ON u.id = ur.user_id "
+        "SELECT COUNT(*) FROM forge_user_roles ur JOIN forge_roles r ON r.id = ur.role_id "
+        "JOIN forge_users u ON u.id = ur.user_id "
         "WHERE u.app_id = 'ATL-2024-0871' AND r.slug = 'founder' AND ur.revoked_at IS NULL"
     )
     check("and the founder role was added", role_added == "1", role_added)
@@ -166,13 +166,13 @@ with sync_playwright() as p:
 
     check("revoking confirms", "Founder Access Revoked" in page.inner_text("body"))
     role_gone = sql(
-        "SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id "
-        "JOIN users u ON u.id = ur.user_id "
+        "SELECT COUNT(*) FROM forge_user_roles ur JOIN forge_roles r ON r.id = ur.role_id "
+        "JOIN forge_users u ON u.id = ur.user_id "
         "WHERE u.app_id = 'ATL-2024-0871' AND r.slug = 'founder' AND ur.revoked_at IS NULL"
     )
     check("and the role was removed", role_gone == "0", role_gone)
     check("while the grant record is closed rather than deleted",
-          sql("SELECT COUNT(*) FROM founder_access_grants WHERE revoked_at IS NOT NULL") == "1")
+          sql("SELECT COUNT(*) FROM forge_founder_access_grants WHERE revoked_at IS NOT NULL") == "1")
 
     # ---- platform settings ------------------------------------------------
     page.goto(f"{BASE}/backend/settings", wait_until="networkidle")
@@ -186,13 +186,13 @@ with sync_playwright() as p:
     check("the platform name comes from the database", "ATLAS Forge" in settings_text)
 
     before_toggle = sql(
-        "SELECT setting_value FROM platform_settings WHERE setting_key = 'external_access_v2'"
+        "SELECT setting_value FROM forge_platform_settings WHERE setting_key = 'external_access_v2'"
     )
     external = page.locator("#main-content li").filter(has_text="External Access (V2)").first
     external.get_by_role("switch").click()
     page.wait_for_timeout(2000)
     after_toggle = sql(
-        "SELECT setting_value FROM platform_settings WHERE setting_key = 'external_access_v2'"
+        "SELECT setting_value FROM forge_platform_settings WHERE setting_key = 'external_access_v2'"
     )
     check("a switch writes straight to MySQL", before_toggle != after_toggle,
           f"{before_toggle} -> {after_toggle}")
@@ -200,7 +200,7 @@ with sync_playwright() as p:
     external.get_by_role("switch").click()
     page.wait_for_timeout(2000)
     check("and toggling back restores it",
-          sql("SELECT setting_value FROM platform_settings WHERE setting_key = 'external_access_v2'")
+          sql("SELECT setting_value FROM forge_platform_settings WHERE setting_key = 'external_access_v2'")
           == before_toggle)
 
     # Edit the platform name through its overlay.
@@ -211,7 +211,7 @@ with sync_playwright() as p:
     page.get_by_role("button", name="Save", exact=True).click()
     page.wait_for_timeout(2000)
     check("the new name reached MySQL",
-          sql("SELECT setting_value FROM platform_settings WHERE setting_key = 'platform_name'")
+          sql("SELECT setting_value FROM forge_platform_settings WHERE setting_key = 'platform_name'")
           == "ATLAS Forge (verified)")
 
     page.get_by_role("button", name="Edit", exact=True).first.click()
@@ -220,11 +220,11 @@ with sync_playwright() as p:
     page.get_by_role("button", name="Save", exact=True).click()
     page.wait_for_timeout(2000)
     check("and can be set back",
-          sql("SELECT setting_value FROM platform_settings WHERE setting_key = 'platform_name'")
+          sql("SELECT setting_value FROM forge_platform_settings WHERE setting_key = 'platform_name'")
           == "ATLAS Forge")
 
     # ---- the Danger Zone opens, and Cancel changes nothing ----------------
-    listings_before = sql("SELECT COUNT(*) FROM listings")
+    listings_before = sql("SELECT COUNT(*) FROM forge_listings")
     page.get_by_role("button", name="Reset Platform", exact=True).click()
     page.wait_for_timeout(400)
     check("the Danger Zone confirmation states what it clears",
@@ -232,7 +232,7 @@ with sync_playwright() as p:
     page.get_by_role("button", name="Cancel", exact=True).click()
     page.wait_for_timeout(1500)
     check("cancelling the reset clears nothing",
-          sql("SELECT COUNT(*) FROM listings") == listings_before, listings_before)
+          sql("SELECT COUNT(*) FROM forge_listings") == listings_before, listings_before)
 
     # ---- the directory is real -------------------------------------------
     page.goto(f"{BASE}/backend/users", wait_until="networkidle")
@@ -274,24 +274,24 @@ with sync_playwright() as p:
     browser.close()
 
 # ---- restore the seeded demo data ---------------------------------------
-sql(f"DELETE FROM approvals WHERE id > {hw_approval}")
-sql("UPDATE listings SET status = 'rejected' WHERE title = 'Backend Developer'")
-sql("DELETE ur FROM user_roles ur JOIN roles r ON r.id = ur.role_id "
-    "JOIN users u ON u.id = ur.user_id "
+sql(f"DELETE FROM forge_approvals WHERE id > {hw_approval}")
+sql("UPDATE forge_listings SET status = 'rejected' WHERE title = 'Backend Developer'")
+sql("DELETE ur FROM forge_user_roles ur JOIN forge_roles r ON r.id = ur.role_id "
+    "JOIN forge_users u ON u.id = ur.user_id "
     "WHERE u.app_id = 'ATL-2024-0871' AND r.slug = 'founder'")
-sql(f"DELETE FROM founder_access_grants WHERE id > {hw_grant}")
-sql(f"DELETE FROM activity_logs WHERE id > {hw_activity}")
-sql(f"DELETE FROM notifications WHERE id > {hw_notification}")
-sql("UPDATE platform_settings SET setting_value = 'ATLAS Forge' WHERE setting_key = 'platform_name'")
-sql("UPDATE platform_settings SET setting_value = 'false' WHERE setting_key = 'external_access_v2'")
+sql(f"DELETE FROM forge_founder_access_grants WHERE id > {hw_grant}")
+sql(f"DELETE FROM forge_activity_logs WHERE id > {hw_activity}")
+sql(f"DELETE FROM forge_notifications WHERE id > {hw_notification}")
+sql("UPDATE forge_platform_settings SET setting_value = 'ATLAS Forge' WHERE setting_key = 'platform_name'")
+sql("UPDATE forge_platform_settings SET setting_value = 'false' WHERE setting_key = 'external_access_v2'")
 
 restored = sql(
     "SELECT CONCAT("
-    "(SELECT COUNT(*) FROM listings), '/',"
-    "(SELECT COUNT(*) FROM approvals), '/',"
-    "(SELECT COUNT(*) FROM founder_access_grants), '/',"
-    "(SELECT COUNT(*) FROM activity_logs), '/',"
-    "(SELECT COUNT(*) FROM users))"
+    "(SELECT COUNT(*) FROM forge_listings), '/',"
+    "(SELECT COUNT(*) FROM forge_approvals), '/',"
+    "(SELECT COUNT(*) FROM forge_founder_access_grants), '/',"
+    "(SELECT COUNT(*) FROM forge_activity_logs), '/',"
+    "(SELECT COUNT(*) FROM forge_users))"
 )
 check("teardown — seeded data restored", restored == "7/4/2/10/15", restored)
 

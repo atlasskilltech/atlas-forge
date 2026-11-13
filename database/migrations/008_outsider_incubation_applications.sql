@@ -45,7 +45,7 @@
 -- Idempotent: CREATE TABLE IF NOT EXISTS only.
 -- ===========================================================================
 
-CREATE TABLE IF NOT EXISTS outsider_incubation_applications (
+CREATE TABLE IF NOT EXISTS forge_outsider_incubation_applications (
   id                        BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   reference                 VARCHAR(24)     NOT NULL,
 
@@ -101,23 +101,23 @@ CREATE TABLE IF NOT EXISTS outsider_incubation_applications (
   KEY idx_outsider_incubation_application (incubation_application_id),
 
   CONSTRAINT fk_outsider_incubation_industry FOREIGN KEY (industry_id)
-    REFERENCES industries (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_industries (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_outsider_incubation_stage FOREIGN KEY (stage_id)
-    REFERENCES stages (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_stages (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_outsider_incubation_reviewer FOREIGN KEY (reviewed_by)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_outsider_incubation_user FOREIGN KEY (approved_user_id)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_outsider_incubation_startup FOREIGN KEY (approved_startup_id)
-    REFERENCES startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
+    REFERENCES forge_startups (id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_outsider_incubation_application FOREIGN KEY (incubation_application_id)
-    REFERENCES incubation_applications (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_incubation_applications (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ===========================================================================
 -- Verify
 --
 --   SHOW TABLES LIKE 'outsider_incubation_applications';
---   DESCRIBE outsider_incubation_applications;              -- 26 columns
---   SELECT COUNT(*) FROM outsider_incubation_applications;  -- 0 until the first submission
+--   DESCRIBE forge_outsider_incubation_applications;              -- 26 columns
+--   SELECT COUNT(*) FROM forge_outsider_incubation_applications;  -- 0 until the first submission
 -- ===========================================================================

@@ -21,7 +21,7 @@
 -- not enums: an append-only history must be able to record a status that has
 -- since been removed from the pipeline. They need no change here.
 
-ALTER TABLE applications
+ALTER TABLE forge_applications
   MODIFY COLUMN status
     ENUM('applied','under_review','shortlisted','interview','not_selected','withdrawn','selected')
     NOT NULL DEFAULT 'applied';

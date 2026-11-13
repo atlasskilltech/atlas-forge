@@ -35,12 +35,12 @@
 SET @col_exists := (
   SELECT COUNT(*) FROM information_schema.COLUMNS
    WHERE TABLE_SCHEMA = DATABASE()
-     AND TABLE_NAME   = 'registration_requests'
+     AND TABLE_NAME   = 'forge_registration_requests'
      AND COLUMN_NAME  = 'student_application_id'
 );
 
 SET @ddl := IF(@col_exists = 0,
-  'ALTER TABLE registration_requests ADD COLUMN student_application_id VARCHAR(64) NULL DEFAULT NULL AFTER role_category',
+  'ALTER TABLE forge_registration_requests ADD COLUMN student_application_id VARCHAR(64) NULL DEFAULT NULL AFTER role_category',
   'DO 0'
 );
 
@@ -52,12 +52,12 @@ DEALLOCATE PREPARE stmt;
 SET @idx_exists := (
   SELECT COUNT(*) FROM information_schema.STATISTICS
    WHERE TABLE_SCHEMA = DATABASE()
-     AND TABLE_NAME   = 'registration_requests'
+     AND TABLE_NAME   = 'forge_registration_requests'
      AND INDEX_NAME   = 'idx_registration_student_app_id'
 );
 
 SET @ddl := IF(@idx_exists = 0,
-  'ALTER TABLE registration_requests ADD INDEX idx_registration_student_app_id (student_application_id)',
+  'ALTER TABLE forge_registration_requests ADD INDEX idx_registration_student_app_id (student_application_id)',
   'DO 0'
 );
 
@@ -68,10 +68,10 @@ DEALLOCATE PREPARE stmt;
 -- ===========================================================================
 -- Verify
 --
---   DESCRIBE registration_requests;  -- a `student_application_id` varchar(64)
+--   DESCRIBE forge_registration_requests;  -- a `student_application_id` varchar(64)
 --                                    -- NULL, after role_category
---   SHOW INDEX FROM registration_requests
+--   SHOW INDEX FROM forge_registration_requests
 --     WHERE Key_name = 'idx_registration_student_app_id';
---   SELECT COUNT(*) FROM registration_requests
+--   SELECT COUNT(*) FROM forge_registration_requests
 --    WHERE student_application_id IS NOT NULL;   -- 0 right after migrating
 -- ===========================================================================

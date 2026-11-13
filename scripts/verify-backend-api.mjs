@@ -1,3 +1,5 @@
+import { T } from '../src/lib/queries/tables.mjs'
+
 /**
  * End-to-end verification of the Backend Manager HTTP surface.
  *
@@ -348,37 +350,37 @@ const connection = await mysql.createConnection({
 const run = (sql, params = []) => connection.execute(sql, params)
 
 if (postedBody?.data?.listingId) {
-  await run('DELETE FROM listing_skills WHERE listing_id = ?', [postedBody.data.listingId])
-  await run('DELETE FROM listings WHERE id = ?', [postedBody.data.listingId])
+  await run(`DELETE FROM ${T.listing_skills} WHERE listing_id = ?`, [postedBody.data.listingId])
+  await run(`DELETE FROM ${T.listings} WHERE id = ?`, [postedBody.data.listingId])
 }
 await run(
-  `DELETE a FROM approvals a JOIN roles r ON r.id = a.decided_as_role_id
+  `DELETE a FROM ${T.approvals} a JOIN ${T.roles} r ON r.id = a.decided_as_role_id
     WHERE a.listing_id = ? AND r.slug = 'backend-manager'`,
   [rejected.listingId]
 )
-await run("UPDATE listings SET status = 'rejected' WHERE id = ?", [rejected.listingId])
-await run("DELETE FROM notifications WHERE entity_type = 'listing' AND entity_id = ?", [
+await run(`UPDATE ${T.listings} SET status = 'rejected' WHERE id = ?`, [rejected.listingId])
+await run(`DELETE FROM ${T.notifications} WHERE entity_type = 'listing' AND entity_id = ?`, [
   rejected.listingId,
 ])
-await run('DELETE FROM founder_access_grants WHERE user_id = ?', [target.userId])
+await run(`DELETE FROM ${T.founder_access_grants} WHERE user_id = ?`, [target.userId])
 await run(
-  "DELETE ur FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = ? AND r.slug = 'founder'",
+  `DELETE ur FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id WHERE ur.user_id = ? AND r.slug = 'founder'`,
   [target.userId]
 )
-await run("DELETE FROM notifications WHERE type = 'access' AND user_id = ?", [target.userId])
-await run("UPDATE platform_settings SET setting_value = 'true' WHERE setting_key = ?", [
+await run(`DELETE FROM ${T.notifications} WHERE type = 'access' AND user_id = ?`, [target.userId])
+await run(`UPDATE ${T.platform_settings} SET setting_value = 'true' WHERE setting_key = ?`, [
   'job_listings_require_approval',
 ])
 await run(
-  'DELETE FROM activity_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)'
+  `DELETE FROM ${T.activity_logs} WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)`
 )
 
 const [[counts]] = await connection.execute(`
-  SELECT (SELECT COUNT(*) FROM listings)                       AS listings,
-         (SELECT COUNT(*) FROM approvals)                      AS approvals,
-         (SELECT COUNT(*) FROM founder_access_grants)          AS grants,
-         (SELECT COUNT(*) FROM activity_logs)                  AS activity,
-         (SELECT COUNT(*) FROM users)                          AS users
+  SELECT (SELECT COUNT(*) FROM ${T.listings})                       AS listings,
+         (SELECT COUNT(*) FROM ${T.approvals})                      AS approvals,
+         (SELECT COUNT(*) FROM ${T.founder_access_grants})          AS grants,
+         (SELECT COUNT(*) FROM ${T.activity_logs})                  AS activity,
+         (SELECT COUNT(*) FROM ${T.users})                          AS users
 `)
 await connection.end()
 

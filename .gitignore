@@ -32,3 +32,5 @@ next-env.d.ts
 
 
 #okay
+# Previous production build kept by scripts/deploy.sh for instant rollback.
+.next.rollback

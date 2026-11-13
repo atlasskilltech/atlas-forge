@@ -25,7 +25,7 @@
 -- Idempotent.
 -- ===========================================================================
 
-INSERT INTO roles (slug, name, description, is_view_only, sort_order) VALUES
+INSERT INTO forge_roles (slug, name, description, is_view_only, sort_order) VALUES
   ('network-member', 'Network Member', 'Member of the ATLAS Forge network', FALSE, 6)
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
@@ -38,8 +38,8 @@ ON DUPLICATE KEY UPDATE
 -- ===========================================================================
 -- Verify
 --
---   SELECT id, slug, name, sort_order FROM roles WHERE slug = 'network-member';
---   SELECT COUNT(*) FROM role_permissions rp
---     JOIN roles r ON r.id = rp.role_id
+--   SELECT id, slug, name, sort_order FROM forge_roles WHERE slug = 'network-member';
+--   SELECT COUNT(*) FROM forge_role_permissions rp
+--     JOIN forge_roles r ON r.id = rp.role_id
 --    WHERE r.slug = 'network-member';   -- 0 (no permissions by design)
 -- ===========================================================================

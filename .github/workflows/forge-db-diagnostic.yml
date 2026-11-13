@@ -1,0 +1,78 @@
+name: ATLAS Forge — read-only production DB diagnostic
+
+# Runs ONLY when this file or the read-only scripts change on the diagnostic
+# branch (GitHub only allows manual `workflow_dispatch` runs for workflows that
+# exist on the default branch). It never deploys and never runs on `main`.
+#
+# On the EC2 server, all read-only (see scripts/ops/prod-readonly-report.sh):
+#   - copies the read-only scripts into a throw-away /tmp directory,
+#   - runs them with the production /home/ubuntu/atlas-forge/.env and the
+#     already-installed node_modules (symlinked, not modified),
+#   - reports server tooling, PM2 processes (no env values), other apps' code
+#     references to Forge table names, cron jobs (passwords redacted), recent
+#     backup files, the DB check and the prefix-migration investigation.
+#
+# It does NOT: git pull, npm install, build, restart/reload PM2, edit any file
+# in /home/ubuntu/atlas-forge, or run any DDL/DML. The investigation runs in a
+# READ ONLY transaction. Every line printed on the server goes through a
+# filter that replaces the values of DB_PASSWORD and other secrets with
+# <redacted>.
+
+on:
+  push:
+    branches:
+      - claude/exciting-knuth-mix0o9
+    paths:
+      - .github/workflows/forge-db-diagnostic.yml
+      - scripts/check-db.mjs
+      - scripts/investigate-prefix.mjs
+      - scripts/ops/**
+      - scripts/lib/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: forge-prod-ops
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v4
+
+      - name: Read-only report on EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          # The secrets carry trailing whitespace/newlines (forge.yml copes only
+          # because it leaves them unquoted); strip it so ssh gets a clean host.
+          EC2_HOST="$(printf '%s' "$EC2_HOST" | tr -d '[:space:]')"
+          EC2_USER="$(printf '%s' "$EC2_USER" | tr -d '[:space:]')"
+          KEY="$RUNNER_TEMP/ec2_key"
+          (umask 077; printf '%s\n' "$EC2_KEY" > "$KEY")
+          trap 'rm -f "$KEY"' EXIT
+          SSH=(ssh -i "$KEY" -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=20 "$EC2_USER@$EC2_HOST")
+          DIAG="/tmp/forge-db-diag-${GITHUB_RUN_ID}"
+
+          tar czf - scripts/check-db.mjs scripts/investigate-prefix.mjs scripts/verify-queries.mjs scripts/lib scripts/ops \
+                    src/lib database/schema.sql database/migrations \
+            | "${SSH[@]}" "umask 077; mkdir -p '$DIAG' && tar xzf - -C '$DIAG'"
+
+          "${SSH[@]}" "DIAG='$DIAG' bash -s" <<'REMOTE'
+          set -uo pipefail
+          APP="$HOME/atlas-forge"
+          trap 'rm -rf -- "$DIAG"' EXIT
+          main() { DIAG="$DIAG" APP="$APP" bash "$DIAG/scripts/ops/prod-readonly-report.sh"; }
+          main </dev/null 2>&1 | node "$DIAG/scripts/ops/redact.cjs" "$APP/.env"
+          rc=${PIPESTATUS[0]}
+          echo; echo "== exit code: $rc  (temporary files in $DIAG removed on exit)"
+          exit "$rc"
+          REMOTE

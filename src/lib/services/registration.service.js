@@ -31,6 +31,8 @@ import * as users from '@/lib/repositories/users.repository'
 import * as studentVerification from '@/lib/services/student-verification.service'
 import { validator } from '@/lib/validate'
 
+import { T } from '@/lib/queries/tables.mjs'
+
 /** Approved registrants receive this role and only this role. */
 const NETWORK_MEMBER_ROLE = 'network-member'
 
@@ -681,7 +683,7 @@ export async function approve({ applicationId, actorId }) {
       )
       // Set here, not in users.create, so the shared create path used by staff
       // and outsider-founder accounts is left exactly as it was.
-      await execute('UPDATE users SET must_change_password = 1 WHERE id = ?', [userId], tx)
+      await execute(`UPDATE ${T.users} SET must_change_password = 1 WHERE id = ?`, [userId], tx)
       await users.grantRole(userId, role.id, { isPrimary: true, grantedBy: actorId }, tx)
     }
 

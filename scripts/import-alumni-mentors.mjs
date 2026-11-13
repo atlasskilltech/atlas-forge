@@ -1,9 +1,9 @@
 /**
  * Imports the alumni mentorship form export into the `mentors` system.
  *
- *   node --env-file=.env.local scripts/import-alumni-mentors.mjs            # dry run
- *   node --env-file=.env.local scripts/import-alumni-mentors.mjs --commit   # writes
- *   node --env-file=.env.local scripts/import-alumni-mentors.mjs --file=<path>
+ *   node --env-file=.env scripts/import-alumni-mentors.mjs            # dry run
+ *   node --env-file=.env scripts/import-alumni-mentors.mjs --commit   # writes
+ *   node --env-file=.env scripts/import-alumni-mentors.mjs --file=<path>
  *
  * Requires migrations/005_alumni_mentors.sql.
  *
@@ -24,6 +24,8 @@ import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import mysql from 'mysql2/promise'
+
+import { T } from '../src/lib/queries/tables.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -318,11 +320,11 @@ const connection = await mysql.createConnection({
 
 try {
   const [[alumniType]] = await connection.query(
-    `SELECT id FROM mentor_types WHERE slug = 'alumni'`
+    `SELECT id FROM ${T.mentor_types} WHERE slug = 'alumni'`
   )
   if (!alumniType) throw new Error("mentor_types has no 'alumni' row — run db:reference first.")
 
-  const [areaRows] = await connection.query(`SELECT id, slug FROM mentorship_areas`)
+  const [areaRows] = await connection.query(`SELECT id, slug FROM ${T.mentorship_areas}`)
   const areaIdBySlug = new Map(areaRows.map((row) => [row.slug, row.id]))
   for (const slug of AREA_SLUGS.values()) {
     if (!areaIdBySlug.has(slug)) {
@@ -343,7 +345,7 @@ try {
     // affectedRows = 1 for both a fresh insert and an unchanged duplicate-key
     // match, and sets insertId whenever the upsert actually modifies a row.
     // Asking first is one query and is exact.
-    const [[before]] = await connection.query(`SELECT id FROM mentors WHERE email = ?`, [
+    const [[before]] = await connection.query(`SELECT id FROM ${T.mentors} WHERE email = ?`, [
       person.email,
     ])
 
@@ -351,7 +353,7 @@ try {
     // absent from the UPDATE clause: if staff have since deactivated someone,
     // re-running the import must not quietly bring them back.
     const [result] = await connection.execute(
-      `INSERT INTO mentors
+      `INSERT INTO ${T.mentors}
          (full_name, email, phone, linkedin_url, role_title, city, course,
           graduation_year, industry, experience_band, mentoring_availability,
           import_source, consent_at, mentor_type_id, initials, avatar_tone)
@@ -396,10 +398,10 @@ try {
 
     // Rewritten rather than appended to, so an area removed from a later
     // submission is also removed here.
-    await connection.execute(`DELETE FROM mentor_mentorship_areas WHERE mentor_id = ?`, [mentorId])
+    await connection.execute(`DELETE FROM ${T.mentor_mentorship_areas} WHERE mentor_id = ?`, [mentorId])
     for (const area of person.areas) {
       await connection.execute(
-        `INSERT INTO mentor_mentorship_areas (mentor_id, area_id) VALUES (?, ?)`,
+        `INSERT INTO ${T.mentor_mentorship_areas} (mentor_id, area_id) VALUES (?, ?)`,
         [mentorId, areaIdBySlug.get(AREA_SLUGS.get(area))]
       )
       links += 1
@@ -409,9 +411,9 @@ try {
   await connection.commit()
 
   const [[totals]] = await connection.query(`
-    SELECT (SELECT COUNT(*) FROM mentors WHERE deleted_at IS NULL)                    AS mentors,
-           (SELECT COUNT(*) FROM mentors WHERE import_source = '${IMPORT_SOURCE}')    AS imported,
-           (SELECT COUNT(*) FROM mentor_mentorship_areas)                             AS links
+    SELECT (SELECT COUNT(*) FROM ${T.mentors} WHERE deleted_at IS NULL)                    AS mentors,
+           (SELECT COUNT(*) FROM ${T.mentors} WHERE import_source = '${IMPORT_SOURCE}')    AS imported,
+           (SELECT COUNT(*) FROM ${T.mentor_mentorship_areas})                             AS links
   `)
 
   console.log(`\n  inserted                ${inserted}`)
@@ -419,7 +421,7 @@ try {
   console.log(`  area links written      ${links}`)
   console.log(`\n  mentors table now       ${totals.mentors} (${totals.imported} from this import)`)
   console.log(`  area links now          ${totals.links}`)
-  console.log(`\nDone. To undo: DELETE FROM mentors WHERE import_source = '${IMPORT_SOURCE}';\n`)
+  console.log(`\nDone. To undo: DELETE FROM ${T.mentors} WHERE import_source = '${IMPORT_SOURCE}';\n`)
 } catch (error) {
   await connection.rollback().catch(() => {})
   console.error(`\nFAILED — nothing was written: ${error.message}\n`)

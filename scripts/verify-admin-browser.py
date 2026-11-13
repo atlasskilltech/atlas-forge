@@ -17,7 +17,7 @@ BASE = os.environ.get("BASE_URL", "http://localhost:3100")
 APP_ID = "ATL-2019-0004"
 PASSWORD = "Atlas@2026"
 MYSQL = r"C:\xampp\mysql\bin\mysql.exe"
-DB = "atlas-forge-dashboard"
+DB = os.environ.get("DB_NAME", "atlas-forge-dashboard")  # local XAMPP default
 
 results = []
 
@@ -36,18 +36,18 @@ def sql(statement):
 
 FINGERPRINT = (
     "SELECT CONCAT_WS('/',"
-    "(SELECT COUNT(*) FROM users),"
-    "(SELECT COUNT(*) FROM user_roles),"
-    "(SELECT COUNT(*) FROM listings),"
-    "(SELECT COUNT(*) FROM approvals),"
-    "(SELECT COUNT(*) FROM applications),"
-    "(SELECT COUNT(*) FROM concierge_contacts),"
-    "(SELECT COUNT(*) FROM mentorship_sessions),"
-    "(SELECT COUNT(*) FROM founder_access_grants),"
-    "(SELECT COUNT(*) FROM startups),"
-    "(SELECT COUNT(*) FROM activity_logs),"
-    "(SELECT COUNT(*) FROM notifications),"
-    "(SELECT GROUP_CONCAT(setting_value ORDER BY setting_key) FROM platform_settings))"
+    "(SELECT COUNT(*) FROM forge_users),"
+    "(SELECT COUNT(*) FROM forge_user_roles),"
+    "(SELECT COUNT(*) FROM forge_listings),"
+    "(SELECT COUNT(*) FROM forge_approvals),"
+    "(SELECT COUNT(*) FROM forge_applications),"
+    "(SELECT COUNT(*) FROM forge_concierge_contacts),"
+    "(SELECT COUNT(*) FROM forge_mentorship_sessions),"
+    "(SELECT COUNT(*) FROM forge_founder_access_grants),"
+    "(SELECT COUNT(*) FROM forge_startups),"
+    "(SELECT COUNT(*) FROM forge_activity_logs),"
+    "(SELECT COUNT(*) FROM forge_notifications),"
+    "(SELECT GROUP_CONCAT(setting_value ORDER BY setting_key) FROM forge_platform_settings))"
 )
 
 before = sql(FINGERPRINT)

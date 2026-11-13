@@ -4,6 +4,7 @@ Asserts behaviour, not just that a control exists — that state actually
 changed, that a write landed in MySQL, and that signing out really ends the
 session.
 """
+import os
 import subprocess
 import sys
 
@@ -13,7 +14,7 @@ BASE = "http://localhost:3100"
 APP_ID = "ATL-2024-0871"
 PASSWORD = "Atlas@2026"
 MYSQL = r"C:\xampp\mysql\bin\mysql.exe"
-DB = "atlas-forge-dashboard"
+DB = os.environ.get("DB_NAME", "atlas-forge-dashboard")  # local XAMPP default
 
 results = []
 
@@ -31,10 +32,10 @@ def sql(statement):
 
 
 # High-water marks, so the teardown removes exactly what this run created.
-high_water_application = sql("SELECT COALESCE(MAX(id), 0) FROM applications")
-high_water_activity = sql("SELECT COALESCE(MAX(id), 0) FROM activity_logs")
-high_water_notification = sql("SELECT COALESCE(MAX(id), 0) FROM notifications")
-high_water_message = sql("SELECT COALESCE(MAX(id), 0) FROM messages")
+high_water_application = sql("SELECT COALESCE(MAX(id), 0) FROM forge_applications")
+high_water_activity = sql("SELECT COALESCE(MAX(id), 0) FROM forge_activity_logs")
+high_water_notification = sql("SELECT COALESCE(MAX(id), 0) FROM forge_notifications")
+high_water_message = sql("SELECT COALESCE(MAX(id), 0) FROM forge_messages")
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
@@ -100,7 +101,7 @@ with sync_playwright() as p:
 
     # ---- apply -----------------------------------------------------------
     before = sql(
-        "SELECT COUNT(*) FROM applications a JOIN users u ON u.id=a.applicant_user_id "
+        "SELECT COUNT(*) FROM forge_applications a JOIN forge_users u ON u.id=a.applicant_user_id "
         f"WHERE u.app_id='{APP_ID}'"
     )
 
@@ -130,15 +131,15 @@ with sync_playwright() as p:
           role_title)
 
     after = sql(
-        "SELECT COUNT(*) FROM applications a JOIN users u ON u.id=a.applicant_user_id "
+        "SELECT COUNT(*) FROM forge_applications a JOIN forge_users u ON u.id=a.applicant_user_id "
         f"WHERE u.app_id='{APP_ID}'"
     )
     check("the application actually reached MySQL", int(after) == int(before) + 1,
           f"{before} -> {after}")
 
     stored = sql(
-        "SELECT l.title FROM applications a JOIN listings l ON l.id=a.listing_id "
-        f"JOIN users u ON u.id=a.applicant_user_id WHERE u.app_id='{APP_ID}' "
+        "SELECT l.title FROM forge_applications a JOIN forge_listings l ON l.id=a.listing_id "
+        f"JOIN forge_users u ON u.id=a.applicant_user_id WHERE u.app_id='{APP_ID}' "
         "ORDER BY a.id DESC LIMIT 1"
     )
     check("the stored row is the role that was clicked", stored == role_title,
@@ -157,7 +158,7 @@ with sync_playwright() as p:
           stored in page.inner_text("body"), stored)
 
     # ---- Contact Forge Manager writes a real message ---------------------
-    messages_before = sql("SELECT COUNT(*) FROM messages")
+    messages_before = sql("SELECT COUNT(*) FROM forge_messages")
     page.goto(f"{BASE}/student/contact-manager", wait_until="networkidle")
     page.wait_for_timeout(400)
     page.get_by_role("button", name="Contact Forge Manager", exact=True).click()
@@ -168,11 +169,11 @@ with sync_playwright() as p:
     page.wait_for_timeout(2500)
 
     check("the message confirmation appears", "Message Sent!" in page.inner_text("body"))
-    messages_after = sql("SELECT COUNT(*) FROM messages")
+    messages_after = sql("SELECT COUNT(*) FROM forge_messages")
     check("and the message reached MySQL", int(messages_after) == int(messages_before) + 1,
           f"{messages_before} -> {messages_after}")
     recipient = sql(
-        "SELECT u.full_name FROM messages m JOIN users u ON u.id = m.recipient_user_id "
+        "SELECT u.full_name FROM forge_messages m JOIN forge_users u ON u.id = m.recipient_user_id "
         "ORDER BY m.id DESC LIMIT 1"
     )
     check("addressed to the Forge Manager", recipient == "Mihir Pawar", recipient)
@@ -196,7 +197,7 @@ with sync_playwright() as p:
 
     # ---- availability toggle --------------------------------------------
     was = sql(
-        "SELECT is_available FROM student_profiles sp JOIN users u ON u.id=sp.user_id "
+        "SELECT is_available FROM forge_student_profiles sp JOIN forge_users u ON u.id=sp.user_id "
         f"WHERE u.app_id='{APP_ID}'"
     )
     page.goto(f"{BASE}/student/availability", wait_until="networkidle")
@@ -204,7 +205,7 @@ with sync_playwright() as p:
     toggle.click()
     page.wait_for_timeout(2000)
     now = sql(
-        "SELECT is_available FROM student_profiles sp JOIN users u ON u.id=sp.user_id "
+        "SELECT is_available FROM forge_student_profiles sp JOIN forge_users u ON u.id=sp.user_id "
         f"WHERE u.app_id='{APP_ID}'"
     )
     check("the availability toggle writes to MySQL", was != now, f"{was} -> {now}")
@@ -212,14 +213,14 @@ with sync_playwright() as p:
     toggle.click()
     page.wait_for_timeout(2000)
     restored = sql(
-        "SELECT is_available FROM student_profiles sp JOIN users u ON u.id=sp.user_id "
+        "SELECT is_available FROM forge_student_profiles sp JOIN forge_users u ON u.id=sp.user_id "
         f"WHERE u.app_id='{APP_ID}'"
     )
     check("and toggling back restores it", restored == was, f"{restored} == {was}")
 
     # ---- mentorship request ---------------------------------------------
     requests_before = sql(
-        "SELECT COUNT(*) FROM mentorship_requests r JOIN users u ON u.id=r.requester_user_id "
+        "SELECT COUNT(*) FROM forge_mentorship_requests r JOIN forge_users u ON u.id=r.requester_user_id "
         f"WHERE u.app_id='{APP_ID}'"
     )
     page.goto(f"{BASE}/student/mentorship", wait_until="networkidle")
@@ -231,7 +232,7 @@ with sync_playwright() as p:
     page.wait_for_timeout(2500)
     check("the request dialog confirms", "Request Sent!" in page.inner_text("body"))
     requests_after = sql(
-        "SELECT COUNT(*) FROM mentorship_requests r JOIN users u ON u.id=r.requester_user_id "
+        "SELECT COUNT(*) FROM forge_mentorship_requests r JOIN forge_users u ON u.id=r.requester_user_id "
         f"WHERE u.app_id='{APP_ID}'"
     )
     check("the mentorship request reached MySQL",
@@ -263,15 +264,15 @@ with sync_playwright() as p:
 # before it started rather than by hard-coded ids.
 TOPIC = "Portfolio review before placements"
 sql(
-    "DELETE ae FROM application_events ae JOIN applications a ON a.id=ae.application_id "
+    "DELETE ae FROM forge_application_events ae JOIN forge_applications a ON a.id=ae.application_id "
     f"WHERE a.id > {high_water_application}"
 )
-sql(f"DELETE FROM applications WHERE id > {high_water_application}")
-sql(f"DELETE FROM mentorship_sessions WHERE topic = '{TOPIC}'")
-sql(f"DELETE FROM mentorship_requests WHERE topic = '{TOPIC}'")
-sql(f"DELETE FROM activity_logs WHERE id > {high_water_activity}")
-sql(f"DELETE FROM notifications WHERE id > {high_water_notification}")
-sql(f"DELETE FROM messages WHERE id > {high_water_message}")
+sql(f"DELETE FROM forge_applications WHERE id > {high_water_application}")
+sql(f"DELETE FROM forge_mentorship_sessions WHERE topic = '{TOPIC}'")
+sql(f"DELETE FROM forge_mentorship_requests WHERE topic = '{TOPIC}'")
+sql(f"DELETE FROM forge_activity_logs WHERE id > {high_water_activity}")
+sql(f"DELETE FROM forge_notifications WHERE id > {high_water_notification}")
+sql(f"DELETE FROM forge_messages WHERE id > {high_water_message}")
 
 for ok, name, detail in results:
     print(f"  {'PASS' if ok else 'FAIL'}  {name}{f' — {detail}' if detail else ''}")

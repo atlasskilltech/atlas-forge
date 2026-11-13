@@ -29,11 +29,11 @@ SET @add_logo_url = (
     EXISTS(
       SELECT 1 FROM information_schema.COLUMNS
        WHERE TABLE_SCHEMA = DATABASE()
-         AND TABLE_NAME   = 'startups'
+         AND TABLE_NAME   = 'forge_startups'
          AND COLUMN_NAME  = 'logo_url'
     ),
     'SELECT 1',
-    'ALTER TABLE startups ADD COLUMN logo_url VARCHAR(255) NULL DEFAULT NULL AFTER avatar_tone'
+    'ALTER TABLE forge_startups ADD COLUMN logo_url VARCHAR(255) NULL DEFAULT NULL AFTER avatar_tone'
   )
 );
 

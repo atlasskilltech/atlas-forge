@@ -5,6 +5,8 @@ import * as sql from '@/lib/queries/users'
 import { applyFullListCap, withFullListCap } from '@/lib/queries/pagination'
 import { bool, inClause, iso, num } from '@/lib/utils/rows'
 
+import { T } from '@/lib/queries/tables.mjs'
+
 export const toUser = (row) => ({
   id: num(row.id),
   appId: row.app_id,
@@ -243,5 +245,5 @@ export async function softDelete(userId, conn) {
 }
 
 export async function countActiveApplications(userId) {
-  return num(await queryValue('SELECT COUNT(*) FROM applications WHERE applicant_user_id = ? AND deleted_at IS NULL', [userId]))
+  return num(await queryValue(`SELECT COUNT(*) FROM ${T.applications} WHERE applicant_user_id = ? AND deleted_at IS NULL`, [userId]))
 }

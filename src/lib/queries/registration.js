@@ -1,3 +1,5 @@
+import { T } from '@/lib/queries/tables.mjs'
+
 /**
  * SQL for the public "Join the ATLAS Forge Network" registration.
  *
@@ -10,7 +12,7 @@
  */
 
 export const INSERT_REGISTRATION_REQUEST = `
-  INSERT INTO registration_requests
+  INSERT INTO ${T.registration_requests}
     (reference, full_name, email, phone, role_category, student_application_id,
      details_json, consent, consented_at, source_ip, user_agent)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -25,7 +27,7 @@ export const INSERT_REGISTRATION_REQUEST = `
  */
 export const COUNT_PENDING_BY_EMAIL = `
   SELECT COUNT(*) AS total
-    FROM registration_requests
+    FROM ${T.registration_requests}
    WHERE email = ?
      AND status = 'pending'
 `
@@ -38,7 +40,7 @@ export const COUNT_PENDING_BY_EMAIL = `
  */
 export const COUNT_RECENT_BY_IP = `
   SELECT COUNT(*) AS total
-    FROM registration_requests
+    FROM ${T.registration_requests}
    WHERE source_ip = ?
      AND source_ip <> ''
      AND created_at > (NOW() - INTERVAL ? SECOND)
@@ -63,7 +65,7 @@ export const COUNT_RECENT_BY_IP = `
  */
 export const SELECT_PUBLIC_REGISTRATIONS = `
   SELECT r.reference, r.full_name, r.email, r.role_category, r.status, r.created_at
-    FROM registration_requests r
+    FROM ${T.registration_requests} r
    WHERE (? IS NULL OR r.status = ?)
    ORDER BY r.created_at DESC, r.id DESC
 `
@@ -71,7 +73,7 @@ export const SELECT_PUBLIC_REGISTRATIONS = `
 /** Total rows matching the same optional status filter, for page metadata. */
 export const COUNT_PUBLIC_REGISTRATIONS = `
   SELECT COUNT(*) AS total
-    FROM registration_requests
+    FROM ${T.registration_requests}
    WHERE (? IS NULL OR status = ?)
 `
 
@@ -97,8 +99,8 @@ export const SELECT_STUDENT_BY_APPLICATION_ID = `
     u.status               AS account_status,
     u.must_change_password AS account_must_change,
     u.deleted_at           AS account_deleted_at
-  FROM registration_requests r
-  LEFT JOIN users u ON u.id = r.approved_user_id
+  FROM ${T.registration_requests} r
+  LEFT JOIN ${T.users} u ON u.id = r.approved_user_id
   WHERE r.role_category = 'atlas_student'
     AND r.student_application_id = ?
   ORDER BY r.created_at DESC, r.id DESC
@@ -112,7 +114,7 @@ export const SELECT_STUDENT_BY_APPLICATION_ID = `
  */
 export const SELECT_LATEST_INCUBATION_STATUS_BY_USER = `
   SELECT status
-    FROM incubation_applications
+    FROM ${T.incubation_applications}
    WHERE applicant_user_id = ?
      AND deleted_at IS NULL
    ORDER BY COALESCE(submitted_at, created_at) DESC, id DESC
@@ -142,11 +144,11 @@ const REGISTRATION_FIELDS = `
  * will attach to that account rather than creating a second one.
  */
 const REGISTRATION_JOINS = `
-    FROM registration_requests r
-    LEFT JOIN users rv ON rv.id = r.reviewed_by
-    LEFT JOIN users au ON au.id = r.approved_user_id
-    LEFT JOIN roles ro ON ro.id = r.approved_role_id
-    LEFT JOIN users mu ON mu.email = r.email AND mu.deleted_at IS NULL
+    FROM ${T.registration_requests} r
+    LEFT JOIN ${T.users} rv ON rv.id = r.reviewed_by
+    LEFT JOIN ${T.users} au ON au.id = r.approved_user_id
+    LEFT JOIN ${T.roles} ro ON ro.id = r.approved_role_id
+    LEFT JOIN ${T.users} mu ON mu.email = r.email AND mu.deleted_at IS NULL
 `
 
 export const SELECT_REGISTRATIONS = `
@@ -172,13 +174,13 @@ export const SELECT_REGISTRATION = `
  * created in a later phase, which fills `approved_user_id` / `approved_role_id`.
  */
 export const CLAIM_FOR_APPROVAL = `
-  UPDATE registration_requests
+  UPDATE ${T.registration_requests}
      SET status = 'approved', reviewed_by = ?, reviewed_at = NOW(), rejection_reason = NULL
    WHERE id = ? AND status = 'pending'
 `
 
 export const REJECT_REGISTRATION = `
-  UPDATE registration_requests
+  UPDATE ${T.registration_requests}
      SET status = 'rejected', reviewed_by = ?, reviewed_at = NOW(), rejection_reason = ?
    WHERE id = ? AND status = 'pending'
 `
@@ -188,7 +190,7 @@ export const REJECT_REGISTRATION = `
  * transaction as the claim, after the user and role grant exist.
  */
 export const LINK_APPROVAL = `
-  UPDATE registration_requests
+  UPDATE ${T.registration_requests}
      SET approved_user_id = ?, approved_role_id = ?
    WHERE id = ?
 `
@@ -199,7 +201,7 @@ export const LINK_APPROVAL = `
  */
 export const SELECT_USER_BY_EMAIL = `
   SELECT id, app_id, full_name, status, deleted_at
-    FROM users
+    FROM ${T.users}
    WHERE email = ?
    LIMIT 1
 `
