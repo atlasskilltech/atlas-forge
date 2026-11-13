@@ -13,9 +13,15 @@
 # This file was created for a local rehearsal and is intended to be run from the
 # Actions tab AFTER review; it is safe to delete.
 # ---------------------------------------------------------------------------
-name: Migration rehearsal (MariaDB 10.11) — manual only
+name: Migration rehearsal (MariaDB 10.11)
 
 on:
+  # Runs on a push to the isolated rehearsal branch ONLY — never main, never any
+  # other branch — so GitHub lists and runs it without needing it on main first.
+  push:
+    branches:
+      - test/mariadb-10-11-migration-rehearsal
+  # Kept for manual re-runs once GitHub recognises the workflow.
   workflow_dispatch: {}
 
 permissions:
