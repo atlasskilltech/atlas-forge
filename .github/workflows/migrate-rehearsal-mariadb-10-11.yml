@@ -1,19 +1,21 @@
 # ---------------------------------------------------------------------------
-# ATLAS Forge — migration-runner rehearsal against MariaDB 10.11 (production's
-# version). ISOLATED and MANUAL ONLY.
+# ATLAS Forge — migration-runner + backup/deploy-gate tests against MariaDB
+# 10.11 (production's version). ISOLATED to a disposable service container.
 #
-#   - `workflow_dispatch` only: it never runs on push/PR, and it is not wired
-#     into deployment. forge.yml is untouched.
+#   - Triggers on push to the isolated test branch (and manual dispatch) only —
+#     never main or other branches; it is not wired into deployment, and
+#     forge.yml is untouched.
 #   - It talks ONLY to a disposable MariaDB 10.11 SERVICE CONTAINER on
 #     127.0.0.1. It never reads .env/.env.local and never connects to the
 #     production database (65.1.118.10). The password below is a throwaway
 #     CI-only value, not a production credential, and is never echoed to logs.
-#   - It runs the existing migration tests + a 10.4-vs-10.11 fingerprint diff.
+#   - It runs the migration, backup-verification and deploy phase-1b tests, plus
+#     a 10.4-vs-10.11 fingerprint diff.
 #
 # This file was created for a local rehearsal and is intended to be run from the
 # Actions tab AFTER review; it is safe to delete.
 # ---------------------------------------------------------------------------
-name: Migration rehearsal (MariaDB 10.11)
+name: Migration & deploy tests (MariaDB 10.11)
 
 on:
   # Runs on a push to the isolated rehearsal branch ONLY — never main, never any
@@ -76,6 +78,12 @@ jobs:
 
       - name: Migration runner tests (against MariaDB 10.11)
         run: node --test --test-timeout=60000 --test-reporter=spec scripts/__tests__/migrate.test.mjs
+
+      - name: Backup-verification tests (verify-backup.mjs)
+        run: node --test --test-reporter=spec scripts/__tests__/verify-backup.test.mjs
+
+      - name: Deploy phase-1b failure-path tests (shell, stubbed)
+        run: bash scripts/__tests__/deploy-phase1b.test.sh
 
       - name: Generate the 10.11 fingerprint and diff against the committed (10.4) artifact
         run: |
