@@ -26,7 +26,7 @@ on:
       - .github/workflows/forge-db-diagnostic.yml
       - scripts/check-db.mjs
       - scripts/investigate-prefix.mjs
-      - scripts/ops/prod-readonly-report.sh
+      - scripts/ops/**
       - scripts/lib/**
   workflow_dispatch:
 
@@ -62,8 +62,8 @@ jobs:
           SSH=(ssh -i "$KEY" -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=20 "$EC2_USER@$EC2_HOST")
           DIAG="/tmp/forge-db-diag-${GITHUB_RUN_ID}"
 
-          tar czf - scripts/check-db.mjs scripts/investigate-prefix.mjs scripts/lib scripts/ops \
-                    src/lib/queries/tables.mjs database/schema.sql database/migrations \
+          tar czf - scripts/check-db.mjs scripts/investigate-prefix.mjs scripts/verify-queries.mjs scripts/lib scripts/ops \
+                    src/lib database/schema.sql database/migrations \
             | "${SSH[@]}" "umask 077; mkdir -p '$DIAG' && tar xzf - -C '$DIAG'"
 
           "${SSH[@]}" "DIAG='$DIAG' bash -s" <<'REMOTE'

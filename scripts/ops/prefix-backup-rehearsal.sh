@@ -43,6 +43,14 @@ for d in "$HOME"/*/; do
   if grep -qsF "$DBN" "$d".env "$d".env.* "$d"config/*.js "$d"config/*.json "$d"*.config.* 2>/dev/null; then echo "  $(basename "$d")"; fi
 done
 
+section "existing backups (sha256 + gzip integrity)"
+for f in "$BK"/*.sql.gz; do
+  [ -f "$f" ] || continue
+  st=OK; (cd "$BK" && sha256sum -c --quiet "$(basename "$f").sha256" >/dev/null 2>&1) || st=SHA-MISMATCH
+  gzip -t "$f" 2>/dev/null || st="$st GZIP-BAD"
+  printf '  %-6s %10s  %s\n' "$st" "$(stat -c %s "$f")" "$(basename "$f")"
+done
+
 section "docker and disk"
 DOCKER=docker
 if ! docker info >/dev/null 2>&1; then

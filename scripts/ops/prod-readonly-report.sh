@@ -63,6 +63,18 @@ find "$HOME" /var/backups /backup /backups -maxdepth 4 -type f \
   -printf '  %TY-%Tm-%Td %TH:%TM %12s %p\n' 2>/dev/null | sort -r | head -20
 echo "  (end of list)"
 
+section "backup integrity (sha256 + gzip test of every backup in ~/forge-migration/backups)"
+BK="$HOME/forge-migration/backups"
+if ls "$BK"/*.sql.gz >/dev/null 2>&1; then
+  for f in "$BK"/*.sql.gz; do
+    ok=OK; (cd "$BK" && sha256sum -c --quiet "$(basename "$f").sha256" >/dev/null 2>&1) || ok=SHA-MISMATCH
+    gzip -t "$f" 2>/dev/null || ok="$ok GZIP-BAD"
+    printf '  %-6s %10s  %s\n' "$ok" "$(stat -c %s "$f")" "$f"
+  done
+else
+  echo "  no backups found"
+fi
+
 section "read-only database check"
 node --env-file=.env "$DIAG/scripts/check-db.mjs"
 rc_check=$?
@@ -74,4 +86,29 @@ node --env-file=.env "$DIAG/scripts/investigate-prefix.mjs" --json="$BASE"
 rc_inv=$?
 [ -f "$BASE" ] && echo "  baseline sha256 $(sha256sum "$BASE" | cut -c1-64)"
 
-exit $(( rc_check != 0 || rc_inv != 0 ))
+rc_post=0
+if node -e "process.exit(require('$BASE').forge.every(r=>r.prefixedExists&&!r.legacyExists)?0:1)" 2>/dev/null; then
+  section "POST-MIGRATION verification (read-only)"
+  PRE=$(ls -t "$HOME"/forge-migration/backups/*-investigation.json 2>/dev/null | head -1)
+  echo "  baseline (pre-migration): $PRE"
+  node "$DIAG/scripts/ops/compare-investigations.mjs" "$PRE" "$BASE" || rc_post=1
+  node --no-warnings --env-file=.env "$DIAG/scripts/verify-queries.mjs" | grep -E 'prepared|FAIL' | sed 's/^/  /'
+  [ "${PIPESTATUS[0]}" -eq 0 ] || rc_post=1
+  HP=$(node -e "process.stdout.write(require('util').parseEnv(require('fs').readFileSync('.env','utf8')).PORT||'')")
+  for path in /login "/api/public/student-activity?applicationId=post-migration-check"; do
+    code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$HP$path"); echo "  GET $path -> $code"
+    [ "$code" -lt 500 ] 2>/dev/null && [ "$code" != 000 ] || rc_post=1
+  done
+  pm2 jlist 2>/dev/null | node -e '
+    let s=""; process.stdin.on("data",d=>s+=d).on("end",()=>{
+      const p=JSON.parse(s).find(x=>x.name==="atlas-forge"); const e=p?.pm2_env||{}
+      const a=[].concat(e.node_args||[]).join(" ")
+      console.log(`  PM2 atlas-forge: ${e.status} (restarts ${e.restart_time}, unstable ${e.unstable_restarts}, node_args ${a})`)
+      process.exit(e.status==="online"&&a.includes("--env-file=.env")?0:1)})' || rc_post=1
+  LOGF=$(pm2 jlist 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const p=JSON.parse(s).find(x=>x.name==="atlas-forge");process.stdout.write(p?.pm2_env?.pm_out_log_path||"")})')
+  echo "  last boot log lines: $(grep -a '\[atlas-forge\] database' "$LOGF" 2>/dev/null | tail -1)"
+  ERRF=${LOGF/-out/-error}
+  echo "  missing-table errors in app error log since deploy: $(grep -acE "ER_NO_SUCH_TABLE|doesn't exist" "$ERRF" 2>/dev/null || true)"
+fi
+
+exit $(( rc_check != 0 || rc_inv != 0 || rc_post != 0 ))
