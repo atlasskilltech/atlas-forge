@@ -22,7 +22,7 @@ on:
       - claude/exciting-knuth-mix0o9
     paths:
       - .github/workflows/forge-prefix-rehearsal.yml
-      - scripts/ops/prefix-backup-rehearsal.sh
+      - scripts/ops/**
 
 permissions:
   contents: read

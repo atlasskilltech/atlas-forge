@@ -30,6 +30,10 @@ const conn = await mysql.createConnection({
   dateStrings: true, supportBigNumbers: true, bigNumberStrings: true, decimalNumbers: false,
   typeCast: (field, next) => (field.type === 'JSON' ? field.string() : next()),
 })
+// TIMESTAMP values are rendered in the SESSION time zone. Pin it to UTC so the
+// same stored instant hashes identically on servers configured differently
+// (e.g. production vs. the UTC restore container). A session setting, not a write.
+await conn.query("SET SESSION time_zone = '+00:00'")
 await conn.query('SET SESSION TRANSACTION READ ONLY')
 await conn.query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY')
 
