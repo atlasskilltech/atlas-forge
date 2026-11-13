@@ -34,7 +34,7 @@
 -- for the whole feature, because the reference shows two categories collecting
 -- an archive of several files and the rest collecting a single PDF.
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS document_categories (
+CREATE TABLE IF NOT EXISTS forge_document_categories (
   id             BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
   slug           VARCHAR(64)       NOT NULL,
   name           VARCHAR(120)      NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS document_categories (
 -- founder types reaches the filesystem. `original_name` is what they uploaded
 -- and what a download hands back.
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS startup_documents (
+CREATE TABLE IF NOT EXISTS forge_startup_documents (
   id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   startup_id    BIGINT UNSIGNED NOT NULL,
   category_id   BIGINT UNSIGNED NOT NULL,
@@ -94,11 +94,11 @@ CREATE TABLE IF NOT EXISTS startup_documents (
   KEY idx_startup_documents_uploader (uploaded_by),
   KEY idx_startup_documents_deleted (deleted_at),
   CONSTRAINT fk_startup_documents_startup FOREIGN KEY (startup_id)
-    REFERENCES startups (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    REFERENCES forge_startups (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_startup_documents_category FOREIGN KEY (category_id)
-    REFERENCES document_categories (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    REFERENCES forge_document_categories (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT fk_startup_documents_uploader FOREIGN KEY (uploaded_by)
-    REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+    REFERENCES forge_users (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS startup_documents (
 -- shows: PDF everywhere except the two categories the design collects as an
 -- archive.
 -- ---------------------------------------------------------------------------
-INSERT INTO document_categories (slug, name, description, tier, accepted_types, sort_order) VALUES
+INSERT INTO forge_document_categories (slug, name, description, tier, accepted_types, sort_order) VALUES
   ('pitch-deck',                'Pitch Deck',                                       NULL, 'core',        'pdf',      1),
   ('incubation-agreement',      'Incubation Agreement',                             NULL, 'core',        'pdf',      2),
   ('dpiit-recognition',         'DPIIT Recognition Certificate',
@@ -137,28 +137,28 @@ ON DUPLICATE KEY UPDATE
 -- oversight. Staff are never granted upload or replace — the paperwork is the
 -- startup's to maintain.
 -- ---------------------------------------------------------------------------
-INSERT INTO permissions (slug, name, module) VALUES
+INSERT INTO forge_permissions (slug, name, module) VALUES
   ('document.manage_own', 'Upload and replace own startup documents', 'compliance'),
   ('document.view_all',   'View and download any startup documents',  'compliance')
 ON DUPLICATE KEY UPDATE name = VALUES(name), module = VALUES(module);
 
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id FROM roles r JOIN permissions p ON p.slug = 'document.manage_own'
+INSERT INTO forge_role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM forge_roles r JOIN forge_permissions p ON p.slug = 'document.manage_own'
 WHERE r.slug = 'founder'
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id FROM roles r JOIN permissions p ON p.slug = 'document.view_all'
+INSERT INTO forge_role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM forge_roles r JOIN forge_permissions p ON p.slug = 'document.view_all'
 WHERE r.slug IN ('forge-manager', 'super-admin', 'backend-manager')
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
 -- ===========================================================================
 -- Verify
 --
---   SELECT COUNT(*) FROM document_categories;                        -- 14
---   SELECT tier, COUNT(*) FROM document_categories GROUP BY tier;    -- core 6, recommended 8
---   SELECT COUNT(*) FROM startup_documents;                          -- 0 until the first upload
---   SELECT r.slug, p.slug FROM role_permissions rp
---     JOIN roles r ON r.id = rp.role_id JOIN permissions p ON p.id = rp.permission_id
+--   SELECT COUNT(*) FROM forge_document_categories;                        -- 14
+--   SELECT tier, COUNT(*) FROM forge_document_categories GROUP BY tier;    -- core 6, recommended 8
+--   SELECT COUNT(*) FROM forge_startup_documents;                          -- 0 until the first upload
+--   SELECT r.slug, p.slug FROM forge_role_permissions rp
+--     JOIN forge_roles r ON r.id = rp.role_id JOIN forge_permissions p ON p.id = rp.permission_id
 --    WHERE p.module = 'compliance' ORDER BY r.slug;                  -- 4 rows
 -- ===========================================================================

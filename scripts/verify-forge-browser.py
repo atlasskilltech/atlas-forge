@@ -32,11 +32,11 @@ def sql(statement):
     return out.stdout.strip()
 
 
-hw_approval = sql("SELECT COALESCE(MAX(id), 0) FROM approvals")
-hw_session = sql("SELECT COALESCE(MAX(id), 0) FROM mentorship_sessions")
-hw_grant = sql("SELECT COALESCE(MAX(id), 0) FROM founder_access_grants")
-hw_activity = sql("SELECT COALESCE(MAX(id), 0) FROM activity_logs")
-hw_notification = sql("SELECT COALESCE(MAX(id), 0) FROM notifications")
+hw_approval = sql("SELECT COALESCE(MAX(id), 0) FROM forge_approvals")
+hw_session = sql("SELECT COALESCE(MAX(id), 0) FROM forge_mentorship_sessions")
+hw_grant = sql("SELECT COALESCE(MAX(id), 0) FROM forge_founder_access_grants")
+hw_activity = sql("SELECT COALESCE(MAX(id), 0) FROM forge_activity_logs")
+hw_notification = sql("SELECT COALESCE(MAX(id), 0) FROM forge_notifications")
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
@@ -66,7 +66,7 @@ with sync_playwright() as p:
           page.locator("header").first.get_by_label("Mihir Pawar avatar").count() == 1)
 
     # ---- approving a listing ---------------------------------------------
-    approvals_before = sql("SELECT COUNT(*) FROM approvals")
+    approvals_before = sql("SELECT COUNT(*) FROM forge_approvals")
     page.goto(f"{BASE}/forge/approval-queue", wait_until="networkidle")
     page.wait_for_timeout(600)
 
@@ -86,20 +86,20 @@ with sync_playwright() as p:
     page.get_by_role("button", name="Yes, Approve", exact=True).click()
     page.wait_for_timeout(2500)
 
-    approvals_after = sql("SELECT COUNT(*) FROM approvals")
+    approvals_after = sql("SELECT COUNT(*) FROM forge_approvals")
     check("the decision reached MySQL", int(approvals_after) == int(approvals_before) + 1,
           f"{approvals_before} -> {approvals_after}")
 
     recorded = sql(
-        "SELECT CONCAT(a.decision, '|', r.slug, '|', l.status) FROM approvals a "
-        "JOIN roles r ON r.id = a.decided_as_role_id JOIN listings l ON l.id = a.listing_id "
+        "SELECT CONCAT(a.decision, '|', r.slug, '|', l.status) FROM forge_approvals a "
+        "JOIN forge_roles r ON r.id = a.decided_as_role_id JOIN forge_listings l ON l.id = a.listing_id "
         "ORDER BY a.id DESC LIMIT 1"
     )
     check("recorded as the Forge Manager, and the listing is live",
           recorded == "approved|forge-manager|live", recorded)
 
     notified = sql(
-        "SELECT COUNT(*) FROM notifications WHERE entity_type = 'listing' "
+        "SELECT COUNT(*) FROM forge_notifications WHERE entity_type = 'listing' "
         f"AND id > {hw_notification}"
     )
     check("the founder is notified", int(notified) >= 1)
@@ -111,7 +111,7 @@ with sync_playwright() as p:
           f"{first_tab} -> {new_tab}")
 
     # ---- cancelling a decision must change nothing ------------------------
-    before_cancel = sql("SELECT COUNT(*) FROM approvals")
+    before_cancel = sql("SELECT COUNT(*) FROM forge_approvals")
     reject_target = page.locator("#main-content ul li").filter(
         has=page.get_by_role("button", name="Reject", exact=True)
     ).first
@@ -122,10 +122,10 @@ with sync_playwright() as p:
     page.get_by_role("button", name="Cancel", exact=True).click()
     page.wait_for_timeout(1200)
     check("cancelling writes nothing",
-          sql("SELECT COUNT(*) FROM approvals") == before_cancel, before_cancel)
+          sql("SELECT COUNT(*) FROM forge_approvals") == before_cancel, before_cancel)
 
     # ---- assigning a mentor ----------------------------------------------
-    sessions_before = sql("SELECT COUNT(*) FROM mentorship_sessions")
+    sessions_before = sql("SELECT COUNT(*) FROM forge_mentorship_sessions")
     page.goto(f"{BASE}/forge/assign-mentors", wait_until="networkidle")
     page.wait_for_timeout(600)
 
@@ -142,14 +142,14 @@ with sync_playwright() as p:
     page.wait_for_timeout(2500)
 
     check("assigning confirms", "Mentor Assigned!" in page.inner_text("body"))
-    sessions_after = sql("SELECT COUNT(*) FROM mentorship_sessions")
+    sessions_after = sql("SELECT COUNT(*) FROM forge_mentorship_sessions")
     check("the session reached MySQL", int(sessions_after) == int(sessions_before) + 1,
           f"{sessions_before} -> {sessions_after} via {mentor_label}")
     check("the request is closed",
-          sql("SELECT COUNT(*) FROM mentorship_requests WHERE status = 'assigned'") == "2")
+          sql("SELECT COUNT(*) FROM forge_mentorship_requests WHERE status = 'assigned'") == "2")
 
     # ---- granting founder access -----------------------------------------
-    grants_before = sql("SELECT COUNT(*) FROM founder_access_grants")
+    grants_before = sql("SELECT COUNT(*) FROM forge_founder_access_grants")
     page.goto(f"{BASE}/forge/applications", wait_until="networkidle")
     page.wait_for_timeout(600)
 
@@ -165,12 +165,12 @@ with sync_playwright() as p:
     page.wait_for_timeout(2500)
 
     check("granting confirms", "Founder Access Granted" in page.inner_text("body"))
-    grants_after = sql("SELECT COUNT(*) FROM founder_access_grants")
+    grants_after = sql("SELECT COUNT(*) FROM forge_founder_access_grants")
     check("the grant reached MySQL", int(grants_after) == int(grants_before) + 1,
           f"{grants_before} -> {grants_after}")
 
     roles_added = sql(
-        "SELECT COUNT(*) FROM user_roles ur JOIN roles r ON r.id = ur.role_id "
+        "SELECT COUNT(*) FROM forge_user_roles ur JOIN forge_roles r ON r.id = ur.role_id "
         "WHERE r.slug = 'founder' AND ur.revoked_at IS NULL"
     )
     check("and the founder role was added", int(roles_added) == 3, roles_added)
@@ -181,21 +181,21 @@ with sync_playwright() as p:
           "Access Granted" in page.inner_text("#main-content"))
 
     # ---- the student pool offers no outreach this role may perform -------
-    contacts_before = sql("SELECT COUNT(*) FROM concierge_contacts")
+    contacts_before = sql("SELECT COUNT(*) FROM forge_concierge_contacts")
     page.goto(f"{BASE}/forge/student-pool", wait_until="networkidle")
     page.wait_for_timeout(600)
     contact_button = page.get_by_role("button", name="Contact Student", exact=True).first
     check("Contact Student is disabled for this role", contact_button.is_disabled())
     check("and no outreach was recorded",
-          sql("SELECT COUNT(*) FROM concierge_contacts") == contacts_before, contacts_before)
+          sql("SELECT COUNT(*) FROM forge_concierge_contacts") == contacts_before, contacts_before)
 
     # ---- featuring a startup ---------------------------------------------
-    featured_before = sql("SELECT COUNT(*) FROM startups WHERE is_featured = 1")
+    featured_before = sql("SELECT COUNT(*) FROM forge_startups WHERE is_featured = 1")
     page.goto(f"{BASE}/forge/projects", wait_until="networkidle")
     page.wait_for_timeout(600)
     page.get_by_role("button", name="Feature", exact=True).first.click()
     page.wait_for_timeout(2500)
-    featured_after = sql("SELECT COUNT(*) FROM startups WHERE is_featured = 1")
+    featured_after = sql("SELECT COUNT(*) FROM forge_startups WHERE is_featured = 1")
     check("featuring reached MySQL", int(featured_after) == int(featured_before) + 1,
           f"{featured_before} -> {featured_after}")
 
@@ -228,33 +228,33 @@ with sync_playwright() as p:
     browser.close()
 
 # ---- restore the seeded demo data ---------------------------------------
-sql(f"DELETE FROM approvals WHERE id > {hw_approval}")
-sql("UPDATE listings SET status = 'pending' WHERE id IN "
-    "(SELECT * FROM (SELECT l.id FROM listings l LEFT JOIN approvals a ON a.listing_id = l.id "
+sql(f"DELETE FROM forge_approvals WHERE id > {hw_approval}")
+sql("UPDATE forge_listings SET status = 'pending' WHERE id IN "
+    "(SELECT * FROM (SELECT l.id FROM forge_listings l LEFT JOIN forge_approvals a ON a.listing_id = l.id "
     " WHERE a.id IS NULL AND l.status = 'live' AND l.title IN "
     " ('Frontend Developer','Data Analyst','Looking for a UI Designer for my food-tech app')) t)")
-sql(f"DELETE FROM mentorship_sessions WHERE id > {hw_session}")
-sql("UPDATE mentorship_requests SET status = 'requested' WHERE id IN "
-    "(SELECT * FROM (SELECT mr.id FROM mentorship_requests mr LEFT JOIN mentorship_sessions ms "
+sql(f"DELETE FROM forge_mentorship_sessions WHERE id > {hw_session}")
+sql("UPDATE forge_mentorship_requests SET status = 'requested' WHERE id IN "
+    "(SELECT * FROM (SELECT mr.id FROM forge_mentorship_requests mr LEFT JOIN forge_mentorship_sessions ms "
     " ON ms.request_id = mr.id AND ms.mentor_id IS NOT NULL "
     " WHERE ms.id IS NULL AND mr.status = 'assigned') t)")
-sql(f"DELETE ur FROM user_roles ur JOIN founder_access_grants g ON g.user_id = ur.user_id "
-    f"JOIN roles r ON r.id = ur.role_id WHERE g.id > {hw_grant} AND r.slug = 'founder'")
-sql("UPDATE incubation_applications SET status = 'pending', reviewed_at = NULL, reviewed_by = NULL "
-    f"WHERE id IN (SELECT * FROM (SELECT incubation_application_id FROM founder_access_grants "
+sql(f"DELETE ur FROM forge_user_roles ur JOIN forge_founder_access_grants g ON g.user_id = ur.user_id "
+    f"JOIN forge_roles r ON r.id = ur.role_id WHERE g.id > {hw_grant} AND r.slug = 'founder'")
+sql("UPDATE forge_incubation_applications SET status = 'pending', reviewed_at = NULL, reviewed_by = NULL "
+    f"WHERE id IN (SELECT * FROM (SELECT incubation_application_id FROM forge_founder_access_grants "
     f"WHERE id > {hw_grant}) t)")
-sql(f"DELETE FROM founder_access_grants WHERE id > {hw_grant}")
-sql("UPDATE startups SET is_featured = 0 WHERE slug <> 'novamed'")
-sql(f"DELETE FROM activity_logs WHERE id > {hw_activity}")
-sql(f"DELETE FROM notifications WHERE id > {hw_notification}")
+sql(f"DELETE FROM forge_founder_access_grants WHERE id > {hw_grant}")
+sql("UPDATE forge_startups SET is_featured = 0 WHERE slug <> 'novamed'")
+sql(f"DELETE FROM forge_activity_logs WHERE id > {hw_activity}")
+sql(f"DELETE FROM forge_notifications WHERE id > {hw_notification}")
 
 restored = sql(
     "SELECT CONCAT("
-    "(SELECT COUNT(*) FROM listings WHERE status = 'pending'), '/',"
-    "(SELECT COUNT(*) FROM mentorship_sessions), '/',"
-    "(SELECT COUNT(*) FROM founder_access_grants), '/',"
-    "(SELECT COUNT(*) FROM activity_logs), '/',"
-    "(SELECT COUNT(*) FROM startups WHERE is_featured = 1))"
+    "(SELECT COUNT(*) FROM forge_listings WHERE status = 'pending'), '/',"
+    "(SELECT COUNT(*) FROM forge_mentorship_sessions), '/',"
+    "(SELECT COUNT(*) FROM forge_founder_access_grants), '/',"
+    "(SELECT COUNT(*) FROM forge_activity_logs), '/',"
+    "(SELECT COUNT(*) FROM forge_startups WHERE is_featured = 1))"
 )
 check("teardown — seeded data restored", restored == "3/6/2/10/1", restored)
 

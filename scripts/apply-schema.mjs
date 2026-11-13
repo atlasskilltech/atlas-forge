@@ -19,7 +19,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import mysql from 'mysql2/promise'
 import {
-  ROOT, dbEnv, describe, assertScopedSql, inspectDatabase, assertNoCollisions,
+  ROOT, dbEnv, describe, assertScopedSql, inspectDatabase, assertNoCollisions, assertNotLegacy,
 } from './lib/forge-db.mjs'
 
 const force = process.argv.includes('--force')
@@ -35,6 +35,7 @@ const conn = await mysql.createConnection({ ...cfg, multipleStatements: true })
 try {
   const inventory = await inspectDatabase(conn)
   assertNoCollisions(inventory, 'schema.sql')
+  assertNotLegacy(inventory, 'schema.sql')
 
   if (inventory.foreign.length > 0) {
     console.error(

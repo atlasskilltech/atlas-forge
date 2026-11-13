@@ -10,6 +10,8 @@
 import { register } from 'node:module'
 import { pathToFileURL } from 'node:url'
 
+import { T } from '../src/lib/queries/tables.mjs'
+
 register(
   'data:text/javascript,' +
     encodeURIComponent(`
@@ -250,33 +252,33 @@ const CLEANUP = [
   // Notifications the test founder's actions sent to *other* people. Deleting
   // only rows addressed to the test user leaves these behind on seeded
   // accounts, which then fail the data-layer counts on the next run.
-  "DELETE FROM notifications WHERE entity_type = 'concierge_contact' AND entity_id IN (SELECT id FROM concierge_contacts WHERE founder_user_id = ?)",
-  "DELETE FROM notifications WHERE entity_type = 'listing' AND entity_id IN (SELECT id FROM listings WHERE created_by = ?)",
-  "DELETE FROM notifications WHERE entity_type = 'application' AND entity_id IN (SELECT ap.id FROM applications ap JOIN listings l ON l.id = ap.listing_id WHERE l.created_by = ?)",
+  `DELETE FROM ${T.notifications} WHERE entity_type = 'concierge_contact' AND entity_id IN (SELECT id FROM ${T.concierge_contacts} WHERE founder_user_id = ?)`,
+  `DELETE FROM ${T.notifications} WHERE entity_type = 'listing' AND entity_id IN (SELECT id FROM ${T.listings} WHERE created_by = ?)`,
+  `DELETE FROM ${T.notifications} WHERE entity_type = 'application' AND entity_id IN (SELECT ap.id FROM ${T.applications} ap JOIN ${T.listings} l ON l.id = ap.listing_id WHERE l.created_by = ?)`,
   // Audit rows for applications to this founder's listings. Their actor is the
   // *applicant*, so deleting by `actor_user_id = testUser` misses them.
-  "DELETE FROM activity_logs WHERE entity_type = 'application' AND entity_id IN (SELECT ap.id FROM applications ap JOIN listings l ON l.id = ap.listing_id WHERE l.created_by = ?)",
-  'DELETE FROM application_events WHERE application_id IN (SELECT id FROM applications WHERE applicant_user_id = ?)',
-  'DELETE FROM applications WHERE applicant_user_id = ?',
-  'DELETE FROM applications WHERE listing_id IN (SELECT id FROM listings WHERE created_by = ?)',
-  'DELETE FROM mentorship_sessions WHERE mentee_user_id = ?',
-  'DELETE FROM mentorship_requests WHERE requester_user_id = ?',
-  'DELETE FROM application_readiness WHERE application_id IN (SELECT id FROM incubation_applications WHERE applicant_user_id = ?)',
-  'DELETE FROM incubation_applications WHERE applicant_user_id = ?',
-  'DELETE FROM listing_skills WHERE listing_id IN (SELECT id FROM listings WHERE created_by = ?)',
-  'DELETE FROM listings WHERE created_by = ?',
-  'DELETE FROM concierge_contacts WHERE founder_user_id = ?',
-  'DELETE FROM posted_needs WHERE founder_user_id = ?',
-  'DELETE FROM contracts WHERE founder_user_id = ?',
-  'DELETE FROM startup_members WHERE startup_id IN (SELECT id FROM startups WHERE owner_user_id = ?)',
-  'DELETE FROM startup_members WHERE user_id = ?',
-  'DELETE FROM startups WHERE owner_user_id = ?',
-  'DELETE FROM notifications WHERE user_id = ?',
-  'DELETE FROM activity_logs WHERE actor_user_id = ?',
-  'DELETE FROM student_skills WHERE user_id = ?',
-  'DELETE FROM student_profiles WHERE user_id = ?',
-  'DELETE FROM user_roles WHERE user_id = ?',
-  'DELETE FROM users WHERE id = ?',
+  `DELETE FROM ${T.activity_logs} WHERE entity_type = 'application' AND entity_id IN (SELECT ap.id FROM ${T.applications} ap JOIN ${T.listings} l ON l.id = ap.listing_id WHERE l.created_by = ?)`,
+  `DELETE FROM ${T.application_events} WHERE application_id IN (SELECT id FROM ${T.applications} WHERE applicant_user_id = ?)`,
+  `DELETE FROM ${T.applications} WHERE applicant_user_id = ?`,
+  `DELETE FROM ${T.applications} WHERE listing_id IN (SELECT id FROM ${T.listings} WHERE created_by = ?)`,
+  `DELETE FROM ${T.mentorship_sessions} WHERE mentee_user_id = ?`,
+  `DELETE FROM ${T.mentorship_requests} WHERE requester_user_id = ?`,
+  `DELETE FROM ${T.application_readiness} WHERE application_id IN (SELECT id FROM ${T.incubation_applications} WHERE applicant_user_id = ?)`,
+  `DELETE FROM ${T.incubation_applications} WHERE applicant_user_id = ?`,
+  `DELETE FROM ${T.listing_skills} WHERE listing_id IN (SELECT id FROM ${T.listings} WHERE created_by = ?)`,
+  `DELETE FROM ${T.listings} WHERE created_by = ?`,
+  `DELETE FROM ${T.concierge_contacts} WHERE founder_user_id = ?`,
+  `DELETE FROM ${T.posted_needs} WHERE founder_user_id = ?`,
+  `DELETE FROM ${T.contracts} WHERE founder_user_id = ?`,
+  `DELETE FROM ${T.startup_members} WHERE startup_id IN (SELECT id FROM ${T.startups} WHERE owner_user_id = ?)`,
+  `DELETE FROM ${T.startup_members} WHERE user_id = ?`,
+  `DELETE FROM ${T.startups} WHERE owner_user_id = ?`,
+  `DELETE FROM ${T.notifications} WHERE user_id = ?`,
+  `DELETE FROM ${T.activity_logs} WHERE actor_user_id = ?`,
+  `DELETE FROM ${T.student_skills} WHERE user_id = ?`,
+  `DELETE FROM ${T.student_profiles} WHERE user_id = ?`,
+  `DELETE FROM ${T.user_roles} WHERE user_id = ?`,
+  `DELETE FROM ${T.users} WHERE id = ?`,
 ]
 
 async function purge(userId) {
@@ -294,7 +296,7 @@ try {
     passwordHash: await hashPassword('Atlas@2026'),
     initials: 'TF',
   })
-  const founderRole = await queryOne('SELECT id FROM roles WHERE slug = ?', ['founder'])
+  const founderRole = await queryOne(`SELECT id FROM ${T.roles} WHERE slug = ?`, ['founder'])
   await usersRepo.grantRole(testUserId, founderRole.id, { isPrimary: true })
 
   const testUser = await usersRepo.findById(testUserId)
@@ -324,7 +326,7 @@ try {
   })
   check('saveStartupProfile — creates when there is no startup', created.created === true)
 
-  const createdRow = await queryOne('SELECT slug, status, open_roles FROM startups WHERE id = ?', [
+  const createdRow = await queryOne(`SELECT slug, status, open_roles FROM ${T.startups} WHERE id = ?`, [
     created.startupId,
   ])
   check('new startup gets a slug from its name', createdRow.slug === 'test-ventures', createdRow.slug)
@@ -332,7 +334,7 @@ try {
   check('open roles stored as a number', Number(createdRow.open_roles) === 2)
 
   const ownerIsMember = await queryValue(
-    'SELECT COUNT(*) FROM startup_members WHERE startup_id = ? AND user_id = ?',
+    `SELECT COUNT(*) FROM ${T.startup_members} WHERE startup_id = ? AND user_id = ?`,
     [created.startupId, testUserId]
   )
   check('the owner is added to the team', Number(ownerIsMember) === 1)
@@ -348,7 +350,7 @@ try {
   })
   check('saveStartupProfile — updates once one exists', updated.created === false)
 
-  const afterUpdate = await queryOne('SELECT tagline, is_hiring, stage_id FROM startups WHERE id = ?', [
+  const afterUpdate = await queryOne(`SELECT tagline, is_hiring, stage_id FROM ${T.startups} WHERE id = ?`, [
     created.startupId,
   ])
   check('the update landed', afterUpdate.tagline === 'Now with a better tagline.' &&
@@ -371,7 +373,7 @@ try {
     skills: 'Testing, React, Telepathy',
   })
   const listingRow = await queryOne(
-    'SELECT type, status, startup_id, listing_type_id FROM listings WHERE id = ?',
+    `SELECT type, status, startup_id, listing_type_id FROM ${T.listings} WHERE id = ?`,
     [listingId]
   )
   check('postJob — created as a job awaiting approval',
@@ -382,7 +384,7 @@ try {
   check('postJob — free-typed role type matched to its lookup row',
     listingRow.listing_type_id !== null)
 
-  const linkedSkills = await queryValue('SELECT COUNT(*) FROM listing_skills WHERE listing_id = ?', [
+  const linkedSkills = await queryValue(`SELECT COUNT(*) FROM ${T.listing_skills} WHERE listing_id = ?`, [
     listingId,
   ])
   check('postJob — recognised skills linked, unknown ignored', Number(linkedSkills) === 2,
@@ -402,14 +404,14 @@ try {
   // The listing was posted as `pending` because job listings require approval;
   // a student cannot apply to one. Approving it through the Forge Manager is a
   // different module's flow, so the fixture puts it live directly.
-  await execute("UPDATE listings SET status = 'live' WHERE id = ?", [listingId])
+  await execute(`UPDATE ${T.listings} SET status = 'live' WHERE id = ?`, [listingId])
 
   const pipelineApplicationId = await applicationsService.apply({
     listingId,
     applicantId: riyaUser.id,
   })
 
-  const asApplied = await queryValue('SELECT status FROM applications WHERE id = ?', [
+  const asApplied = await queryValue(`SELECT status FROM ${T.applications} WHERE id = ?`, [
     pipelineApplicationId,
   ])
   check('an application starts as Applied', asApplied === 'applied', asApplied)
@@ -421,14 +423,14 @@ try {
     })
   }
 
-  const finalStatus = await queryValue('SELECT status FROM applications WHERE id = ?', [
+  const finalStatus = await queryValue(`SELECT status FROM ${T.applications} WHERE id = ?`, [
     pipelineApplicationId,
   ])
   check('decideApplicant — the full pipeline reaches Selected', finalStatus === 'selected',
     finalStatus)
 
   const history = await query(
-    'SELECT from_status, to_status FROM application_events WHERE application_id = ? ORDER BY id',
+    `SELECT from_status, to_status FROM ${T.application_events} WHERE application_id = ? ORDER BY id`,
     [pipelineApplicationId]
   )
   check('every transition is written to the append-only history',
@@ -439,7 +441,7 @@ try {
     history.map((row) => row.to_status).join(' → '))
 
   const auditRows = await queryValue(
-    "SELECT COUNT(*) FROM activity_logs WHERE entity_type = 'application' AND entity_id = ?",
+    `SELECT COUNT(*) FROM ${T.activity_logs} WHERE entity_type = 'application' AND entity_id = ?`,
     [pipelineApplicationId]
   )
   // One row for the application itself, then one per transition.
@@ -447,7 +449,7 @@ try {
     Number(auditRows) === 5, `${auditRows} audit rows: 1 apply + 4 transitions`)
 
   const studentNotified = await queryValue(
-    "SELECT COUNT(*) FROM notifications WHERE entity_type = 'application' AND entity_id = ?",
+    `SELECT COUNT(*) FROM ${T.notifications} WHERE entity_type = 'application' AND entity_id = ?`,
     [pipelineApplicationId]
   )
   check('and the student is notified at each step', Number(studentNotified) === 5,
@@ -514,7 +516,7 @@ try {
     duration: '2 weeks',
   })
   const contactRow = await queryOne(
-    'SELECT cc_user_id, startup_id, status FROM concierge_contacts WHERE id = ?',
+    `SELECT cc_user_id, startup_id, status FROM ${T.concierge_contacts} WHERE id = ?`,
     [contactId]
   )
   check('contactStudent — the Forge Manager is CC’d automatically',
@@ -523,7 +525,7 @@ try {
     Number(contactRow.startup_id) === created.startupId)
 
   const notified = await queryValue(
-    "SELECT COUNT(*) FROM notifications WHERE entity_type = 'concierge_contact' AND entity_id = ?",
+    `SELECT COUNT(*) FROM ${T.notifications} WHERE entity_type = 'concierge_contact' AND entity_id = ?`,
     [contactId]
   )
   check('contactStudent — the student is notified', Number(notified) === 1)
@@ -544,7 +546,7 @@ try {
     mentorType: 'industry',
     timing: 'Friday mornings',
   })
-  const requestRow = await queryOne('SELECT startup_id FROM mentorship_requests WHERE id = ?', [
+  const requestRow = await queryOne(`SELECT startup_id FROM ${T.mentorship_requests} WHERE id = ?`, [
     requestId,
   ])
   check('requestMentorship — filed against the startup',
@@ -573,7 +575,7 @@ try {
 } finally {
   if (testUserId) {
     await purge(testUserId)
-    const leaked = await queryValue('SELECT COUNT(*) FROM users WHERE app_id = ?', [APP_ID])
+    const leaked = await queryValue(`SELECT COUNT(*) FROM ${T.users} WHERE app_id = ?`, [APP_ID])
     check('cleanup — test founder removed', Number(leaked) === 0)
   }
 }

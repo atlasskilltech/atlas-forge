@@ -10,6 +10,8 @@
 import { register } from 'node:module'
 import { pathToFileURL } from 'node:url'
 
+import { T } from '../src/lib/queries/tables.mjs'
+
 // Resolve the app's "@/..." alias and stub the Next-only modules the guard
 // pulls in, so the module layer can be imported outside a Next runtime.
 register(
@@ -206,23 +208,23 @@ const CLEANUP = [
   // Notifications this student's actions sent to *other* people — applying to
   // a listing notifies whoever posted it. Deleting only rows addressed to the
   // test student leaves those behind on seeded accounts.
-  "DELETE FROM notifications WHERE entity_type = 'application' AND entity_id IN (SELECT id FROM applications WHERE applicant_user_id = ?)",
-  "DELETE FROM notifications WHERE entity_type = 'listing' AND entity_id IN (SELECT id FROM listings WHERE created_by = ?)",
-  'DELETE FROM application_events WHERE application_id IN (SELECT id FROM applications WHERE applicant_user_id = ?)',
-  'DELETE FROM applications WHERE applicant_user_id = ?',
-  'DELETE FROM mentorship_sessions WHERE mentee_user_id = ?',
-  'DELETE FROM mentorship_requests WHERE requester_user_id = ?',
-  'DELETE FROM application_readiness WHERE application_id IN (SELECT id FROM incubation_applications WHERE applicant_user_id = ?)',
-  'DELETE FROM incubation_applications WHERE applicant_user_id = ?',
-  'DELETE FROM listing_skills WHERE listing_id IN (SELECT id FROM listings WHERE created_by = ?)',
-  'DELETE FROM applications WHERE listing_id IN (SELECT id FROM listings WHERE created_by = ?)',
-  'DELETE FROM listings WHERE created_by = ?',
-  'DELETE FROM notifications WHERE user_id = ?',
-  'DELETE FROM activity_logs WHERE actor_user_id = ?',
-  'DELETE FROM student_skills WHERE user_id = ?',
-  'DELETE FROM student_profiles WHERE user_id = ?',
-  'DELETE FROM user_roles WHERE user_id = ?',
-  'DELETE FROM users WHERE id = ?',
+  `DELETE FROM ${T.notifications} WHERE entity_type = 'application' AND entity_id IN (SELECT id FROM ${T.applications} WHERE applicant_user_id = ?)`,
+  `DELETE FROM ${T.notifications} WHERE entity_type = 'listing' AND entity_id IN (SELECT id FROM ${T.listings} WHERE created_by = ?)`,
+  `DELETE FROM ${T.application_events} WHERE application_id IN (SELECT id FROM ${T.applications} WHERE applicant_user_id = ?)`,
+  `DELETE FROM ${T.applications} WHERE applicant_user_id = ?`,
+  `DELETE FROM ${T.mentorship_sessions} WHERE mentee_user_id = ?`,
+  `DELETE FROM ${T.mentorship_requests} WHERE requester_user_id = ?`,
+  `DELETE FROM ${T.application_readiness} WHERE application_id IN (SELECT id FROM ${T.incubation_applications} WHERE applicant_user_id = ?)`,
+  `DELETE FROM ${T.incubation_applications} WHERE applicant_user_id = ?`,
+  `DELETE FROM ${T.listing_skills} WHERE listing_id IN (SELECT id FROM ${T.listings} WHERE created_by = ?)`,
+  `DELETE FROM ${T.applications} WHERE listing_id IN (SELECT id FROM ${T.listings} WHERE created_by = ?)`,
+  `DELETE FROM ${T.listings} WHERE created_by = ?`,
+  `DELETE FROM ${T.notifications} WHERE user_id = ?`,
+  `DELETE FROM ${T.activity_logs} WHERE actor_user_id = ?`,
+  `DELETE FROM ${T.student_skills} WHERE user_id = ?`,
+  `DELETE FROM ${T.student_profiles} WHERE user_id = ?`,
+  `DELETE FROM ${T.user_roles} WHERE user_id = ?`,
+  `DELETE FROM ${T.users} WHERE id = ?`,
 ]
 
 async function purge(userId) {
@@ -240,7 +242,7 @@ try {
     passwordHash: await hashPassword('Atlas@2026'),
     initials: 'TS',
   })
-  const studentRole = await queryOne('SELECT id FROM roles WHERE slug = ?', ['student'])
+  const studentRole = await queryOne(`SELECT id FROM ${T.roles} WHERE slug = ?`, ['student'])
   await usersRepo.grantRole(testUserId, studentRole.id, { isPrimary: true })
   await usersRepo.upsertStudentProfile(testUserId, {
     programme: 'BTech Computer Science',
@@ -318,13 +320,13 @@ try {
   )
 
   const eventCount = await queryValue(
-    'SELECT COUNT(*) FROM application_events WHERE application_id = ?',
+    `SELECT COUNT(*) FROM ${T.application_events} WHERE application_id = ?`,
     [applicationId]
   )
   check('applyToListing — history event recorded', Number(eventCount) === 1, `${eventCount} event`)
 
   const logged = await queryValue(
-    "SELECT COUNT(*) FROM activity_logs WHERE actor_user_id = ? AND module = 'Hiring'",
+    `SELECT COUNT(*) FROM ${T.activity_logs} WHERE actor_user_id = ? AND module = 'Hiring'`,
     [testUserId]
   )
   check('applyToListing — written to the audit trail', Number(logged) === 1)
@@ -356,7 +358,7 @@ try {
   )
 
   await student.withdrawApplication(testUserId, applicationId)
-  const withdrawn = await queryValue('SELECT status FROM applications WHERE id = ?', [applicationId])
+  const withdrawn = await queryValue(`SELECT status FROM ${T.applications} WHERE id = ?`, [applicationId])
   check('withdrawApplication — own application withdrawn', withdrawn === 'withdrawn', withdrawn)
 
   // ---- mentorship ---------------------------------------------------------
@@ -391,7 +393,7 @@ try {
     skills: 'Figma, Branding, Telepathy',
     engagement: 'no-pay',
   })
-  const postedRow = await queryOne('SELECT type, status, title FROM listings WHERE id = ?', [
+  const postedRow = await queryOne(`SELECT type, status, title FROM ${T.listings} WHERE id = ?`, [
     posted.listingId,
   ])
   check(
@@ -404,7 +406,7 @@ try {
     posted.unmatchedSkills.join(',') === 'Telepathy',
     `unmatched: ${posted.unmatchedSkills.join(', ') || 'none'}`
   )
-  const attached = await queryValue('SELECT COUNT(*) FROM listing_skills WHERE listing_id = ?', [
+  const attached = await queryValue(`SELECT COUNT(*) FROM ${T.listing_skills} WHERE listing_id = ?`, [
     posted.listingId,
   ])
   check('postCollab — 2 recognised skills linked', Number(attached) === 2, `${attached} linked`)
@@ -417,7 +419,7 @@ try {
     readiness: { 'pitch-deck': 'https://example.com/deck', demo: 'https://example.com/demo' },
   })
   const stored = await queryOne(
-    'SELECT status, completion_pct FROM incubation_applications WHERE id = ?',
+    `SELECT status, completion_pct FROM ${T.incubation_applications} WHERE id = ?`,
     [submission.applicationId]
   )
   check(
@@ -434,7 +436,7 @@ try {
 } finally {
   if (testUserId) {
     await purge(testUserId)
-    const leaked = await queryValue('SELECT COUNT(*) FROM users WHERE app_id = ?', [APP_ID])
+    const leaked = await queryValue(`SELECT COUNT(*) FROM ${T.users} WHERE app_id = ?`, [APP_ID])
     check('cleanup — test student removed', Number(leaked) === 0)
   }
 }

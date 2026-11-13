@@ -1,3 +1,5 @@
+import { T } from '@/lib/queries/tables.mjs'
+
 /**
  * SQL for the two public landing-page forms.
  *
@@ -6,13 +8,13 @@
  */
 
 export const INSERT_SERVICE_REQUEST = `
-  INSERT INTO service_requests
+  INSERT INTO ${T.service_requests}
     (name, email, phone, service_required, message, source_ip, user_agent)
   VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 
 export const INSERT_PARTNER_REQUEST = `
-  INSERT INTO partner_requests
+  INSERT INTO ${T.partner_requests}
     (name, email, phone, company, message, source_ip, user_agent)
   VALUES (?, ?, ?, ?, ?, ?, ?)
 `
@@ -26,14 +28,14 @@ export const INSERT_PARTNER_REQUEST = `
  */
 export const COUNT_RECENT_SERVICE_BY_EMAIL = `
   SELECT COUNT(*) AS total
-    FROM service_requests
+    FROM ${T.service_requests}
    WHERE email = ?
      AND created_at > (NOW() - INTERVAL ? SECOND)
 `
 
 export const COUNT_RECENT_PARTNER_BY_EMAIL = `
   SELECT COUNT(*) AS total
-    FROM partner_requests
+    FROM ${T.partner_requests}
    WHERE email = ?
      AND created_at > (NOW() - INTERVAL ? SECOND)
 `
@@ -41,7 +43,7 @@ export const COUNT_RECENT_PARTNER_BY_EMAIL = `
 /** Per-address throttle: submissions from one client across the window. */
 export const COUNT_RECENT_SERVICE_BY_IP = `
   SELECT COUNT(*) AS total
-    FROM service_requests
+    FROM ${T.service_requests}
    WHERE source_ip = ?
      AND source_ip <> ''
      AND created_at > (NOW() - INTERVAL ? SECOND)
@@ -49,7 +51,7 @@ export const COUNT_RECENT_SERVICE_BY_IP = `
 
 export const COUNT_RECENT_PARTNER_BY_IP = `
   SELECT COUNT(*) AS total
-    FROM partner_requests
+    FROM ${T.partner_requests}
    WHERE source_ip = ?
      AND source_ip <> ''
      AND created_at > (NOW() - INTERVAL ? SECOND)

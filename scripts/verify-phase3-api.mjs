@@ -1,3 +1,5 @@
+import { T } from '../src/lib/queries/tables.mjs'
+
 /**
  * Verifies the endpoints added for services that already existed but had no
  * route: notifications, messages, application history, password change,
@@ -76,10 +78,10 @@ const db = await mysql.createConnection({
 const one = async (sql, params = []) => (await db.execute(sql, params))[0][0]
 
 const before = await one(`
-  SELECT COALESCE((SELECT MAX(id) FROM posted_needs), 0)   AS needs,
-         COALESCE((SELECT MAX(id) FROM activity_logs), 0)  AS activity,
-         COALESCE((SELECT MAX(id) FROM error_logs), 0)     AS errors,
-         (SELECT COUNT(*) FROM error_logs)                 AS errorCount
+  SELECT COALESCE((SELECT MAX(id) FROM ${T.posted_needs}), 0)   AS needs,
+         COALESCE((SELECT MAX(id) FROM ${T.activity_logs}), 0)  AS activity,
+         COALESCE((SELECT MAX(id) FROM ${T.error_logs}), 0)     AS errors,
+         (SELECT COUNT(*) FROM ${T.error_logs})                 AS errorCount
 `)
 
 console.log(`\nATLAS Forge - Phase 3 endpoint verification (${BASE})\n`)
@@ -288,7 +290,7 @@ check('and it can be changed back', restored.status === 200, String(restored.sta
 check('the seeded password works again', (await signIn(OTHER_STUDENT)).status === 200)
 
 const hashChanged = await one(
-  'SELECT password_hash FROM users WHERE app_id = ?', [OTHER_STUDENT]
+  `SELECT password_hash FROM ${T.users} WHERE app_id = ?`, [OTHER_STUDENT]
 )
 check('the stored value is a scrypt hash, never the password itself',
   hashChanged.password_hash.startsWith('scrypt$') && !hashChanged.password_hash.includes(PASSWORD))
@@ -302,7 +304,7 @@ check('error_logs was empty before this run', Number(before.errorCount) === 0,
 
 // A handled error must NOT be recorded: a 404 is an answer, not an incident.
 await call('/api/notifications/999999', { method: 'PATCH', cookies: riya })
-const afterHandled = await one('SELECT COUNT(*) AS n FROM error_logs')
+const afterHandled = await one(`SELECT COUNT(*) AS n FROM ${T.error_logs}`)
 check('a handled 404 is not recorded as a platform error', Number(afterHandled.n) === 0,
   String(afterHandled.n))
 
@@ -310,20 +312,20 @@ check('a handled 404 is not recorded as a platform error', Number(afterHandled.n
 /* Teardown                                                                   */
 /* -------------------------------------------------------------------------- */
 
-await db.execute("UPDATE concierge_contacts SET status = 'pending' WHERE id = ?", [
+await db.execute(`UPDATE ${T.concierge_contacts} SET status = 'pending' WHERE id = ?`, [
   pending.contactId,
 ])
-await db.execute("DELETE FROM posted_needs WHERE title LIKE '__phase3__%'")
-await db.execute('UPDATE notifications SET read_at = NULL WHERE id = ?', [target.id])
-await db.execute('DELETE FROM activity_logs WHERE id > ?', [before.activity])
-await db.execute('DELETE FROM error_logs WHERE id > ?', [before.errors])
+await db.execute(`DELETE FROM ${T.posted_needs} WHERE title LIKE '__phase3__%'`)
+await db.execute(`UPDATE ${T.notifications} SET read_at = NULL WHERE id = ?`, [target.id])
+await db.execute(`DELETE FROM ${T.activity_logs} WHERE id > ?`, [before.activity])
+await db.execute(`DELETE FROM ${T.error_logs} WHERE id > ?`, [before.errors])
 
 const after = await one(`
-  SELECT (SELECT COUNT(*) FROM posted_needs)                              AS needs,
-         (SELECT COUNT(*) FROM activity_logs)                             AS activity,
-         (SELECT COUNT(*) FROM error_logs)                                AS errors,
-         (SELECT COUNT(*) FROM notifications WHERE read_at IS NOT NULL)   AS readRows,
-         (SELECT COUNT(*) FROM concierge_contacts WHERE status='pending') AS pendingContacts
+  SELECT (SELECT COUNT(*) FROM ${T.posted_needs})                              AS needs,
+         (SELECT COUNT(*) FROM ${T.activity_logs})                             AS activity,
+         (SELECT COUNT(*) FROM ${T.error_logs})                                AS errors,
+         (SELECT COUNT(*) FROM ${T.notifications} WHERE read_at IS NOT NULL)   AS readRows,
+         (SELECT COUNT(*) FROM ${T.concierge_contacts} WHERE status='pending') AS pendingContacts
 `)
 await db.end()
 

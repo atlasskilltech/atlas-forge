@@ -34,14 +34,14 @@ def sql(statement):
 
 
 # High-water marks, so the teardown removes exactly what this run created.
-hw_listing = sql("SELECT COALESCE(MAX(id), 0) FROM listings")
-hw_contact = sql("SELECT COALESCE(MAX(id), 0) FROM concierge_contacts")
-hw_request = sql("SELECT COALESCE(MAX(id), 0) FROM mentorship_requests")
-hw_session = sql("SELECT COALESCE(MAX(id), 0) FROM mentorship_sessions")
-hw_activity = sql("SELECT COALESCE(MAX(id), 0) FROM activity_logs")
-hw_notification = sql("SELECT COALESCE(MAX(id), 0) FROM notifications")
+hw_listing = sql("SELECT COALESCE(MAX(id), 0) FROM forge_listings")
+hw_contact = sql("SELECT COALESCE(MAX(id), 0) FROM forge_concierge_contacts")
+hw_request = sql("SELECT COALESCE(MAX(id), 0) FROM forge_mentorship_requests")
+hw_session = sql("SELECT COALESCE(MAX(id), 0) FROM forge_mentorship_sessions")
+hw_activity = sql("SELECT COALESCE(MAX(id), 0) FROM forge_activity_logs")
+hw_notification = sql("SELECT COALESCE(MAX(id), 0) FROM forge_notifications")
 original_tagline = sql(
-    "SELECT tagline FROM startups WHERE slug = 'novamed'"
+    "SELECT tagline FROM forge_startups WHERE slug = 'novamed'"
 )
 
 with sync_playwright() as p:
@@ -117,7 +117,7 @@ with sync_playwright() as p:
     check("and the applicants are real students", "Riya Kapoor" in detail)
 
     # ---- contacting a student -------------------------------------------
-    before = sql("SELECT COUNT(*) FROM concierge_contacts")
+    before = sql("SELECT COUNT(*) FROM forge_concierge_contacts")
     page.goto(f"{BASE}/founder/concierge", wait_until="networkidle")
     page.wait_for_timeout(600)
 
@@ -130,11 +130,11 @@ with sync_playwright() as p:
     check("the confirmation names the student contacted", student_name in dialog, student_name)
     check("and states the Forge Manager is CC'd", "Mihir Pawar" in dialog)
 
-    after = sql("SELECT COUNT(*) FROM concierge_contacts")
+    after = sql("SELECT COUNT(*) FROM forge_concierge_contacts")
     check("the contact reached MySQL", int(after) == int(before) + 1, f"{before} -> {after}")
 
     ccd = sql(
-        "SELECT u.full_name FROM concierge_contacts c JOIN users u ON u.id = c.cc_user_id "
+        "SELECT u.full_name FROM forge_concierge_contacts c JOIN forge_users u ON u.id = c.cc_user_id "
         "ORDER BY c.id DESC LIMIT 1"
     )
     check("the stored row really is CC'd to the Forge Manager", ccd == "Mihir Pawar", ccd)
@@ -149,7 +149,7 @@ with sync_playwright() as p:
           student_name in page.inner_text("#main-content"), student_name)
 
     # ---- posting a job ----------------------------------------------------
-    listings_before = sql("SELECT COUNT(*) FROM listings")
+    listings_before = sql("SELECT COUNT(*) FROM forge_listings")
     page.goto(f"{BASE}/founder/post-job", wait_until="networkidle")
     page.fill("input[name=title]", "__browser_probe__ QA Engineer")
     page.fill("textarea[name=description]", "Verifies the founder posting flow.")
@@ -161,14 +161,14 @@ with sync_playwright() as p:
     check("posting confirms with the reference dialog",
           "Listing Submitted!" in page.inner_text("body"))
 
-    listings_after = sql("SELECT COUNT(*) FROM listings")
+    listings_after = sql("SELECT COUNT(*) FROM forge_listings")
     check("the listing reached MySQL", int(listings_after) == int(listings_before) + 1,
           f"{listings_before} -> {listings_after}")
 
     stored = sql(
         "SELECT CONCAT(l.status, '|', COALESCE(lt.name, 'none'), '|', COALESCE(s.name, 'none')) "
-        "FROM listings l LEFT JOIN listing_types lt ON lt.id = l.listing_type_id "
-        "LEFT JOIN startups s ON s.id = l.startup_id "
+        "FROM forge_listings l LEFT JOIN forge_listing_types lt ON lt.id = l.listing_type_id "
+        "LEFT JOIN forge_startups s ON s.id = l.startup_id "
         "WHERE l.title LIKE '__browser_probe__%' ORDER BY l.id DESC LIMIT 1"
     )
     check("stored pending, typed and attached to the founder's startup",
@@ -192,7 +192,7 @@ with sync_playwright() as p:
 
     check("saving confirms with the reference dialog",
           "Listing Updated" in page.inner_text("body"))
-    saved_tagline = sql("SELECT tagline FROM startups WHERE slug = 'novamed'")
+    saved_tagline = sql("SELECT tagline FROM forge_startups WHERE slug = 'novamed'")
     check("the tagline reached MySQL", saved_tagline == "Browser-verified tagline.", saved_tagline)
 
     page.goto(f"{BASE}/founder/startup", wait_until="networkidle")
@@ -205,7 +205,7 @@ with sync_playwright() as p:
     # open the request form at all. That is a gap in the drawn design, not in
     # the wiring, so the flow is exercised at the size where the reference
     # actually provides the button.
-    requests_before = sql("SELECT COUNT(*) FROM mentorship_requests")
+    requests_before = sql("SELECT COUNT(*) FROM forge_mentorship_requests")
     page.set_viewport_size({"width": 390, "height": 844})
     page.goto(f"{BASE}/founder/mentorship", wait_until="networkidle")
     check("the desktop Mentorship screen has no request trigger (flagged)",
@@ -218,12 +218,12 @@ with sync_playwright() as p:
     page.wait_for_timeout(2500)
 
     check("the mentorship dialog confirms", "Request Sent!" in page.inner_text("body"))
-    requests_after = sql("SELECT COUNT(*) FROM mentorship_requests")
+    requests_after = sql("SELECT COUNT(*) FROM forge_mentorship_requests")
     check("the request reached MySQL", int(requests_after) == int(requests_before) + 1,
           f"{requests_before} -> {requests_after}")
     linked = sql(
-        "SELECT COALESCE(s.name, 'none') FROM mentorship_requests r "
-        "LEFT JOIN startups s ON s.id = r.startup_id ORDER BY r.id DESC LIMIT 1"
+        "SELECT COALESCE(s.name, 'none') FROM forge_mentorship_requests r "
+        "LEFT JOIN forge_startups s ON s.id = r.startup_id ORDER BY r.id DESC LIMIT 1"
     )
     check("and is filed against the founder's startup", linked == "NovaMed", linked)
 
@@ -244,18 +244,18 @@ with sync_playwright() as p:
     browser.close()
 
 # ---- restore the seeded demo data ---------------------------------------
-sql(f"DELETE FROM listing_skills WHERE listing_id > {hw_listing}")
-sql(f"DELETE FROM listings WHERE id > {hw_listing}")
-sql(f"DELETE FROM concierge_contacts WHERE id > {hw_contact}")
-sql(f"DELETE FROM mentorship_sessions WHERE id > {hw_session}")
-sql(f"DELETE FROM mentorship_requests WHERE id > {hw_request}")
-sql(f"DELETE FROM activity_logs WHERE id > {hw_activity}")
-sql(f"DELETE FROM notifications WHERE id > {hw_notification}")
-sql(f"UPDATE startups SET tagline = '{original_tagline}' WHERE slug = 'novamed'")
+sql(f"DELETE FROM forge_listing_skills WHERE listing_id > {hw_listing}")
+sql(f"DELETE FROM forge_listings WHERE id > {hw_listing}")
+sql(f"DELETE FROM forge_concierge_contacts WHERE id > {hw_contact}")
+sql(f"DELETE FROM forge_mentorship_sessions WHERE id > {hw_session}")
+sql(f"DELETE FROM forge_mentorship_requests WHERE id > {hw_request}")
+sql(f"DELETE FROM forge_activity_logs WHERE id > {hw_activity}")
+sql(f"DELETE FROM forge_notifications WHERE id > {hw_notification}")
+sql(f"UPDATE forge_startups SET tagline = '{original_tagline}' WHERE slug = 'novamed'")
 
-restored = sql("SELECT tagline FROM startups WHERE slug = 'novamed'")
+restored = sql("SELECT tagline FROM forge_startups WHERE slug = 'novamed'")
 check("teardown — seeded data restored",
-      restored == original_tagline and sql("SELECT COUNT(*) FROM concierge_contacts") == "5",
+      restored == original_tagline and sql("SELECT COUNT(*) FROM forge_concierge_contacts") == "5",
       restored)
 
 for ok, name, detail in results:

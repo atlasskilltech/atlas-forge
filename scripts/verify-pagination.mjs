@@ -1,3 +1,5 @@
+import { T } from '../src/lib/queries/tables.mjs'
+
 /**
  * Verifies Phase 5 batch 3: opt-in pagination and the ceilings on lists that
  * are read whole.
@@ -75,14 +77,14 @@ const db = await mysql.createConnection({
 const one = async (sql, params = []) => (await db.query(sql, params))[0][0]
 
 const activityHighWater = Number(
-  (await one('SELECT COALESCE(MAX(id), 0) AS id FROM activity_logs')).id
+  (await one(`SELECT COALESCE(MAX(id), 0) AS id FROM ${T.activity_logs}`)).id
 )
-const seededActivity = Number((await one('SELECT COUNT(*) AS n FROM activity_logs')).n)
+const seededActivity = Number((await one(`SELECT COUNT(*) AS n FROM ${T.activity_logs}`)).n)
 
 // Enough rows that a page boundary is a real boundary, not an edge case.
 for (let index = 0; index < 25; index += 1) {
   await db.execute(
-    "INSERT INTO activity_logs (actor_user_id, action, module, status) VALUES (1, ?, 'Platform', 'logged')",
+    `INSERT INTO ${T.activity_logs} (actor_user_id, action, module, status) VALUES (1, ?, 'Platform', 'logged')`,
     [`__pagination_probe__ ${index}`]
   )
 }
@@ -182,13 +184,13 @@ for (const [path, cookies, shape] of [
 /* Teardown                                                                   */
 /* -------------------------------------------------------------------------- */
 
-await db.execute('DELETE FROM activity_logs WHERE id > ?', [activityHighWater])
-await db.execute('DELETE FROM login_attempts WHERE succeeded = 1')
+await db.execute(`DELETE FROM ${T.activity_logs} WHERE id > ?`, [activityHighWater])
+await db.execute(`DELETE FROM ${T.login_attempts} WHERE succeeded = 1`)
 
 const after = await one(`
-  SELECT (SELECT COUNT(*) FROM activity_logs) AS activity,
-         (SELECT COUNT(*) FROM users)         AS users,
-         (SELECT COUNT(*) FROM messages)      AS messages
+  SELECT (SELECT COUNT(*) FROM ${T.activity_logs}) AS activity,
+         (SELECT COUNT(*) FROM ${T.users})         AS users,
+         (SELECT COUNT(*) FROM ${T.messages})      AS messages
 `)
 await db.end()
 

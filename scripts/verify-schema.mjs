@@ -10,6 +10,8 @@
 import mysql from 'mysql2/promise'
 import { dbEnv, forgeTables } from './lib/forge-db.mjs'
 
+import { T } from '../src/lib/queries/tables.mjs'
+
 // Only ATLAS Forge's own tables are checked. The production database is shared
 // with other applications; their tables are neither expected nor reported.
 const cfg = dbEnv()
@@ -75,7 +77,7 @@ const [actions] = await conn.query(
 // --- the deferred circular FK ---------------------------------------------
 const [[circular]] = await conn.query(
   `SELECT COUNT(*) n FROM information_schema.TABLE_CONSTRAINTS
-    WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME = 'startups'
+    WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME = '${T.startups}'
       AND CONSTRAINT_NAME = 'fk_startups_mentor'`, [DB_NAME])
 if (circular.n !== 1) fail('deferred FK fk_startups_mentor was not created')
 

@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { T } from '@/lib/queries/tables.mjs'
+
 const APPLICATION_FIELDS = `
   ia.id, ia.idea_name, ia.problem_statement, ia.team_member_ids, ia.status,
   ia.completion_pct, ia.submitted_at, ia.reviewed_at, ia.created_at,
@@ -10,11 +12,11 @@ const APPLICATION_FIELDS = `
 `
 
 const APPLICATION_JOINS = `
-    FROM incubation_applications ia
-    JOIN users u          ON u.id = ia.applicant_user_id
-    LEFT JOIN stages st   ON st.id = ia.stage_id
-    LEFT JOIN startups s  ON s.id = ia.startup_id
-    LEFT JOIN users rv    ON rv.id = ia.reviewed_by
+    FROM ${T.incubation_applications} ia
+    JOIN ${T.users} u          ON u.id = ia.applicant_user_id
+    LEFT JOIN ${T.stages} st   ON st.id = ia.stage_id
+    LEFT JOIN ${T.startups} s  ON s.id = ia.startup_id
+    LEFT JOIN ${T.users} rv    ON rv.id = ia.reviewed_by
 `
 
 export const SELECT_INCUBATION_APPLICATIONS = `
@@ -38,34 +40,34 @@ export const SELECT_INCUBATION_APPLICATION = `
  */
 export const SELECT_APPLICATION_READINESS = `
   SELECT ri.id, ri.slug, ri.name, ri.hint, ri.sort_order, ar.value
-    FROM readiness_items ri
-    LEFT JOIN application_readiness ar
+    FROM ${T.readiness_items} ri
+    LEFT JOIN ${T.application_readiness} ar
            ON ar.readiness_item_id = ri.id AND ar.application_id = ?
    WHERE ri.is_active = TRUE
    ORDER BY ri.sort_order
 `
 
 export const INSERT_INCUBATION_APPLICATION = `
-  INSERT INTO incubation_applications
+  INSERT INTO ${T.incubation_applications}
     (applicant_user_id, startup_id, idea_name, problem_statement, stage_id,
      team_member_ids, status, completion_pct, submitted_at)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 export const UPSERT_READINESS_VALUE = `
-  INSERT INTO application_readiness (application_id, readiness_item_id, value)
+  INSERT INTO ${T.application_readiness} (application_id, readiness_item_id, value)
   VALUES (?, ?, ?)
   ON DUPLICATE KEY UPDATE value = VALUES(value)
 `
 
 export const UPDATE_APPLICATION_REVIEW = `
-  UPDATE incubation_applications
+  UPDATE ${T.incubation_applications}
      SET status = ?, reviewed_by = ?, reviewed_at = NOW()
    WHERE id = ? AND deleted_at IS NULL
 `
 
 export const UPDATE_COMPLETION_PCT = `
-  UPDATE incubation_applications SET completion_pct = ? WHERE id = ?
+  UPDATE ${T.incubation_applications} SET completion_pct = ? WHERE id = ?
 `
 
 export const SELECT_FOUNDER_GRANTS = `
@@ -74,28 +76,28 @@ export const SELECT_FOUNDER_GRANTS = `
          s.name AS startup_name, s.slug AS startup_slug,
          gb.full_name AS granted_by_name,
          rb.full_name AS revoked_by_name
-    FROM founder_access_grants g
-    JOIN users u ON u.id = g.user_id
-    LEFT JOIN startups s ON s.id = g.startup_id
-    LEFT JOIN users gb   ON gb.id = g.granted_by
-    LEFT JOIN users rb   ON rb.id = g.revoked_by
+    FROM ${T.founder_access_grants} g
+    JOIN ${T.users} u ON u.id = g.user_id
+    LEFT JOIN ${T.startups} s ON s.id = g.startup_id
+    LEFT JOIN ${T.users} gb   ON gb.id = g.granted_by
+    LEFT JOIN ${T.users} rb   ON rb.id = g.revoked_by
    WHERE (? IS NULL OR g.user_id = ?)
    ORDER BY g.granted_at DESC
 `
 
 export const INSERT_FOUNDER_GRANT = `
-  INSERT INTO founder_access_grants
+  INSERT INTO ${T.founder_access_grants}
     (user_id, startup_id, incubation_application_id, granted_by, reason)
   VALUES (?, ?, ?, ?, ?)
 `
 
 export const REVOKE_FOUNDER_GRANT = `
-  UPDATE founder_access_grants
+  UPDATE ${T.founder_access_grants}
      SET revoked_by = ?, revoked_at = NOW(), reason = ?
    WHERE id = ? AND revoked_at IS NULL
 `
 
 export const COUNT_PENDING_APPLICATIONS = `
-  SELECT COUNT(*) AS total FROM incubation_applications
+  SELECT COUNT(*) AS total FROM ${T.incubation_applications}
    WHERE status IN ('pending', 'under_review') AND deleted_at IS NULL
 `

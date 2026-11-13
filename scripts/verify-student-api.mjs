@@ -1,3 +1,5 @@
+import { T } from '../src/lib/queries/tables.mjs'
+
 /**
  * End-to-end verification of the Student HTTP surface.
  *
@@ -379,16 +381,16 @@ const connection = await mysql.createConnection({
 })
 
 if (createdApplicationId) {
-  await connection.execute('DELETE FROM application_events WHERE application_id = ?', [
+  await connection.execute(`DELETE FROM ${T.application_events} WHERE application_id = ?`, [
     createdApplicationId,
   ])
-  await connection.execute('DELETE FROM applications WHERE id = ?', [createdApplicationId])
+  await connection.execute(`DELETE FROM ${T.applications} WHERE id = ?`, [createdApplicationId])
   await connection.execute(
-    "DELETE FROM activity_logs WHERE entity_type = 'application' AND entity_id = ?",
+    `DELETE FROM ${T.activity_logs} WHERE entity_type = 'application' AND entity_id = ?`,
     [createdApplicationId]
   )
   await connection.execute(
-    "DELETE FROM notifications WHERE entity_type = 'application' AND entity_id = ?",
+    `DELETE FROM ${T.notifications} WHERE entity_type = 'application' AND entity_id = ?`,
     [createdApplicationId]
   )
 }
@@ -399,21 +401,21 @@ if (createdApplicationId) {
 // runs inside the limiter's window would lock it out and the probe would start
 // answering 429 instead of the 401 the checks above assert.
 await connection.execute(
-  'DELETE FROM login_attempts WHERE identifier = ? AND succeeded = 0',
+  `DELETE FROM ${T.login_attempts} WHERE identifier = ? AND succeeded = 0`,
   ['atl-0000-0000']
 )
 
 // The probe message and the notification `sendMessage` writes for it.
 await connection.execute(
-  "DELETE FROM notifications WHERE entity_type = 'message' AND entity_id IN " +
-    "(SELECT id FROM messages WHERE subject LIKE '__api_probe__%')"
+  `DELETE FROM ${T.notifications} WHERE entity_type = 'message' AND entity_id IN ` +
+    `(SELECT id FROM ${T.messages} WHERE subject LIKE '__api_probe__%')`
 )
-await connection.execute("DELETE FROM messages WHERE subject LIKE '__api_probe__%'")
+await connection.execute(`DELETE FROM ${T.messages} WHERE subject LIKE '__api_probe__%'`)
 
 const [[counts]] = await connection.execute(`
-  SELECT (SELECT COUNT(*) FROM applications)  AS applications,
-         (SELECT COUNT(*) FROM messages)      AS messages,
-         (SELECT COUNT(*) FROM notifications) AS notifications
+  SELECT (SELECT COUNT(*) FROM ${T.applications})  AS applications,
+         (SELECT COUNT(*) FROM ${T.messages})      AS messages,
+         (SELECT COUNT(*) FROM ${T.notifications}) AS notifications
 `)
 await connection.end()
 

@@ -1,3 +1,5 @@
+import { T } from '../src/lib/queries/tables.mjs'
+
 /**
  * End-to-end verification of the Super Admin HTTP surface.
  *
@@ -203,14 +205,14 @@ const connection = await mysql.createConnection({
   database: process.env.DB_NAME,
 })
 const [[counts]] = await connection.execute(`
-  SELECT (SELECT COUNT(*) FROM listings)              AS listings,
-         (SELECT COUNT(*) FROM approvals)             AS approvals,
-         (SELECT COUNT(*) FROM applications)          AS applications,
-         (SELECT COUNT(*) FROM concierge_contacts)    AS contacts,
-         (SELECT COUNT(*) FROM founder_access_grants) AS grants,
-         (SELECT COUNT(*) FROM user_roles)            AS user_roles,
-         (SELECT COUNT(*) FROM activity_logs)         AS activity,
-         (SELECT setting_value FROM platform_settings WHERE setting_key = 'v1_mode') AS v1
+  SELECT (SELECT COUNT(*) FROM ${T.listings})              AS listings,
+         (SELECT COUNT(*) FROM ${T.approvals})             AS approvals,
+         (SELECT COUNT(*) FROM ${T.applications})          AS applications,
+         (SELECT COUNT(*) FROM ${T.concierge_contacts})    AS contacts,
+         (SELECT COUNT(*) FROM ${T.founder_access_grants}) AS grants,
+         (SELECT COUNT(*) FROM ${T.user_roles})            AS user_roles,
+         (SELECT COUNT(*) FROM ${T.activity_logs})         AS activity,
+         (SELECT setting_value FROM ${T.platform_settings} WHERE setting_key = 'v1_mode') AS v1
 `)
 await connection.end()
 

@@ -22,12 +22,12 @@
 SET @col_exists := (
   SELECT COUNT(*) FROM information_schema.COLUMNS
    WHERE TABLE_SCHEMA = DATABASE()
-     AND TABLE_NAME   = 'users'
+     AND TABLE_NAME   = 'forge_users'
      AND COLUMN_NAME  = 'must_change_password'
 );
 
 SET @ddl := IF(@col_exists = 0,
-  'ALTER TABLE users ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0 AFTER status',
+  'ALTER TABLE forge_users ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0 AFTER status',
   'DO 0'
 );
 
@@ -38,6 +38,6 @@ DEALLOCATE PREPARE stmt;
 -- ===========================================================================
 -- Verify
 --
---   DESCRIBE users;  -- a `must_change_password` tinyint(1) NOT NULL default 0
---   SELECT COUNT(*) FROM users WHERE must_change_password = 1;  -- 0 right after
+--   DESCRIBE forge_users;  -- a `must_change_password` tinyint(1) NOT NULL default 0
+--   SELECT COUNT(*) FROM forge_users WHERE must_change_password = 1;  -- 0 right after
 -- ===========================================================================

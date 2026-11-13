@@ -24,7 +24,7 @@
 -- Safe on a populated table -- no existing row and no FK changes.
 -- ===========================================================================
 
-INSERT INTO contract_types (slug, name, sort_order) VALUES
+INSERT INTO forge_contract_types (slug, name, sort_order) VALUES
   ('paid-academic-credit', 'Paid Work / Academic Credit',             5),
   ('equity-cofounder',     'Equity / Revenue Share / Co-founder Role', 6)
 ON DUPLICATE KEY UPDATE name = VALUES(name), sort_order = VALUES(sort_order);

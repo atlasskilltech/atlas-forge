@@ -16,6 +16,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import mysql from 'mysql2/promise'
 import { dbEnv, describe, envFileConflicts, inspectDatabase, parseEnvText } from './lib/forge-db.mjs'
+import { T } from '../src/lib/queries/tables.mjs'
 
 const cfg = dbEnv()
 const line = (label, value) => console.log(`  ${label.padEnd(22)}${value}`)
@@ -77,7 +78,10 @@ try {
 
   // 3. Table inventory (information_schema only).
   const inv = await inspectDatabase(conn)
-  line('forge tables', `${inv.present.length}/${inv.expected.length} present`)
+  line('forge tables', `${inv.present.length}/${inv.expected.length} present (forge_ prefix)`)
+  if (inv.legacy.length > 0) {
+    fail('legacy names', `${inv.legacy.length}/46 Forge tables still unprefixed — run the prefix migration (npm run db:prefix)`)
+  }
   if (inv.missing.length > 0) fail('missing tables', inv.missing.join(', '))
   for (const { name, lacking } of inv.collisions) {
     fail('foreign table', `${name} exists but is not Forge's (lacks ${lacking.slice(0, 4).join(', ')})`)
@@ -85,12 +89,12 @@ try {
   line('other apps\' tables', `${inv.foreign.length} (left untouched)`)
 
   // 4. A real read through a prepared statement, as the app's repositories do.
-  if (inv.present.includes('users')) {
-    const [[row]] = await conn.execute('SELECT COUNT(*) AS n FROM users WHERE deleted_at IS NULL')
+  if (inv.present.includes(T.users)) {
+    const [[row]] = await conn.execute(`SELECT COUNT(*) AS n FROM ${T.users} WHERE deleted_at IS NULL`)
     line('read users', `ok (${row.n} active rows)`)
   }
-  if (inv.present.includes('roles')) {
-    const [[row]] = await conn.execute('SELECT COUNT(*) AS n FROM roles')
+  if (inv.present.includes(T.roles)) {
+    const [[row]] = await conn.execute(`SELECT COUNT(*) AS n FROM ${T.roles}`)
     line('read roles', `ok (${row.n} rows)${row.n === 0 ? ' — run db:reference' : ''}`)
   }
 } catch (error) {

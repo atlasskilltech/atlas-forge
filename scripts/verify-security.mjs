@@ -1,3 +1,5 @@
+import { T } from '../src/lib/queries/tables.mjs'
+
 /**
  * Verifies the Phase 5 batch 1 hardening: response headers, the cross-site
  * request block, and login rate limiting.
@@ -74,7 +76,7 @@ const one = async (sql, params = []) => (await db.query(sql, params))[0][0]
 // captured separately from the high-water mark: ids leave gaps once the
 // retention sweep has run, so `MAX(id)` is not a row count.
 const before = await one(
-  'SELECT COALESCE(MAX(id), 0) AS id, COUNT(*) AS total FROM login_attempts'
+  `SELECT COALESCE(MAX(id), 0) AS id, COUNT(*) AS total FROM ${T.login_attempts}`
 )
 const highWater = Number(before.id)
 const attemptsBefore = Number(before.total)
@@ -85,9 +87,9 @@ const attemptsBefore = Number(before.total)
 // row counts, which break the moment the database is seeded differently or real
 // accounts exist alongside the fixtures.
 const seedBefore = await one(`
-  SELECT (SELECT COUNT(*) FROM users)         AS users,
-         (SELECT COUNT(*) FROM activity_logs) AS activity,
-         (SELECT COUNT(*) FROM error_logs)    AS errors
+  SELECT (SELECT COUNT(*) FROM ${T.users})         AS users,
+         (SELECT COUNT(*) FROM ${T.activity_logs}) AS activity,
+         (SELECT COUNT(*) FROM ${T.error_logs})    AS errors
 `)
 
 /* -------------------------------------------------------------------------- */
@@ -192,7 +194,7 @@ check(`the first ${limit} wrong passwords are 401s`,
 check('the attempt past the limit is 429', statuses.at(-1) === 429, statuses.join(','))
 
 const logged = await one(
-  'SELECT COUNT(*) AS total FROM login_attempts WHERE identifier = ? AND succeeded = 0',
+  `SELECT COUNT(*) AS total FROM ${T.login_attempts} WHERE identifier = ? AND succeeded = 0`,
   [THROWAWAY.toLowerCase()]
 )
 check('every failure was recorded', Number(logged.total) === limit, String(logged.total))
@@ -201,7 +203,7 @@ check('every failure was recorded', Number(logged.total) === limit, String(logge
 // utf8mb4_unicode_ci, so `WHERE identifier = 'ATL-...'` matches either casing
 // and could never tell the two apart.
 const stored = await one(
-  'SELECT identifier FROM login_attempts WHERE identifier = ? LIMIT 1',
+  `SELECT identifier FROM ${T.login_attempts} WHERE identifier = ? LIMIT 1`,
   [THROWAWAY]
 )
 check('the identifier is stored lower-cased, so casing cannot split the counter',
@@ -224,7 +226,7 @@ for (let attempt = 0; attempt < 3; attempt += 1) {
   })
 }
 const beforeSuccess = await one(
-  'SELECT COUNT(*) AS n FROM login_attempts WHERE identifier = ? AND succeeded = 0',
+  `SELECT COUNT(*) AS n FROM ${T.login_attempts} WHERE identifier = ? AND succeeded = 0`,
   [REAL_ACCOUNT.toLowerCase()]
 )
 check('failures against a real account are counted too', Number(beforeSuccess.n) === 3,
@@ -235,7 +237,7 @@ await call('/api/auth/login', {
   body: { appId: REAL_ACCOUNT, password: PASSWORD },
 })
 const afterSuccess = await one(
-  'SELECT COUNT(*) AS n FROM login_attempts WHERE identifier = ? AND succeeded = 0',
+  `SELECT COUNT(*) AS n FROM ${T.login_attempts} WHERE identifier = ? AND succeeded = 0`,
   [REAL_ACCOUNT.toLowerCase()]
 )
 check('a correct password clears the failure streak', Number(afterSuccess.n) === 0,
@@ -245,13 +247,13 @@ check('a correct password clears the failure streak', Number(afterSuccess.n) ===
 /* Teardown                                                                   */
 /* -------------------------------------------------------------------------- */
 
-await db.execute('DELETE FROM login_attempts WHERE id > ?', [highWater])
+await db.execute(`DELETE FROM ${T.login_attempts} WHERE id > ?`, [highWater])
 
 const after = await one(`
-  SELECT (SELECT COUNT(*) FROM login_attempts) AS attempts,
-         (SELECT COUNT(*) FROM users)          AS users,
-         (SELECT COUNT(*) FROM activity_logs)  AS activity,
-         (SELECT COUNT(*) FROM error_logs)     AS errors
+  SELECT (SELECT COUNT(*) FROM ${T.login_attempts}) AS attempts,
+         (SELECT COUNT(*) FROM ${T.users})          AS users,
+         (SELECT COUNT(*) FROM ${T.activity_logs})  AS activity,
+         (SELECT COUNT(*) FROM ${T.error_logs})     AS errors
 `)
 await db.end()
 

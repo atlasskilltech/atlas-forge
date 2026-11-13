@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { T } from '@/lib/queries/tables.mjs'
+
 /**
  * SQL for the public incubation application — `outsider_incubation_applications`.
  *
@@ -29,13 +31,13 @@ const APPLICATION_FIELDS = `
  * startup to that account rather than creating a second one.
  */
 const APPLICATION_JOINS = `
-    FROM outsider_incubation_applications o
-    LEFT JOIN industries i ON i.id = o.industry_id
-    LEFT JOIN stages st    ON st.id = o.stage_id
-    LEFT JOIN users rv     ON rv.id = o.reviewed_by
-    LEFT JOIN users au     ON au.id = o.approved_user_id
-    LEFT JOIN startups s   ON s.id = o.approved_startup_id
-    LEFT JOIN users mu     ON mu.email = o.email AND mu.deleted_at IS NULL
+    FROM ${T.outsider_incubation_applications} o
+    LEFT JOIN ${T.industries} i ON i.id = o.industry_id
+    LEFT JOIN ${T.stages} st    ON st.id = o.stage_id
+    LEFT JOIN ${T.users} rv     ON rv.id = o.reviewed_by
+    LEFT JOIN ${T.users} au     ON au.id = o.approved_user_id
+    LEFT JOIN ${T.startups} s   ON s.id = o.approved_startup_id
+    LEFT JOIN ${T.users} mu     ON mu.email = o.email AND mu.deleted_at IS NULL
 `
 
 export const SELECT_OUTSIDER_APPLICATIONS = `
@@ -52,7 +54,7 @@ export const SELECT_OUTSIDER_APPLICATION = `
 `
 
 export const INSERT_OUTSIDER_APPLICATION = `
-  INSERT INTO outsider_incubation_applications
+  INSERT INTO ${T.outsider_incubation_applications}
     (reference, full_name, email, phone, startup_name, tagline, problem_statement,
      industry_id, stage_id, startup_logo_url,
      pitch_deck, product_demo, product_assets, key_personnel,
@@ -67,33 +69,33 @@ export const INSERT_OUTSIDER_APPLICATION = `
  * transaction it waits on the winner's row lock before it finds that out.
  */
 export const CLAIM_FOR_APPROVAL = `
-  UPDATE outsider_incubation_applications
+  UPDATE ${T.outsider_incubation_applications}
      SET status = 'approved', reviewed_by = ?, reviewed_at = NOW(), rejection_reason = NULL
    WHERE id = ? AND status = 'pending'
 `
 
 export const LINK_APPROVAL = `
-  UPDATE outsider_incubation_applications
+  UPDATE ${T.outsider_incubation_applications}
      SET approved_user_id = ?, approved_startup_id = ?, incubation_application_id = ?
    WHERE id = ?
 `
 
 export const REJECT_OUTSIDER_APPLICATION = `
-  UPDATE outsider_incubation_applications
+  UPDATE ${T.outsider_incubation_applications}
      SET status = 'rejected', reviewed_by = ?, reviewed_at = NOW(), rejection_reason = ?
    WHERE id = ? AND status = 'pending'
 `
 
 export const COUNT_PENDING_BY_EMAIL = `
   SELECT COUNT(*) AS total
-    FROM outsider_incubation_applications
+    FROM ${T.outsider_incubation_applications}
    WHERE email = ? AND status = 'pending'
 `
 
 /** Per-address throttle: submissions from one client across the window. */
 export const COUNT_RECENT_BY_IP = `
   SELECT COUNT(*) AS total
-    FROM outsider_incubation_applications
+    FROM ${T.outsider_incubation_applications}
    WHERE source_ip = ?
      AND source_ip <> ''
      AND created_at > (NOW() - INTERVAL ? SECOND)
@@ -106,7 +108,7 @@ export const COUNT_RECENT_BY_IP = `
  */
 export const SELECT_USER_BY_EMAIL = `
   SELECT id, app_id, full_name, status, deleted_at
-    FROM users
+    FROM ${T.users}
    WHERE email = ?
    LIMIT 1
 `

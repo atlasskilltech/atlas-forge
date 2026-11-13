@@ -1,3 +1,5 @@
+import { T } from '../src/lib/queries/tables.mjs'
+
 /**
  * End-to-end verification of the Forge Manager HTTP surface.
  *
@@ -296,52 +298,52 @@ const connection = await mysql.createConnection({
 const run = (sql, params = []) => connection.execute(sql, params)
 
 // the approval
-await run('DELETE FROM approvals WHERE listing_id = ?', [undecided.listingId])
-await run("UPDATE listings SET status = 'pending' WHERE id = ?", [undecided.listingId])
-await run("DELETE FROM notifications WHERE entity_type = 'listing' AND entity_id = ?", [
+await run(`DELETE FROM ${T.approvals} WHERE listing_id = ?`, [undecided.listingId])
+await run(`UPDATE ${T.listings} SET status = 'pending' WHERE id = ?`, [undecided.listingId])
+await run(`DELETE FROM ${T.notifications} WHERE entity_type = 'listing' AND entity_id = ?`, [
   undecided.listingId,
 ])
 // the assignment
-await run('DELETE FROM mentorship_sessions WHERE request_id = ? AND assigned_by IS NOT NULL AND scheduled_at IS NOT NULL AND topic = (SELECT topic FROM mentorship_requests WHERE id = ?)', [
+await run(`DELETE FROM ${T.mentorship_sessions} WHERE request_id = ? AND assigned_by IS NOT NULL AND scheduled_at IS NOT NULL AND topic = (SELECT topic FROM ${T.mentorship_requests} WHERE id = ?)`, [
   openRequest.requestId,
   openRequest.requestId,
 ])
-await run("UPDATE mentorship_requests SET status = 'requested' WHERE id = ?", [
+await run(`UPDATE ${T.mentorship_requests} SET status = 'requested' WHERE id = ?`, [
   openRequest.requestId,
 ])
-await run("DELETE FROM notifications WHERE entity_type = 'mentorship_request' AND entity_id = ?", [
+await run(`DELETE FROM ${T.notifications} WHERE entity_type = 'mentorship_request' AND entity_id = ?`, [
   openRequest.requestId,
 ])
 // the grant
 const [[applicant]] = await connection.execute(
-  'SELECT applicant_user_id AS id FROM incubation_applications WHERE id = ?',
+  `SELECT applicant_user_id AS id FROM ${T.incubation_applications} WHERE id = ?`,
   [ungranted.applicationId]
 )
-await run('DELETE FROM founder_access_grants WHERE incubation_application_id = ?', [
+await run(`DELETE FROM ${T.founder_access_grants} WHERE incubation_application_id = ?`, [
   ungranted.applicationId,
 ])
 await run(
-  "DELETE ur FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = ? AND r.slug = 'founder'",
+  `DELETE ur FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id WHERE ur.user_id = ? AND r.slug = 'founder'`,
   [applicant.id]
 )
 await run(
-  "UPDATE incubation_applications SET status = 'pending', reviewed_at = NULL, reviewed_by = NULL WHERE id = ?",
+  `UPDATE ${T.incubation_applications} SET status = 'pending', reviewed_at = NULL, reviewed_by = NULL WHERE id = ?`,
   [ungranted.applicationId]
 )
-await run("DELETE FROM notifications WHERE type = 'access' AND user_id = ?", [applicant.id])
+await run(`DELETE FROM ${T.notifications} WHERE type = 'access' AND user_id = ?`, [applicant.id])
 // the feature flag
-await run('UPDATE startups SET is_featured = 0 WHERE id = ?', [toFeature.startupId])
+await run(`UPDATE ${T.startups} SET is_featured = 0 WHERE id = ?`, [toFeature.startupId])
 // audit rows written by this run
 await run(
-  "DELETE FROM activity_logs WHERE actor_user_id = (SELECT id FROM users WHERE app_id = ?) AND created_at >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)",
+  `DELETE FROM ${T.activity_logs} WHERE actor_user_id = (SELECT id FROM ${T.users} WHERE app_id = ?) AND created_at >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)`,
   [MANAGER]
 )
 
 const [[counts]] = await connection.execute(`
-  SELECT (SELECT COUNT(*) FROM listings WHERE status = 'pending') AS pending,
-         (SELECT COUNT(*) FROM mentorship_sessions)               AS sessions,
-         (SELECT COUNT(*) FROM founder_access_grants)             AS grants,
-         (SELECT COUNT(*) FROM activity_logs)                     AS activity
+  SELECT (SELECT COUNT(*) FROM ${T.listings} WHERE status = 'pending') AS pending,
+         (SELECT COUNT(*) FROM ${T.mentorship_sessions})               AS sessions,
+         (SELECT COUNT(*) FROM ${T.founder_access_grants})             AS grants,
+         (SELECT COUNT(*) FROM ${T.activity_logs})                     AS activity
 `)
 await connection.end()
 

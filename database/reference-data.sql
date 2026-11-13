@@ -19,7 +19,7 @@
 -- ---------------------------------------------------------------------------
 -- Roles
 -- ---------------------------------------------------------------------------
-INSERT INTO roles (slug, name, description, is_view_only, sort_order) VALUES
+INSERT INTO forge_roles (slug, name, description, is_view_only, sort_order) VALUES
   ('student',         'Standard Student', 'Browse jobs, projects, mentorship & flag availability', FALSE, 1),
   ('founder',         'Founder (Startup)', 'Manage your startup, post jobs and contact students',  FALSE, 2),
   ('forge-manager',   'Forge Manager',    'Oversee the incubator, approve content and assign mentors', FALSE, 3),
@@ -32,7 +32,7 @@ ON DUPLICATE KEY UPDATE
 -- ---------------------------------------------------------------------------
 -- Permissions
 -- ---------------------------------------------------------------------------
-INSERT INTO permissions (slug, name, module) VALUES
+INSERT INTO forge_permissions (slug, name, module) VALUES
   ('listing.view',            'View listings',              'hiring'),
   ('listing.create',          'Create a listing',           'hiring'),
   ('listing.approve',         'Approve or reject listings', 'hiring'),
@@ -70,23 +70,23 @@ ON DUPLICATE KEY UPDATE name = VALUES(name), module = VALUES(module);
 -- Super Admin deliberately receives only *.view / view_all permissions: the
 -- role is view-only, and that is enforced here rather than in the UI.
 -- ---------------------------------------------------------------------------
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id FROM roles r JOIN permissions p ON p.slug IN (
+INSERT INTO forge_role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM forge_roles r JOIN forge_permissions p ON p.slug IN (
   'listing.view','application.create','application.view_own','availability.manage',
   'startup.view','mentorship.request','incubation.apply','listing.create')
 WHERE r.slug = 'student'
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id FROM roles r JOIN permissions p ON p.slug IN (
+INSERT INTO forge_role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM forge_roles r JOIN forge_permissions p ON p.slug IN (
   'listing.view','listing.create','application.view_all','concierge.search',
   'concierge.contact','startup.view','startup.manage_own','mentorship.request',
   'incubation.apply','document.manage_own')
 WHERE r.slug = 'founder'
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id FROM roles r JOIN permissions p ON p.slug IN (
+INSERT INTO forge_role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM forge_roles r JOIN forge_permissions p ON p.slug IN (
   'listing.view','listing.approve','application.view_all','concierge.search',
   'concierge.view_all_logs','startup.view','startup.manage_all','startup.feature',
   'mentorship.assign','mentorship.view_all','incubation.review','access.grant',
@@ -94,13 +94,13 @@ SELECT r.id, p.id FROM roles r JOIN permissions p ON p.slug IN (
 WHERE r.slug = 'forge-manager'
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id FROM roles r JOIN permissions p
+INSERT INTO forge_role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM forge_roles r JOIN forge_permissions p
 WHERE r.slug = 'backend-manager'
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id FROM roles r JOIN permissions p ON p.slug IN (
+INSERT INTO forge_role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM forge_roles r JOIN forge_permissions p ON p.slug IN (
   'listing.view','application.view_all','concierge.view_all_logs','startup.view',
   'mentorship.view_all','user.view_all','platform.settings.view','platform.logs.view',
   'document.view_all')
@@ -110,7 +110,7 @@ ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 -- ---------------------------------------------------------------------------
 -- Industries
 -- ---------------------------------------------------------------------------
-INSERT INTO industries (slug, name, sort_order) VALUES
+INSERT INTO forge_industries (slug, name, sort_order) VALUES
   ('healthtech', 'HealthTech', 1),
   ('edtech',     'EdTech',     2),
   ('cleantech',  'CleanTech',  3),
@@ -121,7 +121,7 @@ ON DUPLICATE KEY UPDATE name = VALUES(name), sort_order = VALUES(sort_order);
 -- ---------------------------------------------------------------------------
 -- Stages  (desktop uses Idea/Prototype/Early Traction; mobile shows Seed/Pre-seed)
 -- ---------------------------------------------------------------------------
-INSERT INTO stages (slug, name, sort_order) VALUES
+INSERT INTO forge_stages (slug, name, sort_order) VALUES
   ('idea',           'Idea',           1),
   ('prototype',      'Prototype',      2),
   ('early-traction', 'Early Traction', 3),
@@ -132,7 +132,7 @@ ON DUPLICATE KEY UPDATE name = VALUES(name), sort_order = VALUES(sort_order);
 -- ---------------------------------------------------------------------------
 -- Listing types
 -- ---------------------------------------------------------------------------
-INSERT INTO listing_types (slug, name, sort_order) VALUES
+INSERT INTO forge_listing_types (slug, name, sort_order) VALUES
   ('full-time',  'Full-time',      1),
   ('part-time',  'Part-time',      2),
   ('contract',   'Contract',       3),
@@ -143,7 +143,7 @@ ON DUPLICATE KEY UPDATE name = VALUES(name), sort_order = VALUES(sort_order);
 -- ---------------------------------------------------------------------------
 -- Contract types
 -- ---------------------------------------------------------------------------
-INSERT INTO contract_types (slug, name, sort_order) VALUES
+INSERT INTO forge_contract_types (slug, name, sort_order) VALUES
   ('no-pay',        'Collaboration / No Pay', 1),
   ('paid-freelance','Paid Freelance',         2),
   ('equity',        'Equity / Revenue Share', 3),
@@ -159,7 +159,7 @@ ON DUPLICATE KEY UPDATE name = VALUES(name), sort_order = VALUES(sort_order);
 -- The fourteen categories from /reference/mast ui/Compliance & Docs.
 -- See migrations/006_compliance_documents.sql.
 -- ---------------------------------------------------------------------------
-INSERT INTO document_categories (slug, name, description, tier, accepted_types, sort_order) VALUES
+INSERT INTO forge_document_categories (slug, name, description, tier, accepted_types, sort_order) VALUES
   ('pitch-deck',                'Pitch Deck',                                       NULL, 'core',        'pdf',      1),
   ('incubation-agreement',      'Incubation Agreement',                             NULL, 'core',        'pdf',      2),
   ('dpiit-recognition',         'DPIIT Recognition Certificate',
@@ -185,7 +185,7 @@ ON DUPLICATE KEY UPDATE
 -- The ten options the alumni mentorship form offered, ordered by how many
 -- alumni chose each. See migrations/005_alumni_mentors.sql.
 -- ---------------------------------------------------------------------------
-INSERT INTO mentorship_areas (slug, name, sort_order) VALUES
+INSERT INTO forge_mentorship_areas (slug, name, sort_order) VALUES
   ('design-creative',         'Design & Creative',             1),
   ('business-strategy',       'Business & Strategy',           2),
   ('career-development',      'Career & Personal Development', 3),
@@ -201,7 +201,7 @@ ON DUPLICATE KEY UPDATE name = VALUES(name), sort_order = VALUES(sort_order);
 -- ---------------------------------------------------------------------------
 -- Mentor types
 -- ---------------------------------------------------------------------------
-INSERT INTO mentor_types (slug, name, sort_order) VALUES
+INSERT INTO forge_mentor_types (slug, name, sort_order) VALUES
   ('faculty',  'Faculty Mentor',  1),
   ('alumni',   'Alumni Mentor',   2),
   ('industry', 'Industry Mentor', 3)
@@ -210,7 +210,7 @@ ON DUPLICATE KEY UPDATE name = VALUES(name), sort_order = VALUES(sort_order);
 -- ---------------------------------------------------------------------------
 -- Readiness checklist  (drives the Startup Readiness ring)
 -- ---------------------------------------------------------------------------
-INSERT INTO readiness_items (slug, name, hint, sort_order) VALUES
+INSERT INTO forge_readiness_items (slug, name, hint, sort_order) VALUES
   ('pitch-deck', 'Pitch Deck or Concept Note',
    'Deck link, or a brief concept note if you don''t have one yet', 1),
   ('demo',       'Product Demo / Link',
@@ -224,7 +224,7 @@ ON DUPLICATE KEY UPDATE name = VALUES(name), hint = VALUES(hint), sort_order = V
 -- ---------------------------------------------------------------------------
 -- Skills  (shared by students, listings and mentors)
 -- ---------------------------------------------------------------------------
-INSERT INTO skills (slug, name, category) VALUES
+INSERT INTO forge_skills (slug, name, category) VALUES
   ('ui-ux',            'UI/UX',                'Design'),
   ('ui-ux-design',     'UI/UX Design',         'Design'),
   ('ui-design',        'UI Design',            'Design'),
@@ -262,7 +262,7 @@ ON DUPLICATE KEY UPDATE name = VALUES(name), category = VALUES(category);
 -- setting_value is only seeded on first insert — re-running never overwrites a
 -- value an administrator has changed.
 -- ---------------------------------------------------------------------------
-INSERT INTO platform_settings (setting_key, setting_value, value_type, group_key, label, description) VALUES
+INSERT INTO forge_platform_settings (setting_key, setting_value, value_type, group_key, label, description) VALUES
   ('platform_name',        'ATLAS Forge',                 'string',  'general',
    'Platform Name',                    'Shown across the platform and in all notifications.'),
   ('university_name',      'ATLAS SkillTech University',  'string',  'general',

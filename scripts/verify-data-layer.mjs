@@ -9,6 +9,8 @@
 import { register } from 'node:module'
 import { pathToFileURL } from 'node:url'
 
+import { T } from '../src/lib/queries/tables.mjs'
+
 // Resolve the app's "@/..." alias and strip `server-only` so lib modules can be
 // imported outside Next.js.
 register(
@@ -169,7 +171,7 @@ try {
   await transaction(async (tx) => {
     const { insert } = await import('@/lib/db')
     const id = await insert(
-      'INSERT INTO listings (type, title, created_by, status) VALUES (?, ?, ?, ?)',
+      `INSERT INTO ${T.listings} (type, title, created_by, status) VALUES (?, ?, ?, ?)`,
       ['job', '__probe__', riya.id, 'pending'],
       tx
     )
@@ -179,7 +181,7 @@ try {
 } catch {
   /* expected */
 }
-const leaked = await pool.query("SELECT COUNT(*) AS n FROM listings WHERE title = '__probe__'")
+const leaked = await pool.query(`SELECT COUNT(*) AS n FROM ${T.listings} WHERE title = '__probe__'`)
 check('transaction commits then rolls back cleanly', wrote && leaked[0][0].n === 0,
   `inserted=${wrote}, leaked=${leaked[0][0].n}`)
 

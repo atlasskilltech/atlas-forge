@@ -18,6 +18,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import * as nodeUtil from 'node:util'
+import { TABLE_RENAMES } from '../../src/lib/queries/tables.mjs'
 
 /**
  * Parses a .env file. Uses Node's own parser (the one --env-file uses) when
@@ -157,7 +158,11 @@ function parseCreateTables(sql) {
   return tables
 }
 
-/** Map of Forge table name -> Set of columns its CREATE TABLE defines. */
+/**
+ * Map of physical Forge table name (`forge_*`) -> Set of columns its CREATE
+ * TABLE defines, parsed from schema.sql + migrations. Throws if that set ever
+ * disagrees with the authoritative map in src/lib/queries/tables.mjs.
+ */
 export async function forgeTables() {
   const files = ['schema.sql', ...(await readdir(join(DATABASE_DIR, 'migrations')))
     .filter((f) => f.endsWith('.sql')).sort().map((f) => `migrations/${f}`)]
@@ -169,17 +174,29 @@ export async function forgeTables() {
       all.set(name, prior ? new Set([...prior].filter((c) => cols.has(c))) : cols)
     }
   }
+  const mapped = new Set(Object.values(TABLE_RENAMES))
+  const extra = [...all.keys()].filter((n) => !mapped.has(n))
+  const absent = [...mapped].filter((n) => !all.has(n))
+  if (extra.length || absent.length) {
+    throw new Error(
+      `database/*.sql and src/lib/queries/tables.mjs disagree — in SQL only: ${extra.join(', ') || '-'}; ` +
+        `in map only: ${absent.join(', ') || '-'}`
+    )
+  }
   return all
 }
 
 /**
  * Read-only inventory of the connected database (information_schema only).
  *
- *   present    Forge tables that exist and carry every Forge column
- *   missing    Forge tables that do not exist
- *   collisions Forge table names that exist but are NOT Forge's table
- *              (columns missing) — almost certainly another application's
- *   foreign    tables that are not Forge's at all (other applications)
+ *   present    Forge tables that exist under their `forge_` name with every
+ *              Forge column
+ *   missing    `forge_` tables that do not exist
+ *   legacy     Forge tables that still exist under their OLD unprefixed name
+ *              (with Forge's columns) — the prefix migration has not run
+ *   collisions Forge table names (prefixed, or legacy names) that exist but
+ *              are NOT Forge's table — almost certainly another application's
+ *   foreign    every other table (other applications)
  */
 export async function inspectDatabase(conn) {
   const expected = await forgeTables()
@@ -195,18 +212,40 @@ export async function inspectDatabase(conn) {
   }
   const present = []
   const missing = []
+  const legacy = []
   const collisions = []
-  for (const [name, cols] of expected) {
-    const have = actual.get(name)
-    if (!have) missing.push(name)
-    else {
-      const lacking = [...cols].filter((c) => !have.has(c))
-      if (lacking.length > 0) collisions.push({ name, lacking })
-      else present.push(name)
+  for (const [logical, physical] of Object.entries(TABLE_RENAMES)) {
+    const cols = expected.get(physical)
+    const lackingIn = (name) => [...cols].filter((c) => !actual.get(name).has(c))
+
+    if (!actual.has(physical)) missing.push(physical)
+    else if (lackingIn(physical).length > 0) collisions.push({ name: physical, lacking: lackingIn(physical) })
+    else present.push(physical)
+
+    if (actual.has(logical)) {
+      // Same columns => Forge's own table, not yet renamed. Otherwise it is
+      // some other application's table that merely shares the old name.
+      if (lackingIn(logical).length === 0) legacy.push(logical)
     }
   }
-  const foreign = [...actual.keys()].filter((t) => !expected.has(t)).sort()
-  return { expected: [...expected.keys()].sort(), present, missing, collisions, foreign }
+  const known = new Set([...expected.keys(), ...legacy])
+  const foreign = [...actual.keys()].filter((t) => !known.has(t)).sort()
+  return { expected: [...expected.keys()].sort(), present, missing, legacy, collisions, foreign }
+}
+
+/**
+ * Refuses to write while Forge's tables still carry their old unprefixed
+ * names: every SQL file now targets `forge_*`, so running one first would
+ * create empty `forge_` tables beside the real ones.
+ */
+export function assertNotLegacy(inventory, label) {
+  if (inventory.legacy.length === 0) return
+  console.error(
+    `\nRefusing to run ${label}: ${inventory.legacy.length} ATLAS Forge table(s) still use their old ` +
+      `unprefixed names (e.g. ${inventory.legacy.slice(0, 3).join(', ')}).\n` +
+      'Run the prefix migration first: npm run db:prefix -- --apply\n'
+  )
+  process.exit(1)
 }
 
 /** Refuses to continue when a Forge-named table belongs to another application. */

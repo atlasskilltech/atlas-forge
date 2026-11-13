@@ -5,6 +5,8 @@ import { ForbiddenError, UnauthorizedError, ValidationError } from '@/lib/errors
 import { hashPassword, needsRehash, verifyPassword } from '@/lib/auth/password'
 import * as users from '@/lib/repositories/users.repository'
 
+import { T } from '@/lib/queries/tables.mjs'
+
 /**
  * Authentication and the identity attached to a request.
  *
@@ -35,7 +37,7 @@ export async function authenticate(identifier, password) {
   // Transparently upgrade hashes stored with weaker parameters.
   if (needsRehash(record.password_hash)) {
     const upgraded = await hashPassword(password)
-    await execute('UPDATE users SET password_hash = ? WHERE id = ?', [upgraded, record.id])
+    await execute(`UPDATE ${T.users} SET password_hash = ? WHERE id = ?`, [upgraded, record.id])
   }
 
   await users.touchLastActive(record.id)
@@ -92,7 +94,7 @@ export async function changePassword(userId, currentPassword, newPassword) {
     // the temporary password has now been rotated. A no-op for the users whose
     // flag is already 0.
     await execute(
-      'UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?',
+      `UPDATE ${T.users} SET password_hash = ?, must_change_password = 0 WHERE id = ?`,
       [hash, userId],
       tx
     )

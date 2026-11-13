@@ -20,7 +20,7 @@
 -- Idempotent: `CREATE TABLE IF NOT EXISTS` makes re-running a no-op.
 -- ===========================================================================
 
-CREATE TABLE IF NOT EXISTS login_attempts (
+CREATE TABLE IF NOT EXISTS forge_login_attempts (
   id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   -- The identifier as typed (lowercased), NOT a user id: a failed attempt
   -- against an unknown App ID has no user to point at.

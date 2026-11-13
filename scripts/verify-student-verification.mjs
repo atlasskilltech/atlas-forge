@@ -20,6 +20,8 @@ import {
   VERIFIED,
 } from '../src/lib/services/student-verification.logic.js'
 
+import { T } from '../src/lib/queries/tables.mjs'
+
 const BASE = process.env.BASE_URL ?? 'http://localhost:3001'
 // A known-good UAT application id and one that does not exist.
 const VALID_ID = process.env.STUDENT_CHECK_VALID_ID ?? '2629885'
@@ -118,7 +120,7 @@ try {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
   })
-  const [result] = await db.query('DELETE FROM registration_requests WHERE email LIKE ?', [`sc-%-${TAG}@studentcheck.test`])
+  const [result] = await db.query(`DELETE FROM ${T.registration_requests} WHERE email LIKE ?`, [`sc-%-${TAG}@studentcheck.test`])
   cleaned = result.affectedRows
   await db.end()
 } catch (error) {

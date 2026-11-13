@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { T } from '@/lib/queries/tables.mjs'
+
 const CONTACT_FIELDS = `
   c.id, c.context, c.duration_label, c.message, c.status, c.contacted_at,
   f.id AS founder_id, f.full_name AS founder_name, f.initials AS founder_initials,
@@ -10,11 +12,11 @@ const CONTACT_FIELDS = `
 `
 
 const CONTACT_JOINS = `
-    FROM concierge_contacts c
-    JOIN users f  ON f.id = c.founder_user_id
-    JOIN users st ON st.id = c.student_user_id
-    LEFT JOIN users cc   ON cc.id = c.cc_user_id
-    LEFT JOIN startups s ON s.id = c.startup_id
+    FROM ${T.concierge_contacts} c
+    JOIN ${T.users} f  ON f.id = c.founder_user_id
+    JOIN ${T.users} st ON st.id = c.student_user_id
+    LEFT JOIN ${T.users} cc   ON cc.id = c.cc_user_id
+    LEFT JOIN ${T.startups} s ON s.id = c.startup_id
 `
 
 export const SELECT_CONTACTS = `
@@ -28,13 +30,13 @@ export const SELECT_CONTACTS = `
 `
 
 export const INSERT_CONTACT = `
-  INSERT INTO concierge_contacts
+  INSERT INTO ${T.concierge_contacts}
     (founder_user_id, student_user_id, startup_id, context, duration_label, message, cc_user_id)
   VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 
 export const UPDATE_CONTACT_STATUS = `
-  UPDATE concierge_contacts SET status = ? WHERE id = ? AND deleted_at IS NULL
+  UPDATE ${T.concierge_contacts} SET status = ? WHERE id = ? AND deleted_at IS NULL
 `
 
 export const COUNT_CONTACT_STATS = `
@@ -43,7 +45,7 @@ export const COUNT_CONTACT_STATS = `
     SUM(contacted_at >= DATE_SUB(NOW(), INTERVAL 7 DAY))           AS this_week,
     SUM(status = 'ongoing')                                        AS ongoing,
     SUM(status = 'done')                                           AS completed
-  FROM concierge_contacts
+  FROM ${T.concierge_contacts}
   WHERE deleted_at IS NULL
     AND (? IS NULL OR founder_user_id = ?)
 `
@@ -52,15 +54,15 @@ export const SELECT_POSTED_NEEDS = `
   SELECT n.id, n.title, n.description, n.status, n.posted_at,
          u.full_name AS founder_name,
          s.name AS startup_name, s.slug AS startup_slug
-    FROM posted_needs n
-    JOIN users u ON u.id = n.founder_user_id
-    LEFT JOIN startups s ON s.id = n.startup_id
+    FROM ${T.posted_needs} n
+    JOIN ${T.users} u ON u.id = n.founder_user_id
+    LEFT JOIN ${T.startups} s ON s.id = n.startup_id
    WHERE n.deleted_at IS NULL
      AND (? IS NULL OR n.founder_user_id = ?)
    ORDER BY n.posted_at DESC
 `
 
 export const INSERT_POSTED_NEED = `
-  INSERT INTO posted_needs (founder_user_id, startup_id, title, description)
+  INSERT INTO ${T.posted_needs} (founder_user_id, startup_id, title, description)
   VALUES (?, ?, ?, ?)
 `

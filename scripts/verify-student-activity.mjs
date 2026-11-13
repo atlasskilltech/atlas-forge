@@ -12,6 +12,8 @@
 
 import { createConnection } from 'mysql2/promise'
 
+import { T } from '../src/lib/queries/tables.mjs'
+
 const BASE = process.env.BASE_URL ?? 'http://localhost:3001'
 const TAG = Date.now().toString(36)
 const APP_ID = '2629885' // the requested test id (synthetic locally)
@@ -41,7 +43,7 @@ const created = { regIds: [], userIds: [], activityIds: [] }
 
 async function insertRegistration({ appId, email, status = 'pending', approvedUserId = null, reviewedAt = null }) {
   const [r] = await db.query(
-    `INSERT INTO registration_requests
+    `INSERT INTO ${T.registration_requests}
        (reference, full_name, email, role_category, student_application_id, details_json,
         consent, consented_at, status, approved_user_id, reviewed_at, source_ip)
      VALUES (?, ?, ?, 'atlas_student', ?, '{}', 1, NOW(), ?, ?, ?, '')`,
@@ -53,7 +55,7 @@ async function insertRegistration({ appId, email, status = 'pending', approvedUs
 
 async function insertUser({ appId, email }) {
   const [r] = await db.query(
-    `INSERT INTO users (app_id, full_name, email, password_hash, status)
+    `INSERT INTO ${T.users} (app_id, full_name, email, password_hash, status)
      VALUES (?, 'SYNTHETIC Activity Student', ?, 'x', 'active')`,
     [appId, email]
   )
@@ -63,18 +65,18 @@ async function insertUser({ appId, email }) {
 
 async function grantRole(userId) {
   const [roles] = await db.query(
-    "SELECT id FROM roles WHERE slug = 'network-member' LIMIT 1"
+    `SELECT id FROM ${T.roles} WHERE slug = 'network-member' LIMIT 1`
   )
-  const roleId = roles[0]?.id ?? (await db.query('SELECT id FROM roles ORDER BY id LIMIT 1'))[0][0].id
+  const roleId = roles[0]?.id ?? (await db.query(`SELECT id FROM ${T.roles} ORDER BY id LIMIT 1`))[0][0].id
   await db.query(
-    'INSERT INTO user_roles (user_id, role_id, is_primary, granted_at) VALUES (?, ?, 1, NOW())',
+    `INSERT INTO ${T.user_roles} (user_id, role_id, is_primary, granted_at) VALUES (?, ?, 1, NOW())`,
     [userId, roleId]
   )
 }
 
 async function insertActivity({ actorUserId = null, action, module = 'Registration', entityType = null, entityId = null, status = 'success' }) {
   const [r] = await db.query(
-    'INSERT INTO activity_logs (actor_user_id, action, module, entity_type, entity_id, status) VALUES (?, ?, ?, ?, ?, ?)',
+    `INSERT INTO ${T.activity_logs} (actor_user_id, action, module, entity_type, entity_id, status) VALUES (?, ?, ?, ?, ?, ?)`,
     [actorUserId, action, module, entityType, entityId, status]
   )
   created.activityIds.push(r.insertId)
@@ -108,13 +110,13 @@ try {
   // Push the submission timestamp an hour into the past so registration.submitted
   // is unambiguously the OLDEST event; everything else clusters at NOW() (ties),
   // which also exercises the deterministic tiebreaker.
-  await db.query('UPDATE registration_requests SET status = "approved", approved_user_id = ?, reviewed_at = NOW(), created_at = (NOW() - INTERVAL 1 HOUR) WHERE id = ?', [userId, pendingRegId])
+  await db.query(`UPDATE ${T.registration_requests} SET status = "approved", approved_user_id = ?, reviewed_at = NOW(), created_at = (NOW() - INTERVAL 1 HOUR) WHERE id = ?`, [userId, pendingRegId])
   await grantRole(userId)
   await db.query(
-    "INSERT INTO incubation_applications (applicant_user_id, idea_name, status, submitted_at) VALUES (?, 'SYNTHETIC Idea', 'under_review', NOW())",
+    `INSERT INTO ${T.incubation_applications} (applicant_user_id, idea_name, status, submitted_at) VALUES (?, 'SYNTHETIC Idea', 'under_review', NOW())`,
     [userId]
   )
-  await db.query('INSERT INTO founder_access_grants (user_id, granted_at) VALUES (?, NOW())', [userId])
+  await db.query(`INSERT INTO ${T.founder_access_grants} (user_id, granted_at) VALUES (?, NOW())`, [userId])
   await insertActivity({ action: 'Approved registration (SYNTHETIC)', entityType: 'registration_request', entityId: pendingRegId, status: 'success' })
   await insertActivity({ actorUserId: userId, action: 'Signed in (SYNTHETIC)', module: 'Auth', status: 'success' })
 
@@ -175,9 +177,9 @@ try {
   check('ambiguous id → 409', ambiguous.status === 409 && ambiguous.json?.ok === false)
 
   /* ---- Read-only + method rejection ------------------------------------ */
-  const [[before]] = [await db.query('SELECT COUNT(*) AS n FROM registration_requests')]
+  const [[before]] = [await db.query(`SELECT COUNT(*) AS n FROM ${T.registration_requests}`)]
   await call(`/api/public/student-activity?applicationId=NO-SUCH-${TAG}`)
-  const [[after]] = [await db.query('SELECT COUNT(*) AS n FROM registration_requests')]
+  const [[after]] = [await db.query(`SELECT COUNT(*) AS n FROM ${T.registration_requests}`)]
   check('read-only: GET writes nothing', before[0].n === after[0].n)
   for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
     const res = await call(`/api/public/student-activity?applicationId=${APP_ID}`, { method })
@@ -194,16 +196,16 @@ try {
 } finally {
   /* ---- Cleanup: remove everything this run created --------------------- */
   try {
-    if (created.activityIds.length) await db.query('DELETE FROM activity_logs WHERE id IN (?)', [created.activityIds])
+    if (created.activityIds.length) await db.query(`DELETE FROM ${T.activity_logs} WHERE id IN (?)`, [created.activityIds])
     if (created.userIds.length) {
-      await db.query('DELETE FROM activity_logs WHERE actor_user_id IN (?)', [created.userIds])
-      await db.query('DELETE FROM founder_access_grants WHERE user_id IN (?)', [created.userIds])
-      await db.query('DELETE FROM incubation_applications WHERE applicant_user_id IN (?)', [created.userIds])
+      await db.query(`DELETE FROM ${T.activity_logs} WHERE actor_user_id IN (?)`, [created.userIds])
+      await db.query(`DELETE FROM ${T.founder_access_grants} WHERE user_id IN (?)`, [created.userIds])
+      await db.query(`DELETE FROM ${T.incubation_applications} WHERE applicant_user_id IN (?)`, [created.userIds])
     }
-    if (created.regIds.length) await db.query('DELETE FROM registration_requests WHERE id IN (?)', [created.regIds])
+    if (created.regIds.length) await db.query(`DELETE FROM ${T.registration_requests} WHERE id IN (?)`, [created.regIds])
     if (created.userIds.length) {
-      await db.query('DELETE FROM user_roles WHERE user_id IN (?)', [created.userIds])
-      await db.query('DELETE FROM users WHERE id IN (?)', [created.userIds])
+      await db.query(`DELETE FROM ${T.user_roles} WHERE user_id IN (?)`, [created.userIds])
+      await db.query(`DELETE FROM ${T.users} WHERE id IN (?)`, [created.userIds])
     }
   } catch (error) {
     fail.push(`cleanup failed — ${error.message}`)

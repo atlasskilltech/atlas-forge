@@ -1,3 +1,5 @@
+import { T } from '@/lib/queries/tables.mjs'
+
 /**
  * SQL for the authentication attempt log.
  *
@@ -14,7 +16,7 @@
  */
 
 export const INSERT_ATTEMPT = `
-  INSERT INTO login_attempts (identifier, ip_address, action, succeeded)
+  INSERT INTO ${T.login_attempts} (identifier, ip_address, action, succeeded)
   VALUES (?, ?, ?, ?)
 `
 
@@ -22,7 +24,7 @@ export const INSERT_ATTEMPT = `
 export const COUNT_FAILURES_BY_IDENTIFIER = `
   SELECT COUNT(*)                                              AS failures,
          TIMESTAMPDIFF(SECOND, MIN(created_at), NOW())         AS elapsed_seconds
-    FROM login_attempts
+    FROM ${T.login_attempts}
    WHERE action = ? AND identifier = ? AND succeeded = 0
      AND created_at >= NOW() - INTERVAL ? SECOND
 `
@@ -30,7 +32,7 @@ export const COUNT_FAILURES_BY_IDENTIFIER = `
 export const COUNT_FAILURES_BY_IP = `
   SELECT COUNT(*)                                              AS failures,
          TIMESTAMPDIFF(SECOND, MIN(created_at), NOW())         AS elapsed_seconds
-    FROM login_attempts
+    FROM ${T.login_attempts}
    WHERE action = ? AND ip_address = ? AND ip_address <> '' AND succeeded = 0
      AND created_at >= NOW() - INTERVAL ? SECOND
 `
@@ -41,11 +43,11 @@ export const COUNT_FAILURES_BY_IP = `
  * Successful rows are left in place — they are the useful half of the audit.
  */
 export const CLEAR_FAILURES = `
-  DELETE FROM login_attempts
+  DELETE FROM ${T.login_attempts}
    WHERE action = ? AND identifier = ? AND succeeded = 0
 `
 
 /** Retention sweep. Anything older than the cutoff can no longer affect a decision. */
 export const PURGE_OLD_ATTEMPTS = `
-  DELETE FROM login_attempts WHERE created_at < NOW() - INTERVAL ? SECOND
+  DELETE FROM ${T.login_attempts} WHERE created_at < NOW() - INTERVAL ? SECOND
 `

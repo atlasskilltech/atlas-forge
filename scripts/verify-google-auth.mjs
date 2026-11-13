@@ -1,5 +1,7 @@
 import { createHmac } from 'node:crypto'
 
+import { T } from '../src/lib/queries/tables.mjs'
+
 /**
  * Verification of the Google Sign-In HTTP surface.
  *
@@ -266,25 +268,25 @@ if (db) {
   const run = (sql, params = []) => db.execute(sql, params)
 
   const before = await one(
-    'SELECT (SELECT COUNT(*) FROM users) AS users, (SELECT COUNT(*) FROM user_roles) AS roles'
+    `SELECT (SELECT COUNT(*) FROM ${T.users}) AS users, (SELECT COUNT(*) FROM ${T.user_roles}) AS roles`
   )
 
   const APP_ID = 'ATL-0000-GAUTH'
   const EMAIL = '__gauth_probe__@atlas.local'
   // Idempotent: clear any leftover from an interrupted run (cascades to roles).
-  await run('DELETE FROM users WHERE app_id = ? OR email = ?', [APP_ID, EMAIL])
+  await run(`DELETE FROM ${T.users} WHERE app_id = ? OR email = ?`, [APP_ID, EMAIL])
 
-  const studentRole = await one('SELECT id FROM roles WHERE slug = ?', ['student'])
-  const founderRole = await one('SELECT id FROM roles WHERE slug = ?', ['founder'])
+  const studentRole = await one(`SELECT id FROM ${T.roles} WHERE slug = ?`, ['student'])
+  const founderRole = await one(`SELECT id FROM ${T.roles} WHERE slug = ?`, ['founder'])
 
   try {
     const [inserted] = await run(
-      `INSERT INTO users (app_id, full_name, email, password_hash, status, must_change_password)
+      `INSERT INTO ${T.users} (app_id, full_name, email, password_hash, status, must_change_password)
        VALUES (?, ?, ?, ?, 'active', 1)`,
       [APP_ID, 'Google Auth Probe', EMAIL, 'unusable-no-login']
     )
     const uid = inserted.insertId
-    await run('INSERT INTO user_roles (user_id, role_id, is_primary) VALUES (?, ?, 1)', [
+    await run(`INSERT INTO ${T.user_roles} (user_id, role_id, is_primary) VALUES (?, ?, 1)`, [
       uid,
       studentRole.id,
     ])
@@ -322,7 +324,7 @@ if (db) {
     )
 
     // 2: clear the flag → a normal Google session still works unchanged.
-    await run('UPDATE users SET must_change_password = 0 WHERE id = ?', [uid])
+    await run(`UPDATE ${T.users} SET must_change_password = 0 WHERE id = ?`, [uid])
     const g0 = await land(mkCookie({ uid, role: 'student', viaGoogle: true }))
     check(
       'Google session + must_change_password=0 lands on the dashboard normally',
@@ -332,7 +334,7 @@ if (db) {
 
     // 7: multi-role — add a second role; the user now sees the picker (200) with
     // only their assigned role dashboards, still not forced to change a password.
-    await run('INSERT INTO user_roles (user_id, role_id, is_primary) VALUES (?, ?, 0)', [
+    await run(`INSERT INTO ${T.user_roles} (user_id, role_id, is_primary) VALUES (?, ?, 0)`, [
       uid,
       founderRole.id,
     ])
@@ -348,9 +350,9 @@ if (db) {
       ''
     )
   } finally {
-    await run('DELETE FROM users WHERE app_id = ? OR email = ?', [APP_ID, EMAIL])
+    await run(`DELETE FROM ${T.users} WHERE app_id = ? OR email = ?`, [APP_ID, EMAIL])
     const after = await one(
-      'SELECT (SELECT COUNT(*) FROM users) AS users, (SELECT COUNT(*) FROM user_roles) AS roles'
+      `SELECT (SELECT COUNT(*) FROM ${T.users}) AS users, (SELECT COUNT(*) FROM ${T.user_roles}) AS roles`
     )
     check(
       'teardown — synthetic user removed, seeded tables untouched',

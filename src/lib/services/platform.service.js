@@ -6,6 +6,8 @@ import * as platform from '@/lib/repositories/platform.repository'
 import * as lookups from '@/lib/repositories/lookups.repository'
 import { clearCache } from './lookups.service'
 
+import { T } from '@/lib/queries/tables.mjs'
+
 /**
  * Platform operations: settings, audit trail, notifications, messages and the
  * shared dashboard counters.
@@ -86,16 +88,16 @@ export async function updateSetting({ key, value, actorId }) {
  * not a state anyone can reason about.
  */
 const RESET_STATEMENTS = [
-  'DELETE FROM application_events',
-  'DELETE FROM applications',
-  'DELETE FROM approvals',
-  'DELETE FROM listing_skills',
-  'DELETE FROM listings',
-  'DELETE FROM concierge_contacts',
-  'DELETE FROM posted_needs',
-  'DELETE FROM notifications',
-  'DELETE FROM error_logs',
-  'DELETE FROM activity_logs',
+  `DELETE FROM ${T.application_events}`,
+  `DELETE FROM ${T.applications}`,
+  `DELETE FROM ${T.approvals}`,
+  `DELETE FROM ${T.listing_skills}`,
+  `DELETE FROM ${T.listings}`,
+  `DELETE FROM ${T.concierge_contacts}`,
+  `DELETE FROM ${T.posted_needs}`,
+  `DELETE FROM ${T.notifications}`,
+  `DELETE FROM ${T.error_logs}`,
+  `DELETE FROM ${T.activity_logs}`,
 ]
 
 export async function resetPlatformData({ actorId }) {
