@@ -1,21 +1,22 @@
 name: ATLAS Forge — read-only production DB diagnostic
 
-# Runs ONLY when this file or the check script changes on the diagnostic branch
-# (GitHub only allows manual `workflow_dispatch` runs for workflows that exist
-# on the default branch). It never deploys and never runs on `main`.
+# Runs ONLY when this file or the read-only scripts change on the diagnostic
+# branch (GitHub only allows manual `workflow_dispatch` runs for workflows that
+# exist on the default branch). It never deploys and never runs on `main`.
 #
-# What it does on the EC2 server, all read-only:
-#   - copies scripts/check-db.mjs (+ its helper and the schema files it uses to
-#     recognise Forge tables) into a throw-away /tmp directory,
-#   - runs it with the production /home/ubuntu/atlas-forge/.env and the
+# On the EC2 server, all read-only (see scripts/ops/prod-readonly-report.sh):
+#   - copies the read-only scripts into a throw-away /tmp directory,
+#   - runs them with the production /home/ubuntu/atlas-forge/.env and the
 #     already-installed node_modules (symlinked, not modified),
-#   - reports how PM2 currently runs the app (no environment values printed).
+#   - reports server tooling, PM2 processes (no env values), other apps' code
+#     references to Forge table names, cron jobs (passwords redacted), recent
+#     backup files, the DB check and the prefix-migration investigation.
 #
 # It does NOT: git pull, npm install, build, restart/reload PM2, edit any file
-# in /home/ubuntu/atlas-forge, or run any schema/migration/seed/DDL/DML.
-# check-db.mjs only issues SELECT / SHOW GRANTS / information_schema reads.
-# Every line printed on the server goes through a filter that replaces the
-# values of DB_PASSWORD and other secrets from .env with <redacted>.
+# in /home/ubuntu/atlas-forge, or run any DDL/DML. The investigation runs in a
+# READ ONLY transaction. Every line printed on the server goes through a
+# filter that replaces the values of DB_PASSWORD and other secrets with
+# <redacted>.
 
 on:
   push:
@@ -24,6 +25,8 @@ on:
     paths:
       - .github/workflows/forge-db-diagnostic.yml
       - scripts/check-db.mjs
+      - scripts/investigate-prefix.mjs
+      - scripts/ops/prod-readonly-report.sh
       - scripts/lib/**
   workflow_dispatch:
 
@@ -31,18 +34,18 @@ permissions:
   contents: read
 
 concurrency:
-  group: forge-db-diagnostic
+  group: forge-prod-ops
   cancel-in-progress: false
 
 jobs:
   diagnose:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout diagnostic branch
         uses: actions/checkout@v4
 
-      - name: Read-only DB diagnostic on EC2
+      - name: Read-only report on EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
@@ -57,93 +60,19 @@ jobs:
           (umask 077; printf '%s\n' "$EC2_KEY" > "$KEY")
           trap 'rm -f "$KEY"' EXIT
           SSH=(ssh -i "$KEY" -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=20 "$EC2_USER@$EC2_HOST")
-
           DIAG="/tmp/forge-db-diag-${GITHUB_RUN_ID}"
 
-          # 1. Ship only the read-only check and what it reads, into /tmp.
-          tar czf - scripts/check-db.mjs scripts/lib database/schema.sql database/migrations \
-            | "${SSH[@]}" "umask 077; rm -rf '$DIAG'; mkdir -p '$DIAG' && tar xzf - -C '$DIAG'"
+          tar czf - scripts/check-db.mjs scripts/investigate-prefix.mjs scripts/lib scripts/ops \
+                    src/lib/queries/tables.mjs database/schema.sql database/migrations \
+            | "${SSH[@]}" "umask 077; mkdir -p '$DIAG' && tar xzf - -C '$DIAG'"
 
-          # 2. Run the diagnostic. The remote script removes $DIAG on exit.
           "${SSH[@]}" "DIAG='$DIAG' bash -s" <<'REMOTE'
           set -uo pipefail
-          APP=/home/ubuntu/atlas-forge
-          trap 'rm -rf "$DIAG"' EXIT
-
-          # Redaction filter: replaces secret VALUES from .env wherever they appear.
-          cat > "$DIAG/redact.cjs" <<'JS'
-          const fs = require('fs')
-          const secrets = []
-          try {
-            for (const line of fs.readFileSync(process.argv[2], 'utf8').split(/\r?\n/)) {
-              const m = line.match(/^\s*(?:export\s+)?([A-Za-z_]\w*)\s*=\s*(.*)$/)
-              if (!m || !/(PASS|SECRET|KEY|TOKEN|CA)/i.test(m[1])) continue
-              const v = m[2].trim().replace(/^(["'])(.*)\1$/, '$2')
-              if (v.length >= 4) secrets.push(v)
-            }
-          } catch {}
-          let buf = ''
-          const out = (s) => { for (const v of secrets) s = s.split(v).join('<redacted>'); process.stdout.write(s) }
-          process.stdin.on('data', (d) => {
-            buf += d
-            const i = buf.lastIndexOf('\n')
-            if (i >= 0) { out(buf.slice(0, i + 1)); buf = buf.slice(i + 1) }
-          }).on('end', () => out(buf))
-          JS
-
-          main() {
-            echo "== server"
-            echo "node $(node -v 2>/dev/null || echo MISSING)   pm2 $(pm2 -v 2>/dev/null | tail -1 || echo MISSING)"
-            cd "$APP" || { echo "FAIL: $APP not found"; return 1; }
-
-            echo; echo "== env files in $APP (names/sizes only)"
-            ls -la .env* 2>/dev/null || echo "no .env* files"
-            [ -f .env ] || { echo "FAIL: $APP/.env not found"; return 1; }
-
-            echo; echo "== DB_* keys in .env (password redacted)"
-            grep -E '^[[:space:]]*(export[[:space:]]+)?DB_' .env \
-              | sed -E 's/^([[:space:]]*(export[[:space:]]+)?DB_(PASSWORD|SSL_CA)[[:space:]]*=).*/\1<redacted>/'
-
-            echo; echo "== DB_* variables exported in this SSH shell (names only)"
-            env | grep -oE '^DB_[A-Z_]*' || echo "none"
-
-            echo; echo "== how PM2 currently runs atlas-forge (read-only; no env values except DB target)"
-            pm2 jlist 2>/dev/null | node -e '
-              let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => {
-                let list = []; try { list = JSON.parse(s) } catch { console.log("pm2 jlist unreadable"); return }
-                const p = list.find((x) => x.name === "atlas-forge")
-                if (!p) { console.log("no PM2 process named atlas-forge"); return }
-                const e = p.pm2_env || {}
-                const env = e.env || {}
-                console.log(JSON.stringify({
-                  status: e.status, pm_id: e.pm_id, restarts: e.restart_time, unstable_restarts: e.unstable_restarts,
-                  script: e.pm_exec_path, args: e.args, interpreter: e.exec_interpreter, node_args: e.node_args,
-                  cwd: e.pm_cwd, filter_env: e.filter_env,
-                  stored_env_DB_keys: Object.keys(env).filter((k) => k.startsWith("DB_")),
-                  stored_env_DB_target: env.DB_HOST ? `${env.DB_HOST}:${env.DB_PORT || ""}/${env.DB_NAME || ""} as ${env.DB_USER || ""}` : null,
-                }, null, 2))
-              })' || echo "pm2 not available"
-
-            echo; echo "== recent DB-related lines from the app error log"
-            pm2 logs atlas-forge --err --lines 300 --nostream 2>/dev/null \
-              | grep -iE "ER_[A-Z_]+|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EHOSTUNREACH|Access denied|Missing required|Unknown database|Database query failed|database" \
-              | tail -25 || echo "none found"
-
-            echo; echo "== TCP reachability of DB_HOST:DB_PORT from EC2"
-            H=$(grep -E '^[[:space:]]*DB_HOST=' .env | tail -1 | cut -d= -f2- | tr -d "\"' ")
-            P=$(grep -E '^[[:space:]]*DB_PORT=' .env | tail -1 | cut -d= -f2- | tr -d "\"' "); P=${P:-3306}
-            if timeout 8 bash -c "</dev/tcp/$H/$P" 2>/dev/null; then echo "tcp $H:$P open"; else echo "tcp $H:$P NOT reachable"; fi
-
-            echo; echo "== read-only check-db.mjs (branch version) with production .env"
-            [ -d node_modules/mysql2 ] || { echo "FAIL: $APP/node_modules/mysql2 missing"; return 1; }
-            ln -s "$APP/node_modules" "$DIAG/node_modules"
-            # Same as the running app: values come only from .env, not this shell.
-            for k in $(env | grep -oE '^DB_[A-Z_]*'); do unset "$k"; done
-            node --env-file=.env "$DIAG/scripts/check-db.mjs"
-          }
-
-          main </dev/null 2>&1 | node "$DIAG/redact.cjs" "$APP/.env"
+          APP="$HOME/atlas-forge"
+          trap 'rm -rf -- "$DIAG"' EXIT
+          main() { DIAG="$DIAG" APP="$APP" bash "$DIAG/scripts/ops/prod-readonly-report.sh"; }
+          main </dev/null 2>&1 | node "$DIAG/scripts/ops/redact.cjs" "$APP/.env"
           rc=${PIPESTATUS[0]}
-          echo; echo "== diagnostic exit code: $rc  (temporary files in $DIAG removed on exit)"
+          echo; echo "== exit code: $rc  (temporary files in $DIAG removed on exit)"
           exit "$rc"
           REMOTE
