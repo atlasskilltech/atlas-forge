@@ -49,9 +49,10 @@ LOG_OFFSET=0
 
 start_app() {
   LOG_OFFSET=$(stat -c %s "$OUT_LOG" 2>/dev/null || echo 0)
-  unset_env_keys
-  pm2 delete "$APP" >/dev/null 2>&1 || true
-  pm2 start ecosystem.config.cjs --only "$APP" >/dev/null && pm2 save >/dev/null
+  # Subshell: the unset must only affect what PM2 sees, never this script.
+  ( unset_env_keys
+    pm2 delete "$APP" >/dev/null 2>&1 || true
+    pm2 start ecosystem.config.cjs --only "$APP" >/dev/null && pm2 save >/dev/null ) || return 1
   sleep 8
   pm2 jlist | node -e '
     let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => {
@@ -105,7 +106,7 @@ node -e '
   console.log(`   .env DB target: ${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME} as ${env.DB_USER} (password ${env.DB_PASSWORD ? "set" : "blank"})`)
   if (missing.length) { console.error(`   .env is missing: ${missing.join(", ")}`); process.exit(1) }
 ' || die ".env is incomplete."
-PORT=$(node -e "process.stdout.write(require('util').parseEnv(require('fs').readFileSync('.env','utf8')).PORT)")
+HTTP_PORT=$(node -e "process.stdout.write(require('util').parseEnv(require('fs').readFileSync('.env','utf8')).PORT)")
 
 for f in .env.production.local .env.local .env.production; do
   [ -f "$f" ] && echo "   WARNING: $f exists; Next.js also reads it (.env wins for keys it defines)."
@@ -172,9 +173,9 @@ start_app || rollback "new release is not online with --env-file=.env"
 say "Smoke checks"
 $N --env-file=.env scripts/check-db.mjs || rollback "db:check failed"
 $N --env-file=.env scripts/verify-queries.mjs | grep -E 'prepared|FAIL' ; [ "${PIPESTATUS[0]}" -eq 0 ] || rollback "application SQL does not compile against the database"
-code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/login")
+code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$HTTP_PORT/login")
 echo "   GET /login -> $code"; [ "$code" = 200 ] || rollback "/login returned $code"
-code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/api/public/student-activity?applicationId=deploy-smoke-check")
+code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$HTTP_PORT/api/public/student-activity?applicationId=deploy-smoke-check")
 echo "   GET /api/public/student-activity (DB read) -> $code"; [ "$code" -lt 500 ] || rollback "DB-backed API returned $code"
 # Only lines written since this start count (the log file outlives restarts).
 tail -c +"$((LOG_OFFSET + 1))" "$OUT_LOG" 2>/dev/null | grep -m1 "\[atlas-forge\] database" | sed 's/^/   /'
