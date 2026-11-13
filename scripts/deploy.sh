@@ -44,11 +44,13 @@ unset_env_keys() {
   while IFS= read -r key; do unset "$key"; done < <(grep -oE '^[[:space:]]*(export[[:space:]]+)?[A-Za-z_][A-Za-z0-9_]*=' .env | sed -E 's/^[[:space:]]*(export[[:space:]]+)?//; s/=$//')
 }
 
-OUT_LOG="$HOME/.pm2/logs/$APP-out.log"
-LOG_OFFSET=0
+PM2_LOGS="${PM2_HOME:-$HOME/.pm2}/logs"
+LOG_SIZES=$(mktemp)
 
 start_app() {
-  LOG_OFFSET=$(stat -c %s "$OUT_LOG" 2>/dev/null || echo 0)
+  # PM2 may name the log after the process id (atlas-forge-out-13.log), so
+  # remember every candidate's size now and ask PM2 for the real path later.
+  for f in "$PM2_LOGS/$APP"-out*.log; do [ -f "$f" ] && echo "$(stat -c %s "$f") $f"; done > "$LOG_SIZES"
   # Subshell: the unset must only affect what PM2 sees, never this script.
   ( unset_env_keys
     pm2 delete "$APP" >/dev/null 2>&1 || true
@@ -177,9 +179,12 @@ code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$HTTP_PORT/login
 echo "   GET /login -> $code"; [ "$code" = 200 ] || rollback "/login returned $code"
 code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$HTTP_PORT/api/public/student-activity?applicationId=deploy-smoke-check")
 echo "   GET /api/public/student-activity (DB read) -> $code"; [ "$code" -lt 500 ] || rollback "DB-backed API returned $code"
-# Only lines written since this start count (the log file outlives restarts).
-tail -c +"$((LOG_OFFSET + 1))" "$OUT_LOG" 2>/dev/null | grep -m1 "\[atlas-forge\] database" | sed 's/^/   /'
-tail -c +"$((LOG_OFFSET + 1))" "$OUT_LOG" 2>/dev/null | grep -q "\[atlas-forge\] database reachable" \
-  || rollback "the app did not log a successful database connection since it started"
+# Only lines written since this start count (log files outlive restarts).
+OUT_LOG=$(pm2 jlist | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const p=JSON.parse(s).find(x=>x.name===process.argv[1]);process.stdout.write(p?.pm2_env?.pm_out_log_path||"")})' "$APP")
+OFFSET=$(awk -v f="$OUT_LOG" '$2 == f {print $1}' "$LOG_SIZES"); OFFSET=${OFFSET:-0}
+NEW_LINES=$(tail -c +"$((OFFSET + 1))" "$OUT_LOG" 2>/dev/null | grep -a "\[atlas-forge\] database")
+printf '%s\n' "$NEW_LINES" | sed 's/^/   /'
+printf '%s\n' "$NEW_LINES" | grep -q "database reachable" \
+  || rollback "the app did not log a successful database connection since it started ($OUT_LOG)"
 
 say "Deploy complete — maintenance window $(( $(date +%s) - WINDOW_START ))s; previous build kept in .next.rollback"
