@@ -17,7 +17,25 @@ import { readFile, readdir } from 'node:fs/promises'
 import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { parseEnv } from 'node:util'
+import * as nodeUtil from 'node:util'
+
+/**
+ * Parses a .env file. Uses Node's own parser (the one --env-file uses) when
+ * available (Node >= 20.12 / 21.7), otherwise a minimal KEY=VALUE fallback.
+ */
+export function parseEnvText(text) {
+  if (typeof nodeUtil.parseEnv === 'function') return nodeUtil.parseEnv(text)
+  const out = {}
+  for (const raw of text.split(/\r?\n/)) {
+    const m = raw.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/)
+    if (!m) continue
+    let v = m[2].trim()
+    if (/^(['"`]).*\1$/.test(v)) v = v.slice(1, -1)
+    else v = v.replace(/\s+#.*$/, '')
+    out[m[1]] = v
+  }
+  return out
+}
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const DATABASE_DIR = join(ROOT, 'database')
@@ -62,10 +80,10 @@ export function describe(cfg) {
 export const SHADOW_ENV_FILES = ['.env.production.local', '.env.local', '.env.production']
 
 /** Keys whose value differs from `.env`, or that `.env` lacks, per shadow file. */
-export function envFileConflicts(dir = ROOT, keyFilter = (k) => k.startsWith('DB_')) {
+export function envFileConflicts(dir = process.cwd(), keyFilter = (k) => k.startsWith('DB_')) {
   const read = (name) => {
     const path = join(dir, name)
-    return existsSync(path) ? parseEnv(readFileSync(path, 'utf8')) : null
+    return existsSync(path) ? parseEnvText(readFileSync(path, 'utf8')) : null
   }
   const base = read('.env') ?? {}
   const report = []

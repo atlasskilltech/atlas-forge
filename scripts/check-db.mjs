@@ -14,9 +14,8 @@
  * env file that changes DB_* settings behind .env's back.
  */
 import { existsSync, readFileSync } from 'node:fs'
-import { parseEnv } from 'node:util'
 import mysql from 'mysql2/promise'
-import { dbEnv, describe, envFileConflicts, inspectDatabase } from './lib/forge-db.mjs'
+import { dbEnv, describe, envFileConflicts, inspectDatabase, parseEnvText } from './lib/forge-db.mjs'
 
 const cfg = dbEnv()
 const line = (label, value) => console.log(`  ${label.padEnd(22)}${value}`)
@@ -30,7 +29,7 @@ line('target', describe(cfg))
 //     stale `export DB_NAME=...` would make this check (but not the app, whose
 //     PM2 config filters the shell env) test the wrong database.
 if (existsSync('.env')) {
-  const fromFile = parseEnv(readFileSync('.env', 'utf8'))
+  const fromFile = parseEnvText(readFileSync('.env', 'utf8'))
   const overridden = Object.keys(fromFile)
     .filter((k) => k.startsWith('DB_') && process.env[k] !== fromFile[k])
   if (overridden.length > 0) {
@@ -61,6 +60,20 @@ try {
   line('connected', `MySQL ${who.version} as ${who.account}`)
   line('database in use', who.db)
   if (who.db !== cfg.database) fail('database', `expected ${cfg.database}, got ${who.db}`)
+
+  // 2b. What this account may do (read-only). Any password hash a server
+  //     echoes in a GRANT line is redacted before printing.
+  try {
+    const [grants] = await conn.query('SHOW GRANTS FOR CURRENT_USER()')
+    for (const g of grants) {
+      const text = String(Object.values(g)[0])
+        .replace(/IDENTIFIED\s+(BY|WITH)\s+.*$/i, 'IDENTIFIED <redacted>')
+        .replace(/PASSWORD\s+'[^']*'/gi, "PASSWORD '<redacted>'")
+      line('grant', text)
+    }
+  } catch (error) {
+    line('grant', `could not list (${error.code ?? 'ERROR'})`)
+  }
 
   // 3. Table inventory (information_schema only).
   const inv = await inspectDatabase(conn)

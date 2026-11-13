@@ -34,8 +34,11 @@ node -e 'const [a,b]=process.versions.node.split(".").map(Number); process.exit(
 # Parse .env with Node's own parser (the same one --env-file uses), print the
 # DB target without the password, and fail on missing required keys.
 node -e '
-  const { parseEnv } = require("node:util")
-  const env = parseEnv(require("node:fs").readFileSync(".env", "utf8"))
+  const util = require("node:util")
+  const text = require("node:fs").readFileSync(".env", "utf8")
+  const env = typeof util.parseEnv === "function" ? util.parseEnv(text) : Object.fromEntries(
+    text.split(/\r?\n/).map((l) => l.match(/^\s*(?:export\s+)?([A-Za-z_]\w*)\s*=\s*(.*)$/)).filter(Boolean)
+      .map(([, k, v]) => [k, v.trim().replace(/^(["\x27])(.*)\1$/, "$2")]))
   const required = ["DB_HOST", "DB_PORT", "DB_USER", "DB_NAME", "SESSION_SECRET"]
   const missing = required.filter((k) => !env[k])
   if (!("DB_PASSWORD" in env)) missing.push("DB_PASSWORD")
