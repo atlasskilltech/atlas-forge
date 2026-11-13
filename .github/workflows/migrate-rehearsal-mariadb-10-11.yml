@@ -1,0 +1,99 @@
+# ---------------------------------------------------------------------------
+# ATLAS Forge — migration-runner rehearsal against MariaDB 10.11 (production's
+# version). ISOLATED and MANUAL ONLY.
+#
+#   - `workflow_dispatch` only: it never runs on push/PR, and it is not wired
+#     into deployment. forge.yml is untouched.
+#   - It talks ONLY to a disposable MariaDB 10.11 SERVICE CONTAINER on
+#     127.0.0.1. It never reads .env/.env.local and never connects to the
+#     production database (65.1.118.10). The password below is a throwaway
+#     CI-only value, not a production credential, and is never echoed to logs.
+#   - It runs the existing migration tests + a 10.4-vs-10.11 fingerprint diff.
+#
+# This file was created for a local rehearsal and is intended to be run from the
+# Actions tab AFTER review; it is safe to delete.
+# ---------------------------------------------------------------------------
+name: Migration rehearsal (MariaDB 10.11) — manual only
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  rehearse:
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:10.11
+        ports:
+          - 3306:3306
+        env:
+          # Disposable CI-only credential for an ephemeral container — NOT a
+          # production secret. Never printed by any step below.
+          MARIADB_ROOT_PASSWORD: ci_rehearsal_only
+          MARIADB_DATABASE: forge_ci
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+
+    env:
+      # The test harness reads TEST_DB_* and the fingerprint generator reads DB_*.
+      # Both point ONLY at the local service container (127.0.0.1) — never prod.
+      TEST_DB_HOST: 127.0.0.1
+      TEST_DB_PORT: "3306"
+      TEST_DB_USER: root
+      TEST_DB_PASSWORD: ci_rehearsal_only
+      TEST_DB_NAME: forge_migrate_test
+
+    steps:
+      - name: Checkout (current branch)
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        # npm install (not ci) so this isolated rehearsal does not depend on the
+        # committed lockfile being perfectly in sync; node_modules is ephemeral.
+        run: npm install --no-audit --no-fund
+
+      - name: Confirm MariaDB version (SELECT VERSION())
+        run: |
+          node -e "const m=require('mysql2/promise');(async()=>{const c=await m.createConnection({host:'127.0.0.1',port:3306,user:'root',password:process.env.TEST_DB_PASSWORD});const [[r]]=await c.query('SELECT VERSION() v');console.log('SELECT VERSION() =>',r.v);await c.end();})().catch(e=>{console.error(e.code||e.message);process.exit(1);});"
+
+      - name: Migration runner tests (against MariaDB 10.11)
+        run: node --test --test-timeout=60000 --test-reporter=spec scripts/__tests__/migrate.test.mjs
+
+      - name: Generate the 10.11 fingerprint and diff against the committed (10.4) artifact
+        run: |
+          cp database/expected-schema.fingerprint.json /tmp/fingerprint-10.4.json
+          DB_HOST=127.0.0.1 DB_PORT=3306 DB_USER=root DB_PASSWORD="$TEST_DB_PASSWORD" DB_NAME=forge_ci \
+            node scripts/migrate.mjs fingerprint
+          cp database/expected-schema.fingerprint.json /tmp/fingerprint-10.11.json
+          node --input-type=module -e "
+            import { diffForge } from './scripts/lib/schema-fingerprint.mjs';
+            import { readFileSync } from 'node:fs';
+            const a = JSON.parse(readFileSync('/tmp/fingerprint-10.4.json','utf8'));
+            const b = JSON.parse(readFileSync('/tmp/fingerprint-10.11.json','utf8'));
+            const diffs = diffForge(a, b);
+            console.log('10.4 tables:', Object.keys(a.tables).length, ' 10.11 tables:', Object.keys(b.tables).length);
+            if (!diffs.length) { console.log('STRUCTURAL DIFF: none — fingerprint is portable 10.4 -> 10.11'); }
+            else { console.log('STRUCTURAL DIFF (review each — real schema change vs version representation):'); for (const d of diffs) console.log('  -', d); }
+          "
+
+      - name: Upload both fingerprints as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: forge-fingerprints
+          path: |
+            /tmp/fingerprint-10.4.json
+            /tmp/fingerprint-10.11.json
+          if-no-files-found: ignore

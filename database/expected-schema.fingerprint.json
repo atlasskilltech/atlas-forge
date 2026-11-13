@@ -1,0 +1,5683 @@
+{
+  "tables": {
+    "forge_activity_logs": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "actor_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "action",
+          "type": "varchar(255)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "module",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "entity_type",
+          "type": "varchar(64)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "entity_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('logged','success','action','pending','failed')",
+          "nullable": false,
+          "default": "'logged'",
+          "extra": ""
+        },
+        {
+          "name": "meta",
+          "type": "longtext",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_activity_actor",
+          "unique": false,
+          "cols": [
+            "actor_user_id"
+          ]
+        },
+        {
+          "name": "idx_activity_created",
+          "unique": false,
+          "cols": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_activity_entity",
+          "unique": false,
+          "cols": [
+            "entity_type",
+            "entity_id"
+          ]
+        },
+        {
+          "name": "idx_activity_module_created",
+          "unique": false,
+          "cols": [
+            "module",
+            "created_at"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_activity_actor",
+          "col": "actor_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        }
+      ],
+      "checks": [
+        {
+          "name": "meta",
+          "clause": "json_valid(`meta`)"
+        }
+      ]
+    },
+    "forge_applications": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "listing_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "applicant_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('applied','under_review','shortlisted','interview','not_selected','withdrawn','selected')",
+          "nullable": false,
+          "default": "'applied'",
+          "extra": ""
+        },
+        {
+          "name": "cover_note",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "applied_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_applications_status",
+          "unique": false,
+          "cols": [
+            "status"
+          ]
+        },
+        {
+          "name": "idx_applications_user",
+          "unique": false,
+          "cols": [
+            "applicant_user_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_applications_listing_user",
+          "unique": true,
+          "cols": [
+            "listing_id",
+            "applicant_user_id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_applications_listing",
+          "col": "listing_id",
+          "refTable": "forge_listings",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_applications_user",
+          "col": "applicant_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        }
+      ],
+      "checks": []
+    },
+    "forge_application_events": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "application_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "from_status",
+          "type": "varchar(32)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "to_status",
+          "type": "varchar(32)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "changed_by",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "note",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_application_events_app",
+          "unique": false,
+          "cols": [
+            "application_id",
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_application_events_user",
+          "unique": false,
+          "cols": [
+            "changed_by"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_application_events_app",
+          "col": "application_id",
+          "refTable": "forge_applications",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        },
+        {
+          "name": "fk_application_events_user",
+          "col": "changed_by",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        }
+      ],
+      "checks": []
+    },
+    "forge_application_readiness": {
+      "columns": [
+        {
+          "name": "application_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "readiness_item_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "value",
+          "type": "varchar(500)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_app_readiness_item",
+          "unique": false,
+          "cols": [
+            "readiness_item_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "application_id",
+            "readiness_item_id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_app_readiness_app",
+          "col": "application_id",
+          "refTable": "forge_incubation_applications",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        },
+        {
+          "name": "fk_app_readiness_item",
+          "col": "readiness_item_id",
+          "refTable": "forge_readiness_items",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        }
+      ],
+      "checks": []
+    },
+    "forge_approvals": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "listing_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "decided_as_role_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "decision",
+          "type": "enum('approved','rejected')",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "decided_by",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "reason",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "is_override",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "decided_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_approvals_decided_by",
+          "unique": false,
+          "cols": [
+            "decided_by"
+          ]
+        },
+        {
+          "name": "idx_approvals_role",
+          "unique": false,
+          "cols": [
+            "decided_as_role_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_approvals_listing_role",
+          "unique": true,
+          "cols": [
+            "listing_id",
+            "decided_as_role_id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_approvals_listing",
+          "col": "listing_id",
+          "refTable": "forge_listings",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        },
+        {
+          "name": "fk_approvals_role",
+          "col": "decided_as_role_id",
+          "refTable": "forge_roles",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_approvals_user",
+          "col": "decided_by",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        }
+      ],
+      "checks": []
+    },
+    "forge_concierge_contacts": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "founder_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "student_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "startup_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "context",
+          "type": "varchar(255)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "duration_label",
+          "type": "varchar(64)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "message",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "cc_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('pending','ongoing','done')",
+          "nullable": false,
+          "default": "'pending'",
+          "extra": ""
+        },
+        {
+          "name": "contacted_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_concierge_cc",
+          "unique": false,
+          "cols": [
+            "cc_user_id"
+          ]
+        },
+        {
+          "name": "idx_concierge_founder",
+          "unique": false,
+          "cols": [
+            "founder_user_id",
+            "contacted_at"
+          ]
+        },
+        {
+          "name": "idx_concierge_startup",
+          "unique": false,
+          "cols": [
+            "startup_id"
+          ]
+        },
+        {
+          "name": "idx_concierge_status",
+          "unique": false,
+          "cols": [
+            "status"
+          ]
+        },
+        {
+          "name": "idx_concierge_student",
+          "unique": false,
+          "cols": [
+            "student_user_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_concierge_cc",
+          "col": "cc_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_concierge_founder",
+          "col": "founder_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_concierge_startup",
+          "col": "startup_id",
+          "refTable": "forge_startups",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_concierge_student",
+          "col": "student_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        }
+      ],
+      "checks": []
+    },
+    "forge_contracts": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "listing_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "startup_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "founder_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "student_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "title",
+          "type": "varchar(160)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "terms",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('draft','active','completed','cancelled')",
+          "nullable": false,
+          "default": "'draft'",
+          "extra": ""
+        },
+        {
+          "name": "started_at",
+          "type": "date",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "ended_at",
+          "type": "date",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_contracts_founder",
+          "unique": false,
+          "cols": [
+            "founder_user_id"
+          ]
+        },
+        {
+          "name": "idx_contracts_listing",
+          "unique": false,
+          "cols": [
+            "listing_id"
+          ]
+        },
+        {
+          "name": "idx_contracts_startup",
+          "unique": false,
+          "cols": [
+            "startup_id"
+          ]
+        },
+        {
+          "name": "idx_contracts_status",
+          "unique": false,
+          "cols": [
+            "status"
+          ]
+        },
+        {
+          "name": "idx_contracts_student",
+          "unique": false,
+          "cols": [
+            "student_user_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_contracts_founder",
+          "col": "founder_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_contracts_listing",
+          "col": "listing_id",
+          "refTable": "forge_listings",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_contracts_startup",
+          "col": "startup_id",
+          "refTable": "forge_startups",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_contracts_student",
+          "col": "student_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        }
+      ],
+      "checks": [
+        {
+          "name": "chk_contracts_dates",
+          "clause": "`ended_at` is null or `started_at` is null or `ended_at` >= `started_at`"
+        }
+      ]
+    },
+    "forge_contract_types": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "name",
+          "type": "varchar(96)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "sort_order",
+          "type": "smallint(5) unsigned",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "is_active",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "1",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_contract_types_slug",
+          "unique": true,
+          "cols": [
+            "slug"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_document_categories": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "name",
+          "type": "varchar(120)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "description",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "tier",
+          "type": "enum('core','recommended')",
+          "nullable": false,
+          "default": "'recommended'",
+          "extra": ""
+        },
+        {
+          "name": "accepted_types",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": "'pdf'",
+          "extra": ""
+        },
+        {
+          "name": "sort_order",
+          "type": "smallint(5) unsigned",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "is_active",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "1",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_document_categories_slug",
+          "unique": true,
+          "cols": [
+            "slug"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_error_logs": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "level",
+          "type": "enum('warning','error','critical')",
+          "nullable": false,
+          "default": "'error'",
+          "extra": ""
+        },
+        {
+          "name": "message",
+          "type": "varchar(500)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "stack_trace",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "context",
+          "type": "longtext",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "resolved_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_error_logs_level_created",
+          "unique": false,
+          "cols": [
+            "level",
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_error_logs_resolved",
+          "unique": false,
+          "cols": [
+            "resolved_at"
+          ]
+        },
+        {
+          "name": "idx_error_logs_user",
+          "unique": false,
+          "cols": [
+            "user_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_error_logs_user",
+          "col": "user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        }
+      ],
+      "checks": [
+        {
+          "name": "context",
+          "clause": "json_valid(`context`)"
+        }
+      ]
+    },
+    "forge_founder_access_grants": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "startup_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "incubation_application_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "granted_by",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "granted_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "revoked_by",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "revoked_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "reason",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_grants_application",
+          "unique": false,
+          "cols": [
+            "incubation_application_id"
+          ]
+        },
+        {
+          "name": "idx_grants_granted_by",
+          "unique": false,
+          "cols": [
+            "granted_by"
+          ]
+        },
+        {
+          "name": "idx_grants_revoked_by",
+          "unique": false,
+          "cols": [
+            "revoked_by"
+          ]
+        },
+        {
+          "name": "idx_grants_startup",
+          "unique": false,
+          "cols": [
+            "startup_id"
+          ]
+        },
+        {
+          "name": "idx_grants_user",
+          "unique": false,
+          "cols": [
+            "user_id",
+            "revoked_at"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_grants_application",
+          "col": "incubation_application_id",
+          "refTable": "forge_incubation_applications",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_grants_granted_by",
+          "col": "granted_by",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_grants_revoked_by",
+          "col": "revoked_by",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_grants_startup",
+          "col": "startup_id",
+          "refTable": "forge_startups",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_grants_user",
+          "col": "user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        }
+      ],
+      "checks": []
+    },
+    "forge_incubation_applications": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "applicant_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "startup_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "idea_name",
+          "type": "varchar(160)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "problem_statement",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "stage_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "team_member_ids",
+          "type": "varchar(500)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('draft','pending','under_review','approved','rejected')",
+          "nullable": false,
+          "default": "'draft'",
+          "extra": ""
+        },
+        {
+          "name": "completion_pct",
+          "type": "tinyint(3) unsigned",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "submitted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "reviewed_by",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "reviewed_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_incubation_applicant",
+          "unique": false,
+          "cols": [
+            "applicant_user_id"
+          ]
+        },
+        {
+          "name": "idx_incubation_reviewer",
+          "unique": false,
+          "cols": [
+            "reviewed_by"
+          ]
+        },
+        {
+          "name": "idx_incubation_stage",
+          "unique": false,
+          "cols": [
+            "stage_id"
+          ]
+        },
+        {
+          "name": "idx_incubation_startup",
+          "unique": false,
+          "cols": [
+            "startup_id"
+          ]
+        },
+        {
+          "name": "idx_incubation_status",
+          "unique": false,
+          "cols": [
+            "status"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_incubation_applicant",
+          "col": "applicant_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_incubation_reviewer",
+          "col": "reviewed_by",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_incubation_stage",
+          "col": "stage_id",
+          "refTable": "forge_stages",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_incubation_startup",
+          "col": "startup_id",
+          "refTable": "forge_startups",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        }
+      ],
+      "checks": [
+        {
+          "name": "chk_incubation_pct",
+          "clause": "`completion_pct` between 0 and 100"
+        }
+      ]
+    },
+    "forge_industries": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "name",
+          "type": "varchar(96)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "sort_order",
+          "type": "smallint(5) unsigned",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "is_active",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "1",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_industries_slug",
+          "unique": true,
+          "cols": [
+            "slug"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_listings": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "type",
+          "type": "enum('job','collab')",
+          "nullable": false,
+          "default": "'job'",
+          "extra": ""
+        },
+        {
+          "name": "title",
+          "type": "varchar(160)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "startup_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_by",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "listing_type_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "contract_type_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "compensation",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "collaborator_need",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('draft','pending','live','rejected','closed')",
+          "nullable": false,
+          "default": "'pending'",
+          "extra": ""
+        },
+        {
+          "name": "posted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_listings_contract_type",
+          "unique": false,
+          "cols": [
+            "contract_type_id"
+          ]
+        },
+        {
+          "name": "idx_listings_created_by",
+          "unique": false,
+          "cols": [
+            "created_by"
+          ]
+        },
+        {
+          "name": "idx_listings_deleted",
+          "unique": false,
+          "cols": [
+            "deleted_at"
+          ]
+        },
+        {
+          "name": "idx_listings_listing_type",
+          "unique": false,
+          "cols": [
+            "listing_type_id"
+          ]
+        },
+        {
+          "name": "idx_listings_posted",
+          "unique": false,
+          "cols": [
+            "posted_at"
+          ]
+        },
+        {
+          "name": "idx_listings_startup",
+          "unique": false,
+          "cols": [
+            "startup_id"
+          ]
+        },
+        {
+          "name": "idx_listings_status_type",
+          "unique": false,
+          "cols": [
+            "status",
+            "type"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_listings_contract_type",
+          "col": "contract_type_id",
+          "refTable": "forge_contract_types",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_listings_created_by",
+          "col": "created_by",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_listings_listing_type",
+          "col": "listing_type_id",
+          "refTable": "forge_listing_types",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_listings_startup",
+          "col": "startup_id",
+          "refTable": "forge_startups",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        }
+      ],
+      "checks": []
+    },
+    "forge_listing_skills": {
+      "columns": [
+        {
+          "name": "listing_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "skill_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_listing_skills_skill",
+          "unique": false,
+          "cols": [
+            "skill_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "listing_id",
+            "skill_id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_listing_skills_listing",
+          "col": "listing_id",
+          "refTable": "forge_listings",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        },
+        {
+          "name": "fk_listing_skills_skill",
+          "col": "skill_id",
+          "refTable": "forge_skills",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        }
+      ],
+      "checks": []
+    },
+    "forge_listing_types": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "name",
+          "type": "varchar(96)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "sort_order",
+          "type": "smallint(5) unsigned",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "is_active",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "1",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_listing_types_slug",
+          "unique": true,
+          "cols": [
+            "slug"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_login_attempts": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "identifier",
+          "type": "varchar(190)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "ip_address",
+          "type": "varchar(45)",
+          "nullable": false,
+          "default": "''",
+          "extra": ""
+        },
+        {
+          "name": "action",
+          "type": "varchar(32)",
+          "nullable": false,
+          "default": "'login'",
+          "extra": ""
+        },
+        {
+          "name": "succeeded",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_login_attempts_created",
+          "unique": false,
+          "cols": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_login_attempts_identifier",
+          "unique": false,
+          "cols": [
+            "action",
+            "identifier",
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_login_attempts_ip",
+          "unique": false,
+          "cols": [
+            "action",
+            "ip_address",
+            "created_at"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_mentors": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "full_name",
+          "type": "varchar(160)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "email",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "phone",
+          "type": "varchar(32)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "linkedin_url",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "role_title",
+          "type": "varchar(160)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "city",
+          "type": "varchar(120)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "course",
+          "type": "varchar(160)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "graduation_year",
+          "type": "smallint(5) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "industry",
+          "type": "varchar(96)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "experience_band",
+          "type": "varchar(16)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "mentoring_availability",
+          "type": "varchar(16)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "import_source",
+          "type": "varchar(64)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "consent_at",
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "mentor_type_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "initials",
+          "type": "varchar(4)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "avatar_tone",
+          "type": "varchar(16)",
+          "nullable": false,
+          "default": "'primary'",
+          "extra": ""
+        },
+        {
+          "name": "is_primary",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "is_active",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "1",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_mentors_type",
+          "unique": false,
+          "cols": [
+            "mentor_type_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_mentors_email",
+          "unique": true,
+          "cols": [
+            "email"
+          ]
+        },
+        {
+          "name": "uq_mentors_user",
+          "unique": true,
+          "cols": [
+            "user_id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_mentors_type",
+          "col": "mentor_type_id",
+          "refTable": "forge_mentor_types",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_mentors_user",
+          "col": "user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        }
+      ],
+      "checks": []
+    },
+    "forge_mentorship_areas": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "name",
+          "type": "varchar(96)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "sort_order",
+          "type": "smallint(5) unsigned",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "is_active",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "1",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_mentorship_areas_slug",
+          "unique": true,
+          "cols": [
+            "slug"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_mentorship_requests": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "requester_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "startup_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "topic",
+          "type": "varchar(255)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "context",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "preferred_mentor_type_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "preferred_timing",
+          "type": "varchar(160)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('requested','assigned','cancelled')",
+          "nullable": false,
+          "default": "'requested'",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_mentorship_requests_startup",
+          "unique": false,
+          "cols": [
+            "startup_id"
+          ]
+        },
+        {
+          "name": "idx_mentorship_requests_status",
+          "unique": false,
+          "cols": [
+            "status"
+          ]
+        },
+        {
+          "name": "idx_mentorship_requests_type",
+          "unique": false,
+          "cols": [
+            "preferred_mentor_type_id"
+          ]
+        },
+        {
+          "name": "idx_mentorship_requests_user",
+          "unique": false,
+          "cols": [
+            "requester_user_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_mentorship_requests_startup",
+          "col": "startup_id",
+          "refTable": "forge_startups",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_mentorship_requests_type",
+          "col": "preferred_mentor_type_id",
+          "refTable": "forge_mentor_types",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_mentorship_requests_user",
+          "col": "requester_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        }
+      ],
+      "checks": []
+    },
+    "forge_mentorship_sessions": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "request_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "mentor_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "mentee_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "startup_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "topic",
+          "type": "varchar(255)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "scheduled_at",
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "assigned_by",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('requested','upcoming','completed','cancelled')",
+          "nullable": false,
+          "default": "'requested'",
+          "extra": ""
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_ms_assigned_by",
+          "unique": false,
+          "cols": [
+            "assigned_by"
+          ]
+        },
+        {
+          "name": "idx_ms_mentee",
+          "unique": false,
+          "cols": [
+            "mentee_user_id"
+          ]
+        },
+        {
+          "name": "idx_ms_mentor",
+          "unique": false,
+          "cols": [
+            "mentor_id"
+          ]
+        },
+        {
+          "name": "idx_ms_request",
+          "unique": false,
+          "cols": [
+            "request_id"
+          ]
+        },
+        {
+          "name": "idx_ms_startup",
+          "unique": false,
+          "cols": [
+            "startup_id"
+          ]
+        },
+        {
+          "name": "idx_ms_status_time",
+          "unique": false,
+          "cols": [
+            "status",
+            "scheduled_at"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_ms_assigned_by",
+          "col": "assigned_by",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_ms_mentee",
+          "col": "mentee_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_ms_mentor",
+          "col": "mentor_id",
+          "refTable": "forge_mentors",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_ms_request",
+          "col": "request_id",
+          "refTable": "forge_mentorship_requests",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_ms_startup",
+          "col": "startup_id",
+          "refTable": "forge_startups",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        }
+      ],
+      "checks": []
+    },
+    "forge_mentor_mentorship_areas": {
+      "columns": [
+        {
+          "name": "mentor_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "area_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_mentor_areas_area",
+          "unique": false,
+          "cols": [
+            "area_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "mentor_id",
+            "area_id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_mentor_areas_area",
+          "col": "area_id",
+          "refTable": "forge_mentorship_areas",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        },
+        {
+          "name": "fk_mentor_areas_mentor",
+          "col": "mentor_id",
+          "refTable": "forge_mentors",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        }
+      ],
+      "checks": []
+    },
+    "forge_mentor_skills": {
+      "columns": [
+        {
+          "name": "mentor_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "skill_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_mentor_skills_skill",
+          "unique": false,
+          "cols": [
+            "skill_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "mentor_id",
+            "skill_id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_mentor_skills_mentor",
+          "col": "mentor_id",
+          "refTable": "forge_mentors",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        },
+        {
+          "name": "fk_mentor_skills_skill",
+          "col": "skill_id",
+          "refTable": "forge_skills",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        }
+      ],
+      "checks": []
+    },
+    "forge_mentor_types": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "name",
+          "type": "varchar(96)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "sort_order",
+          "type": "smallint(5) unsigned",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "is_active",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "1",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_mentor_types_slug",
+          "unique": true,
+          "cols": [
+            "slug"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_messages": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "sender_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "recipient_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "subject",
+          "type": "varchar(255)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "body",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "read_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "sent_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_messages_recipient",
+          "unique": false,
+          "cols": [
+            "recipient_user_id",
+            "read_at"
+          ]
+        },
+        {
+          "name": "idx_messages_sender",
+          "unique": false,
+          "cols": [
+            "sender_user_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_messages_recipient",
+          "col": "recipient_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_messages_sender",
+          "col": "sender_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        }
+      ],
+      "checks": []
+    },
+    "forge_notifications": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "type",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "title",
+          "type": "varchar(255)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "body",
+          "type": "varchar(500)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "link_url",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "entity_type",
+          "type": "varchar(64)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "entity_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "read_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "dismissed_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_notifications_created",
+          "unique": false,
+          "cols": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_notifications_user_unread",
+          "unique": false,
+          "cols": [
+            "user_id",
+            "read_at"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_notifications_user",
+          "col": "user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        }
+      ],
+      "checks": []
+    },
+    "forge_outsider_incubation_applications": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "reference",
+          "type": "varchar(24)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "full_name",
+          "type": "varchar(160)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "email",
+          "type": "varchar(190)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "phone",
+          "type": "varchar(32)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "startup_name",
+          "type": "varchar(160)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "tagline",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "problem_statement",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "industry_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "stage_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "startup_logo_url",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "pitch_deck",
+          "type": "varchar(500)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "product_demo",
+          "type": "varchar(500)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "product_assets",
+          "type": "varchar(500)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "key_personnel",
+          "type": "varchar(500)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('pending','approved','rejected')",
+          "nullable": false,
+          "default": "'pending'",
+          "extra": ""
+        },
+        {
+          "name": "reviewed_by",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "reviewed_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "rejection_reason",
+          "type": "varchar(1000)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "approved_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "approved_startup_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "incubation_application_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "source_ip",
+          "type": "varchar(45)",
+          "nullable": false,
+          "default": "''",
+          "extra": ""
+        },
+        {
+          "name": "user_agent",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_outsider_incubation_application",
+          "unique": false,
+          "cols": [
+            "incubation_application_id"
+          ]
+        },
+        {
+          "name": "idx_outsider_incubation_created",
+          "unique": false,
+          "cols": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_outsider_incubation_email",
+          "unique": false,
+          "cols": [
+            "email",
+            "status"
+          ]
+        },
+        {
+          "name": "idx_outsider_incubation_industry",
+          "unique": false,
+          "cols": [
+            "industry_id"
+          ]
+        },
+        {
+          "name": "idx_outsider_incubation_ip",
+          "unique": false,
+          "cols": [
+            "source_ip",
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_outsider_incubation_reviewer",
+          "unique": false,
+          "cols": [
+            "reviewed_by"
+          ]
+        },
+        {
+          "name": "idx_outsider_incubation_stage",
+          "unique": false,
+          "cols": [
+            "stage_id"
+          ]
+        },
+        {
+          "name": "idx_outsider_incubation_startup",
+          "unique": false,
+          "cols": [
+            "approved_startup_id"
+          ]
+        },
+        {
+          "name": "idx_outsider_incubation_status",
+          "unique": false,
+          "cols": [
+            "status",
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_outsider_incubation_user",
+          "unique": false,
+          "cols": [
+            "approved_user_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_outsider_incubation_reference",
+          "unique": true,
+          "cols": [
+            "reference"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_outsider_incubation_application",
+          "col": "incubation_application_id",
+          "refTable": "forge_incubation_applications",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_outsider_incubation_industry",
+          "col": "industry_id",
+          "refTable": "forge_industries",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_outsider_incubation_reviewer",
+          "col": "reviewed_by",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_outsider_incubation_stage",
+          "col": "stage_id",
+          "refTable": "forge_stages",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_outsider_incubation_startup",
+          "col": "approved_startup_id",
+          "refTable": "forge_startups",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_outsider_incubation_user",
+          "col": "approved_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        }
+      ],
+      "checks": []
+    },
+    "forge_partner_requests": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "name",
+          "type": "varchar(120)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "email",
+          "type": "varchar(190)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "phone",
+          "type": "varchar(32)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "company",
+          "type": "varchar(160)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "message",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('new','in_review','contacted','closed')",
+          "nullable": false,
+          "default": "'new'",
+          "extra": ""
+        },
+        {
+          "name": "source_ip",
+          "type": "varchar(45)",
+          "nullable": false,
+          "default": "''",
+          "extra": ""
+        },
+        {
+          "name": "user_agent",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_partner_requests_created",
+          "unique": false,
+          "cols": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_partner_requests_email",
+          "unique": false,
+          "cols": [
+            "email",
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_partner_requests_ip",
+          "unique": false,
+          "cols": [
+            "source_ip",
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_partner_requests_status",
+          "unique": false,
+          "cols": [
+            "status",
+            "created_at"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_permissions": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(96)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "name",
+          "type": "varchar(120)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "module",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_permissions_module",
+          "unique": false,
+          "cols": [
+            "module"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_permissions_slug",
+          "unique": true,
+          "cols": [
+            "slug"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_platform_settings": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "setting_key",
+          "type": "varchar(96)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "setting_value",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "value_type",
+          "type": "enum('string','boolean','number','json')",
+          "nullable": false,
+          "default": "'string'",
+          "extra": ""
+        },
+        {
+          "name": "group_key",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": "'general'",
+          "extra": ""
+        },
+        {
+          "name": "label",
+          "type": "varchar(160)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "description",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "updated_by",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_platform_settings_group",
+          "unique": false,
+          "cols": [
+            "group_key"
+          ]
+        },
+        {
+          "name": "idx_platform_settings_user",
+          "unique": false,
+          "cols": [
+            "updated_by"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_platform_settings_key",
+          "unique": true,
+          "cols": [
+            "setting_key"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_platform_settings_user",
+          "col": "updated_by",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        }
+      ],
+      "checks": []
+    },
+    "forge_posted_needs": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "founder_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "startup_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "title",
+          "type": "varchar(160)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('open','filled','closed')",
+          "nullable": false,
+          "default": "'open'",
+          "extra": ""
+        },
+        {
+          "name": "posted_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_posted_needs_founder",
+          "unique": false,
+          "cols": [
+            "founder_user_id"
+          ]
+        },
+        {
+          "name": "idx_posted_needs_startup",
+          "unique": false,
+          "cols": [
+            "startup_id"
+          ]
+        },
+        {
+          "name": "idx_posted_needs_status",
+          "unique": false,
+          "cols": [
+            "status"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_posted_needs_founder",
+          "col": "founder_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_posted_needs_startup",
+          "col": "startup_id",
+          "refTable": "forge_startups",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        }
+      ],
+      "checks": []
+    },
+    "forge_readiness_items": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "name",
+          "type": "varchar(120)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "hint",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "sort_order",
+          "type": "smallint(5) unsigned",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "is_active",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "1",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_readiness_items_slug",
+          "unique": true,
+          "cols": [
+            "slug"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_registration_requests": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "reference",
+          "type": "varchar(24)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "full_name",
+          "type": "varchar(160)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "email",
+          "type": "varchar(190)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "phone",
+          "type": "varchar(32)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "role_category",
+          "type": "enum('atlas_student','atlas_alumni','atlas_faculty','others')",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "details_json",
+          "type": "longtext",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "consent",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "consented_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('pending','approved','rejected')",
+          "nullable": false,
+          "default": "'pending'",
+          "extra": ""
+        },
+        {
+          "name": "reviewed_by",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "reviewed_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "rejection_reason",
+          "type": "varchar(1000)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "approved_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "approved_role_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "source_ip",
+          "type": "varchar(45)",
+          "nullable": false,
+          "default": "''",
+          "extra": ""
+        },
+        {
+          "name": "user_agent",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_registration_created",
+          "unique": false,
+          "cols": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_registration_email",
+          "unique": false,
+          "cols": [
+            "email",
+            "status"
+          ]
+        },
+        {
+          "name": "idx_registration_ip",
+          "unique": false,
+          "cols": [
+            "source_ip",
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_registration_reviewer",
+          "unique": false,
+          "cols": [
+            "reviewed_by"
+          ]
+        },
+        {
+          "name": "idx_registration_role",
+          "unique": false,
+          "cols": [
+            "approved_role_id"
+          ]
+        },
+        {
+          "name": "idx_registration_status",
+          "unique": false,
+          "cols": [
+            "status",
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_registration_user",
+          "unique": false,
+          "cols": [
+            "approved_user_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_registration_reference",
+          "unique": true,
+          "cols": [
+            "reference"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_registration_reviewer",
+          "col": "reviewed_by",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_registration_role",
+          "col": "approved_role_id",
+          "refTable": "forge_roles",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_registration_user",
+          "col": "approved_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        }
+      ],
+      "checks": []
+    },
+    "forge_roles": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "name",
+          "type": "varchar(120)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "description",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "is_view_only",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "sort_order",
+          "type": "smallint(5) unsigned",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "is_active",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "1",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_roles_slug",
+          "unique": true,
+          "cols": [
+            "slug"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_role_permissions": {
+      "columns": [
+        {
+          "name": "role_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "permission_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_role_permissions_permission",
+          "unique": false,
+          "cols": [
+            "permission_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "role_id",
+            "permission_id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_role_permissions_permission",
+          "col": "permission_id",
+          "refTable": "forge_permissions",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        },
+        {
+          "name": "fk_role_permissions_role",
+          "col": "role_id",
+          "refTable": "forge_roles",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        }
+      ],
+      "checks": []
+    },
+    "forge_service_requests": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "name",
+          "type": "varchar(120)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "email",
+          "type": "varchar(190)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "phone",
+          "type": "varchar(32)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "service_required",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "message",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('new','in_review','contacted','closed')",
+          "nullable": false,
+          "default": "'new'",
+          "extra": ""
+        },
+        {
+          "name": "source_ip",
+          "type": "varchar(45)",
+          "nullable": false,
+          "default": "''",
+          "extra": ""
+        },
+        {
+          "name": "user_agent",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_service_requests_created",
+          "unique": false,
+          "cols": [
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_service_requests_email",
+          "unique": false,
+          "cols": [
+            "email",
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_service_requests_ip",
+          "unique": false,
+          "cols": [
+            "source_ip",
+            "created_at"
+          ]
+        },
+        {
+          "name": "idx_service_requests_status",
+          "unique": false,
+          "cols": [
+            "status",
+            "created_at"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_sessions": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "active_role_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "token_hash",
+          "type": "char(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "ip_address",
+          "type": "varbinary(16)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "user_agent",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_sessions_expires",
+          "unique": false,
+          "cols": [
+            "expires_at"
+          ]
+        },
+        {
+          "name": "idx_sessions_role",
+          "unique": false,
+          "cols": [
+            "active_role_id"
+          ]
+        },
+        {
+          "name": "idx_sessions_user",
+          "unique": false,
+          "cols": [
+            "user_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_sessions_token",
+          "unique": true,
+          "cols": [
+            "token_hash"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_sessions_role",
+          "col": "active_role_id",
+          "refTable": "forge_roles",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_sessions_user",
+          "col": "user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        }
+      ],
+      "checks": []
+    },
+    "forge_skills": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "name",
+          "type": "varchar(96)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "category",
+          "type": "varchar(48)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "is_active",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "1",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_skills_category",
+          "unique": false,
+          "cols": [
+            "category"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_skills_slug",
+          "unique": true,
+          "cols": [
+            "slug"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_stages": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "name",
+          "type": "varchar(96)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "sort_order",
+          "type": "smallint(5) unsigned",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "is_active",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "1",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_stages_slug",
+          "unique": true,
+          "cols": [
+            "slug"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_startups": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(96)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "name",
+          "type": "varchar(160)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "tagline",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "problem_statement",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "industry_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "stage_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "owner_user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "mentor_id",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "is_hiring",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "open_roles",
+          "type": "smallint(5) unsigned",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "is_featured",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('pending','under_review','active','inactive')",
+          "nullable": false,
+          "default": "'pending'",
+          "extra": ""
+        },
+        {
+          "name": "initial",
+          "type": "varchar(4)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "avatar_tone",
+          "type": "varchar(16)",
+          "nullable": false,
+          "default": "'primary'",
+          "extra": ""
+        },
+        {
+          "name": "logo_url",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_startups_deleted",
+          "unique": false,
+          "cols": [
+            "deleted_at"
+          ]
+        },
+        {
+          "name": "idx_startups_featured",
+          "unique": false,
+          "cols": [
+            "is_featured"
+          ]
+        },
+        {
+          "name": "idx_startups_industry",
+          "unique": false,
+          "cols": [
+            "industry_id"
+          ]
+        },
+        {
+          "name": "idx_startups_mentor",
+          "unique": false,
+          "cols": [
+            "mentor_id"
+          ]
+        },
+        {
+          "name": "idx_startups_owner",
+          "unique": false,
+          "cols": [
+            "owner_user_id"
+          ]
+        },
+        {
+          "name": "idx_startups_stage",
+          "unique": false,
+          "cols": [
+            "stage_id"
+          ]
+        },
+        {
+          "name": "idx_startups_status",
+          "unique": false,
+          "cols": [
+            "status"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_startups_slug",
+          "unique": true,
+          "cols": [
+            "slug"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_startups_industry",
+          "col": "industry_id",
+          "refTable": "forge_industries",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_startups_mentor",
+          "col": "mentor_id",
+          "refTable": "forge_mentors",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_startups_owner",
+          "col": "owner_user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_startups_stage",
+          "col": "stage_id",
+          "refTable": "forge_stages",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        }
+      ],
+      "checks": [
+        {
+          "name": "chk_startups_open_roles",
+          "clause": "`open_roles` >= 0"
+        }
+      ]
+    },
+    "forge_startup_documents": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "startup_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "category_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "stored_name",
+          "type": "varchar(128)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "original_name",
+          "type": "varchar(255)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "mime_type",
+          "type": "varchar(128)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "byte_size",
+          "type": "int(10) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "checksum",
+          "type": "char(64)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "uploaded_by",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "is_current",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "1",
+          "extra": ""
+        },
+        {
+          "name": "replaced_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_startup_documents_category",
+          "unique": false,
+          "cols": [
+            "category_id"
+          ]
+        },
+        {
+          "name": "idx_startup_documents_deleted",
+          "unique": false,
+          "cols": [
+            "deleted_at"
+          ]
+        },
+        {
+          "name": "idx_startup_documents_slot",
+          "unique": false,
+          "cols": [
+            "startup_id",
+            "category_id",
+            "is_current"
+          ]
+        },
+        {
+          "name": "idx_startup_documents_uploader",
+          "unique": false,
+          "cols": [
+            "uploaded_by"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_startup_documents_category",
+          "col": "category_id",
+          "refTable": "forge_document_categories",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_startup_documents_startup",
+          "col": "startup_id",
+          "refTable": "forge_startups",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        },
+        {
+          "name": "fk_startup_documents_uploader",
+          "col": "uploaded_by",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        }
+      ],
+      "checks": []
+    },
+    "forge_startup_members": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "startup_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "role_title",
+          "type": "varchar(120)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "joined_at",
+          "type": "date",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_startup_members_user",
+          "unique": false,
+          "cols": [
+            "user_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_startup_members",
+          "unique": true,
+          "cols": [
+            "startup_id",
+            "user_id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_startup_members_startup",
+          "col": "startup_id",
+          "refTable": "forge_startups",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        },
+        {
+          "name": "fk_startup_members_user",
+          "col": "user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        }
+      ],
+      "checks": []
+    },
+    "forge_student_profiles": {
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "programme",
+          "type": "varchar(120)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "year_of_study",
+          "type": "tinyint(3) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "hours_per_week",
+          "type": "tinyint(3) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "work_types",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "availability_timing",
+          "type": "varchar(255)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "is_available",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_student_profiles_available",
+          "unique": false,
+          "cols": [
+            "is_available"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "user_id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_student_profiles_user",
+          "col": "user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        }
+      ],
+      "checks": [
+        {
+          "name": "chk_student_hours",
+          "clause": "`hours_per_week` is null or `hours_per_week` between 0 and 168"
+        }
+      ]
+    },
+    "forge_student_skills": {
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "skill_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_student_skills_skill",
+          "unique": false,
+          "cols": [
+            "skill_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "user_id",
+            "skill_id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_student_skills_skill",
+          "col": "skill_id",
+          "refTable": "forge_skills",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        },
+        {
+          "name": "fk_student_skills_user",
+          "col": "user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        }
+      ],
+      "checks": []
+    },
+    "forge_users": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": "auto_increment"
+        },
+        {
+          "name": "app_id",
+          "type": "varchar(32)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "full_name",
+          "type": "varchar(160)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "email",
+          "type": "varchar(255)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "password_hash",
+          "type": "varchar(255)",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "initials",
+          "type": "varchar(4)",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "avatar_tone",
+          "type": "varchar(16)",
+          "nullable": false,
+          "default": "'primary'",
+          "extra": ""
+        },
+        {
+          "name": "bio",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "status",
+          "type": "enum('active','inactive','suspended')",
+          "nullable": false,
+          "default": "'active'",
+          "extra": ""
+        },
+        {
+          "name": "last_active_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_users_deleted",
+          "unique": false,
+          "cols": [
+            "deleted_at"
+          ]
+        },
+        {
+          "name": "idx_users_last_active",
+          "unique": false,
+          "cols": [
+            "last_active_at"
+          ]
+        },
+        {
+          "name": "idx_users_status",
+          "unique": false,
+          "cols": [
+            "status"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "id"
+          ]
+        },
+        {
+          "name": "uq_users_app_id",
+          "unique": true,
+          "cols": [
+            "app_id"
+          ]
+        },
+        {
+          "name": "uq_users_email",
+          "unique": true,
+          "cols": [
+            "email"
+          ]
+        }
+      ],
+      "foreignKeys": [],
+      "checks": []
+    },
+    "forge_user_roles": {
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "role_id",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": null,
+          "extra": ""
+        },
+        {
+          "name": "is_primary",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "0",
+          "extra": ""
+        },
+        {
+          "name": "granted_by",
+          "type": "bigint(20) unsigned",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        },
+        {
+          "name": "granted_at",
+          "type": "timestamp",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra": ""
+        },
+        {
+          "name": "revoked_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL",
+          "extra": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_user_roles_active",
+          "unique": false,
+          "cols": [
+            "user_id",
+            "revoked_at"
+          ]
+        },
+        {
+          "name": "idx_user_roles_granted_by",
+          "unique": false,
+          "cols": [
+            "granted_by"
+          ]
+        },
+        {
+          "name": "idx_user_roles_role",
+          "unique": false,
+          "cols": [
+            "role_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "unique": true,
+          "cols": [
+            "user_id",
+            "role_id"
+          ]
+        }
+      ],
+      "foreignKeys": [
+        {
+          "name": "fk_user_roles_granted_by",
+          "col": "granted_by",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "SET NULL"
+        },
+        {
+          "name": "fk_user_roles_role",
+          "col": "role_id",
+          "refTable": "forge_roles",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "RESTRICT"
+        },
+        {
+          "name": "fk_user_roles_user",
+          "col": "user_id",
+          "refTable": "forge_users",
+          "refCol": "id",
+          "onUpdate": "CASCADE",
+          "onDelete": "CASCADE"
+        }
+      ],
+      "checks": []
+    }
+  },
+  "forgeTableNames": [
+    "forge_activity_logs",
+    "forge_application_events",
+    "forge_application_readiness",
+    "forge_applications",
+    "forge_approvals",
+    "forge_concierge_contacts",
+    "forge_contract_types",
+    "forge_contracts",
+    "forge_document_categories",
+    "forge_error_logs",
+    "forge_founder_access_grants",
+    "forge_incubation_applications",
+    "forge_industries",
+    "forge_listing_skills",
+    "forge_listing_types",
+    "forge_listings",
+    "forge_login_attempts",
+    "forge_mentor_mentorship_areas",
+    "forge_mentor_skills",
+    "forge_mentor_types",
+    "forge_mentors",
+    "forge_mentorship_areas",
+    "forge_mentorship_requests",
+    "forge_mentorship_sessions",
+    "forge_messages",
+    "forge_notifications",
+    "forge_outsider_incubation_applications",
+    "forge_partner_requests",
+    "forge_permissions",
+    "forge_platform_settings",
+    "forge_posted_needs",
+    "forge_readiness_items",
+    "forge_registration_requests",
+    "forge_role_permissions",
+    "forge_roles",
+    "forge_service_requests",
+    "forge_sessions",
+    "forge_skills",
+    "forge_stages",
+    "forge_startup_documents",
+    "forge_startup_members",
+    "forge_startups",
+    "forge_student_profiles",
+    "forge_student_skills",
+    "forge_user_roles",
+    "forge_users"
+  ],
+  "allTableNames": [
+    "forge_activity_logs",
+    "forge_application_events",
+    "forge_application_readiness",
+    "forge_applications",
+    "forge_approvals",
+    "forge_concierge_contacts",
+    "forge_contract_types",
+    "forge_contracts",
+    "forge_document_categories",
+    "forge_error_logs",
+    "forge_founder_access_grants",
+    "forge_incubation_applications",
+    "forge_industries",
+    "forge_listing_skills",
+    "forge_listing_types",
+    "forge_listings",
+    "forge_login_attempts",
+    "forge_mentor_mentorship_areas",
+    "forge_mentor_skills",
+    "forge_mentor_types",
+    "forge_mentors",
+    "forge_mentorship_areas",
+    "forge_mentorship_requests",
+    "forge_mentorship_sessions",
+    "forge_messages",
+    "forge_notifications",
+    "forge_outsider_incubation_applications",
+    "forge_partner_requests",
+    "forge_permissions",
+    "forge_platform_settings",
+    "forge_posted_needs",
+    "forge_readiness_items",
+    "forge_registration_requests",
+    "forge_role_permissions",
+    "forge_roles",
+    "forge_service_requests",
+    "forge_sessions",
+    "forge_skills",
+    "forge_stages",
+    "forge_startup_documents",
+    "forge_startup_members",
+    "forge_startups",
+    "forge_student_profiles",
+    "forge_student_skills",
+    "forge_user_roles",
+    "forge_users"
+  ]
+}
