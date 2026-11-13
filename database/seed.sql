@@ -13,7 +13,9 @@
 -- All demo accounts share the password:  Atlas@2026
 -- ===========================================================================
 
-USE `atlas-forge-dashboard`;
+-- No USE / ALTER DATABASE here on purpose: the apply script opens the
+-- connection on DB_NAME from .env, so this file only ever touches that
+-- database (which may be shared with other applications).
 
 SET @PWD := 'scrypt$16384$8$1$019a8f0063b670dd5a6e88112f0d5799$f4781a028fef9e4896febf50281eaabf6b8262990b87906413b1d5089ffa9ee372d56f8470412830185cfeeeca00d6d60f2156c430ed5723c19bb5d1c5cf1981';
 

@@ -17,7 +17,7 @@ BASE = os.environ.get("BASE_URL", "http://localhost:3100")
 APP_ID = "ATL-2019-0004"
 PASSWORD = "Atlas@2026"
 MYSQL = r"C:\xampp\mysql\bin\mysql.exe"
-DB = "atlas-forge-dashboard"
+DB = os.environ.get("DB_NAME", "atlas-forge-dashboard")  # local XAMPP default
 
 results = []
 

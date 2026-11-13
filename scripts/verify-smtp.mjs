@@ -32,7 +32,7 @@ console.log(`  SMTP_PASS     : ${env.pass ? '(set — not shown)' : '(missing)'}
 
 if (!(env.host && env.user && env.pass && env.from)) {
   console.error(
-    '\nNot fully configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS and MAIL_FROM in .env.local, then re-run.'
+    '\nNot fully configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS and MAIL_FROM in .env, then re-run.'
   )
   process.exit(1)
 }

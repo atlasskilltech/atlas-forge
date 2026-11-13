@@ -1,111 +1,90 @@
 /**
- * Database connectivity check.
+ * READ-ONLY database check for ATLAS Forge.
  *
  *   npm run db:check
  *
- * Reads the same variables the application uses (loaded by --env-file), so a
- * pass here means the app's pool will connect too. Run it after changing
- * .env.local or pointing at a different MySQL server.
+ * Uses exactly the configuration the running app uses: the project's `.env`,
+ * loaded by `node --env-file=.env` (the same flag PM2 starts Next with). It
+ * never prints the password and never writes anything — it runs SELECTs and
+ * reads information_schema only, so it is safe against the shared production
+ * database.
+ *
+ * Exits non-zero if the app could not work: connection failure, missing Forge
+ * tables, a Forge-named table that belongs to another application, or another
+ * env file that changes DB_* settings behind .env's back.
  */
+import { existsSync, readFileSync } from 'node:fs'
+import { parseEnv } from 'node:util'
 import mysql from 'mysql2/promise'
+import { dbEnv, describe, envFileConflicts, inspectDatabase } from './lib/forge-db.mjs'
 
-const {
-  DB_HOST,
-  DB_PORT = '3306',
-  DB_USER,
-  DB_PASSWORD = '',
-  DB_NAME,
-  DB_CONNECTION_LIMIT = '10',
-} = process.env
+const cfg = dbEnv()
+const line = (label, value) => console.log(`  ${label.padEnd(22)}${value}`)
+let failed = false
+const fail = (label, value) => { failed = true; line(`FAIL ${label}`, value) }
 
-const missing = ['DB_HOST', 'DB_USER', 'DB_NAME'].filter((k) => !process.env[k])
-if (missing.length > 0) {
-  console.error(`Missing required env vars: ${missing.join(', ')}`)
-  console.error('Copy .env.example to .env.local and fill it in.')
-  process.exit(1)
+console.log('\nATLAS Forge — read-only database check')
+line('target', describe(cfg))
+
+// 1a. `--env-file` never overrides a variable already set in the shell, so a
+//     stale `export DB_NAME=...` would make this check (but not the app, whose
+//     PM2 config filters the shell env) test the wrong database.
+if (existsSync('.env')) {
+  const fromFile = parseEnv(readFileSync('.env', 'utf8'))
+  const overridden = Object.keys(fromFile)
+    .filter((k) => k.startsWith('DB_') && process.env[k] !== fromFile[k])
+  if (overridden.length > 0) {
+    fail('shell override', `${overridden.join(', ')} set in your shell differ from .env — unset them and re-run`)
+  }
 }
 
-const line = (label, value) => console.log(`  ${label.padEnd(24)}${value}`)
+// 1b. Other env files that could change DB_* settings at runtime.
+for (const { file, fillsMissing, differs } of envFileConflicts()) {
+  if (fillsMissing.length > 0) fail(file, `supplies ${fillsMissing.join(', ')} that .env lacks — add them to .env`)
+  if (differs.length > 0) line(`note ${file}`, `differs on ${differs.join(', ')} (ignored: .env wins)`)
+}
 
-console.log(`\nATLAS Forge — database check`)
-console.log(`  target                  ${DB_HOST}:${DB_PORT}/${DB_NAME}`)
-console.log(`  user                    ${DB_USER} (password ${DB_PASSWORD ? 'set' : 'blank'})\n`)
-
-let exitCode = 0
-let server
+// 2. Connect exactly as the app's pool does (on DB_NAME, no database created).
+let conn
+try {
+  conn = await mysql.createConnection({ ...cfg, multipleStatements: false })
+} catch (error) {
+  fail('connect', `${error.code ?? 'ERROR'}: ${error.sqlMessage ?? error.message}`)
+  console.log('\nChecks failed.\n')
+  process.exit(1)
+}
 
 try {
-  server = await mysql.createConnection({
-    host: DB_HOST,
-    port: Number(DB_PORT),
-    user: DB_USER,
-    password: DB_PASSWORD,
-    connectTimeout: 8000,
-  })
-  const [[v]] = await server.query('SELECT VERSION() AS version')
-  line('server reachable', `MySQL ${v.version}`)
-} catch (error) {
-  line('server UNREACHABLE', `${error.code}: ${error.message}`)
-  console.error('\nIs MySQL running, and are the credentials correct?\n')
-  process.exit(1)
-}
+  const [[who]] = await conn.query(
+    'SELECT DATABASE() AS db, CURRENT_USER() AS account, VERSION() AS version, 1 AS ok'
+  )
+  line('connected', `MySQL ${who.version} as ${who.account}`)
+  line('database in use', who.db)
+  if (who.db !== cfg.database) fail('database', `expected ${cfg.database}, got ${who.db}`)
 
-const [schemas] = await server.query(
-  `SELECT DEFAULT_CHARACTER_SET_NAME AS charset, DEFAULT_COLLATION_NAME AS collation
-     FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?`,
-  [DB_NAME]
-)
-const dbExists = schemas.length > 0
-line('database', dbExists ? `exists (${schemas[0].charset} / ${schemas[0].collation})` : `"${DB_NAME}" not created yet`)
-await server.end()
-
-if (dbExists) {
-  const pool = mysql.createPool({
-    host: DB_HOST,
-    port: Number(DB_PORT),
-    user: DB_USER,
-    password: DB_PASSWORD,
-    database: DB_NAME,
-    waitForConnections: true,
-    connectionLimit: Number(DB_CONNECTION_LIMIT),
-    timezone: 'Z',
-    charset: 'utf8mb4_unicode_ci',
-    multipleStatements: false,
-  })
-
-  try {
-    const [[ping]] = await pool.query('SELECT 1 AS ok')
-    line('pool connect', `ok=${ping.ok}`)
-
-    const [[bound]] = await pool.execute('SELECT ? + ? AS sum, ? AS text', [2, 3, 'héllo ✓'])
-    line('prepared statement', `${bound.sum}, utf8mb4 round-trip "${bound.text}"`)
-
-    const started = Date.now()
-    await Promise.all(Array.from({ length: 10 }, () => pool.query('SELECT SLEEP(0.05)')))
-    line('10 parallel queries', `${Date.now() - started}ms across pool of ${DB_CONNECTION_LIMIT}`)
-
-    const conn = await pool.getConnection()
-    await conn.beginTransaction()
-    await conn.query('CREATE TEMPORARY TABLE _tx_probe (id INT)')
-    await conn.execute('INSERT INTO _tx_probe (id) VALUES (?)', [1])
-    await conn.rollback()
-    conn.release()
-    line('transaction rollback', 'ok')
-
-    const [tables] = await pool.query(
-      'SELECT COUNT(*) AS n FROM information_schema.TABLES WHERE TABLE_SCHEMA = ?',
-      [DB_NAME]
-    )
-    line('tables present', tables[0].n)
-  } catch (error) {
-    line('pool FAILED', `${error.code}: ${error.message}`)
-    exitCode = 1
-  } finally {
-    await pool.end()
+  // 3. Table inventory (information_schema only).
+  const inv = await inspectDatabase(conn)
+  line('forge tables', `${inv.present.length}/${inv.expected.length} present`)
+  if (inv.missing.length > 0) fail('missing tables', inv.missing.join(', '))
+  for (const { name, lacking } of inv.collisions) {
+    fail('foreign table', `${name} exists but is not Forge's (lacks ${lacking.slice(0, 4).join(', ')})`)
   }
-} else {
-  console.log('\n  Schema has not been created yet — that is expected before Step 3 is approved.')
+  line('other apps\' tables', `${inv.foreign.length} (left untouched)`)
+
+  // 4. A real read through a prepared statement, as the app's repositories do.
+  if (inv.present.includes('users')) {
+    const [[row]] = await conn.execute('SELECT COUNT(*) AS n FROM users WHERE deleted_at IS NULL')
+    line('read users', `ok (${row.n} active rows)`)
+  }
+  if (inv.present.includes('roles')) {
+    const [[row]] = await conn.execute('SELECT COUNT(*) AS n FROM roles')
+    line('read roles', `ok (${row.n} rows)${row.n === 0 ? ' — run db:reference' : ''}`)
+  }
+} catch (error) {
+  fail('query', `${error.code ?? 'ERROR'}: ${error.sqlMessage ?? error.message}`)
+} finally {
+  await conn.end()
 }
 
-console.log(exitCode === 0 ? '\nAll checks passed.\n' : '\nChecks failed.\n')
-process.exit(exitCode)
+console.log(failed ? '\nChecks failed.\n' : '\nAll checks passed.\n')
+process.exit(failed ? 1 : 0)

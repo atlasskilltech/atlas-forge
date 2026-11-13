@@ -2,7 +2,7 @@
 -- 005 · Alumni mentors from the 2026 alumni mentorship form
 --
 --   npm run db:migrate migrations/005_alumni_mentors.sql
---   node --env-file=.env.local scripts/import-alumni-mentors.mjs --commit
+--   node --env-file=.env scripts/import-alumni-mentors.mjs --commit
 --
 -- Adds the profile fields an alumni mentor needs, and the mentorship-area
 -- vocabulary the form collected, to the EXISTING mentors system. There is no

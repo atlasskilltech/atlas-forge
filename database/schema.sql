@@ -12,10 +12,9 @@
 -- database/migrations/.
 -- ===========================================================================
 
-ALTER DATABASE `atlas-forge-dashboard`
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-USE `atlas-forge-dashboard`;
+-- No USE / ALTER DATABASE here on purpose: the apply script opens the
+-- connection on DB_NAME from .env, so this file only ever touches that
+-- database (which may be shared with other applications).
 
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -1033,8 +1032,6 @@ CREATE TABLE partner_requests (
 -- produces the same shape as a migrated database. A public submission lives
 -- only in this table until a Forge Manager approves it — see the migration.
 -- ---------------------------------------------------------------------------
-CREATE TABLE only.
--- ===========================================================================
 
 CREATE TABLE IF NOT EXISTS outsider_incubation_applications (
   id                        BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

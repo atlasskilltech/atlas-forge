@@ -4,6 +4,7 @@ Asserts behaviour, not just that a control exists — that state actually
 changed, that a write landed in MySQL, and that signing out really ends the
 session.
 """
+import os
 import subprocess
 import sys
 
@@ -13,7 +14,7 @@ BASE = "http://localhost:3100"
 APP_ID = "ATL-2024-0871"
 PASSWORD = "Atlas@2026"
 MYSQL = r"C:\xampp\mysql\bin\mysql.exe"
-DB = "atlas-forge-dashboard"
+DB = os.environ.get("DB_NAME", "atlas-forge-dashboard")  # local XAMPP default
 
 results = []
 

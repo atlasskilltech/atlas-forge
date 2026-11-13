@@ -12,7 +12,9 @@
 -- or disturbing the ids that seed/production data references.
 -- ===========================================================================
 
-USE `atlas-forge-dashboard`;
+-- No USE / ALTER DATABASE here on purpose: the apply script opens the
+-- connection on DB_NAME from .env, so this file only ever touches that
+-- database (which may be shared with other applications).
 
 -- ---------------------------------------------------------------------------
 -- Roles

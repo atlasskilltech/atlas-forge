@@ -8,31 +8,15 @@
  * so it can gate a deployment.
  */
 import mysql from 'mysql2/promise'
+import { dbEnv, forgeTables } from './lib/forge-db.mjs'
 
-const {
-  DB_HOST, DB_PORT = '3306', DB_USER, DB_PASSWORD = '', DB_NAME,
-} = process.env
+// Only ATLAS Forge's own tables are checked. The production database is shared
+// with other applications; their tables are neither expected nor reported.
+const cfg = dbEnv()
+const DB_NAME = cfg.database
+const EXPECTED = [...(await forgeTables()).keys()].sort()
 
-const EXPECTED = [
-  'roles', 'permissions', 'role_permissions', 'users', 'user_roles', 'sessions',
-  'skills', 'student_profiles', 'student_skills',
-  'industries', 'stages', 'startups', 'startup_members',
-  'listing_types', 'contract_types', 'listings', 'listing_skills',
-  'applications', 'application_events', 'approvals',
-  'concierge_contacts', 'posted_needs',
-  'mentor_types', 'mentors', 'mentor_skills',
-  'mentorship_requests', 'mentorship_sessions',
-  'readiness_items', 'incubation_applications', 'application_readiness',
-  'founder_access_grants',
-  'contracts', 'platform_settings', 'activity_logs', 'error_logs',
-  'notifications', 'messages',
-  'login_attempts',
-]
-
-const conn = await mysql.createConnection({
-  host: DB_HOST, port: Number(DB_PORT), user: DB_USER,
-  password: DB_PASSWORD, database: DB_NAME,
-})
+const conn = await mysql.createConnection(cfg)
 
 let failures = 0
 const fail = (msg) => { failures += 1; console.log(`  FAIL  ${msg}`) }
@@ -42,18 +26,19 @@ const [[schema]] = await conn.query(
   `SELECT DEFAULT_CHARACTER_SET_NAME cs, DEFAULT_COLLATION_NAME co
      FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?`, [DB_NAME])
 console.log(`\ndatabase  ${DB_NAME}  ${schema.cs} / ${schema.co}`)
-if (schema.co !== 'utf8mb4_unicode_ci') fail(`database collation is ${schema.co}`)
+// The database default belongs to whoever created it (shared in production);
+// what matters is each Forge table's own collation, checked below.
+if (schema.co !== 'utf8mb4_unicode_ci') console.log(`  note  database default collation is ${schema.co}`)
 
 // --- tables ----------------------------------------------------------------
 const [tables] = await conn.query(
   `SELECT TABLE_NAME name, ENGINE engine, TABLE_COLLATION collation
      FROM information_schema.TABLES
-    WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'BASE TABLE'
-    ORDER BY TABLE_NAME`, [DB_NAME])
+    WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME IN (?)
+    ORDER BY TABLE_NAME`, [DB_NAME, EXPECTED])
 
 const found = tables.map((t) => t.name)
 for (const name of EXPECTED) if (!found.includes(name)) fail(`missing table: ${name}`)
-for (const name of found) if (!EXPECTED.includes(name)) fail(`unexpected table: ${name}`)
 for (const t of tables) {
   if (t.engine !== 'InnoDB') fail(`${t.name} engine is ${t.engine}`)
   if (t.collation !== 'utf8mb4_unicode_ci') fail(`${t.name} collation is ${t.collation}`)
@@ -64,28 +49,28 @@ const count = async (sql, params) => (await conn.query(sql, params))[0][0].n
 
 const fks = await count(
   `SELECT COUNT(*) n FROM information_schema.TABLE_CONSTRAINTS
-    WHERE CONSTRAINT_SCHEMA = ? AND CONSTRAINT_TYPE = 'FOREIGN KEY'`, [DB_NAME])
+    WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME IN (?) AND CONSTRAINT_TYPE = 'FOREIGN KEY'`, [DB_NAME, EXPECTED])
 const uniques = await count(
   `SELECT COUNT(*) n FROM information_schema.TABLE_CONSTRAINTS
-    WHERE CONSTRAINT_SCHEMA = ? AND CONSTRAINT_TYPE = 'UNIQUE'`, [DB_NAME])
+    WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME IN (?) AND CONSTRAINT_TYPE = 'UNIQUE'`, [DB_NAME, EXPECTED])
 const pks = await count(
   `SELECT COUNT(*) n FROM information_schema.TABLE_CONSTRAINTS
-    WHERE CONSTRAINT_SCHEMA = ? AND CONSTRAINT_TYPE = 'PRIMARY KEY'`, [DB_NAME])
+    WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME IN (?) AND CONSTRAINT_TYPE = 'PRIMARY KEY'`, [DB_NAME, EXPECTED])
 const indexes = await count(
   `SELECT COUNT(DISTINCT TABLE_NAME, INDEX_NAME) n FROM information_schema.STATISTICS
-    WHERE TABLE_SCHEMA = ?`, [DB_NAME])
+    WHERE TABLE_SCHEMA = ? AND TABLE_NAME IN (?)`, [DB_NAME, EXPECTED])
 
 let checks = 0
 try {
   checks = await count(
-    `SELECT COUNT(*) n FROM information_schema.CHECK_CONSTRAINTS
-      WHERE CONSTRAINT_SCHEMA = ?`, [DB_NAME])
+    `SELECT COUNT(*) n FROM information_schema.TABLE_CONSTRAINTS
+      WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME IN (?) AND CONSTRAINT_TYPE = 'CHECK'`, [DB_NAME, EXPECTED])
 } catch { checks = -1 }
 
 // --- referential actions ---------------------------------------------------
 const [actions] = await conn.query(
   `SELECT DELETE_RULE rule, COUNT(*) n FROM information_schema.REFERENTIAL_CONSTRAINTS
-    WHERE CONSTRAINT_SCHEMA = ? GROUP BY DELETE_RULE ORDER BY n DESC`, [DB_NAME])
+    WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME IN (?) GROUP BY DELETE_RULE ORDER BY n DESC`, [DB_NAME, EXPECTED])
 
 // --- the deferred circular FK ---------------------------------------------
 const [[circular]] = await conn.query(

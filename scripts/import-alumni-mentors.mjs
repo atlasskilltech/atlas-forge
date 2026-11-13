@@ -1,9 +1,9 @@
 /**
  * Imports the alumni mentorship form export into the `mentors` system.
  *
- *   node --env-file=.env.local scripts/import-alumni-mentors.mjs            # dry run
- *   node --env-file=.env.local scripts/import-alumni-mentors.mjs --commit   # writes
- *   node --env-file=.env.local scripts/import-alumni-mentors.mjs --file=<path>
+ *   node --env-file=.env scripts/import-alumni-mentors.mjs            # dry run
+ *   node --env-file=.env scripts/import-alumni-mentors.mjs --commit   # writes
+ *   node --env-file=.env scripts/import-alumni-mentors.mjs --file=<path>
  *
  * Requires migrations/005_alumni_mentors.sql.
  *
