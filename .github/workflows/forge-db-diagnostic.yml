@@ -49,6 +49,10 @@ jobs:
           EC2_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
           set -euo pipefail
+          # The secrets carry trailing whitespace/newlines (forge.yml copes only
+          # because it leaves them unquoted); strip it so ssh gets a clean host.
+          EC2_HOST="$(printf '%s' "$EC2_HOST" | tr -d '[:space:]')"
+          EC2_USER="$(printf '%s' "$EC2_USER" | tr -d '[:space:]')"
           KEY="$RUNNER_TEMP/ec2_key"
           (umask 077; printf '%s\n' "$EC2_KEY" > "$KEY")
           trap 'rm -f "$KEY"' EXIT
