@@ -9,9 +9,11 @@ import {
   listingsService,
   lookupsService,
   platformService,
+  rolesService,
   startupsService,
   studentsService,
 } from '@/lib/services'
+import { ASSIGNABLE_ROLES } from '@/lib/auth/role-policy'
 import * as forge from '@/lib/modules/forge'
 import { getSharedProfile } from '@/lib/modules/shared'
 import * as present from './presenter'
@@ -42,7 +44,7 @@ const MOBILE_QUICK_ACTIONS = [
   { label: 'Settings', href: '/backend/settings' },
 ]
 
-const USER_FILTERS = ['All', 'Students', 'Founders', 'Managers', 'Inactive']
+const USER_FILTERS = ['All', 'Job Seekers', 'Founders', 'Managers', 'Inactive']
 const QUEUE_TABS = ['All Pending', 'Job Listings', 'Collab Posts', 'Approved', 'Rejected']
 
 /**
@@ -148,9 +150,16 @@ export async function getRoleManagement(query = null) {
       )
     : null
 
-  const profile = match ? await studentsService.getProfile(match.id).catch(() => null) : null
+  const [profile, roles] = await Promise.all([
+    match ? studentsService.getProfile(match.id).catch(() => null) : null,
+    lookupsService.getRoles(),
+  ])
 
   return {
+    // The five roles a Backend Manager can switch an account to (one at a time).
+    roleOptions: roles
+      .filter((role) => ASSIGNABLE_ROLES.includes(role.slug))
+      .map((role) => ({ value: role.slug, label: role.name })),
     query: query ?? '',
     searched: Boolean(term),
     matched: match ? present.toMatchedUser(match, profile) : null,
@@ -275,6 +284,28 @@ export async function createStaffUser(user, input) {
     roleSlug,
     password: password ?? null,
     actorId: user.id,
+  })
+}
+
+/**
+ * Change one account's role. One user = one role: the new role REPLACES the
+ * old one. The staff-email rule, "not your own role" and "keep at least one
+ * Backend Manager" are enforced in the roles service.
+ */
+export async function changeUserRole(user, input) {
+  const userId = Number(input?.userId)
+  if (!Number.isInteger(userId) || userId < 1) {
+    throw new ValidationError('Choose an account to change.')
+  }
+  const check = validator()
+  const roleSlug = check.oneOf('role', input?.role, ASSIGNABLE_ROLES, { required: true, label: 'Role' })
+  check.throwIfInvalid()
+
+  return rolesService.changeRole({
+    userId,
+    roleSlug,
+    actorId: user.id,
+    reason: input?.reason?.trim() || null,
   })
 }
 

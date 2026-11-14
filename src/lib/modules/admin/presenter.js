@@ -103,7 +103,7 @@ function relativeLabel(value, now) {
 export function toUserCounts(rows) {
   const count = (group) => rows.filter((row) => row.group === group).length
   return [
-    { label: `${count('Students')} Students`, tone: 'info' },
+    { label: `${count('Job Seekers')} Job Seekers`, tone: 'info' },
     { label: `${count('Founders')} Founders`, tone: 'success' },
     { label: `${count('Managers')} Managers`, tone: 'warning' },
   ]

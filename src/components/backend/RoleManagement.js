@@ -11,6 +11,7 @@ import {
   SectionLabel,
 } from '@/components/ui'
 import { api } from '@/lib/api/client'
+import ChangeRolePanel from './ChangeRolePanel'
 
 /**
  * Reference: /reference/mast ui/BM/Role Management.png
@@ -30,6 +31,7 @@ export default function RoleManagement({
   matched: matchedStudent = null,
   grants: foundersWithAccess = [],
   assignments: mobileRoleAssignments = [],
+  roleOptions = [],
 }) {
   const router = useRouter()
   const [query, setQuery] = useState(initialQuery)
@@ -102,7 +104,7 @@ export default function RoleManagement({
 
         {matchedStudent ? (
           <>
-            <SectionLabel className="mt-5">Matched Student</SectionLabel>
+            <SectionLabel className="mt-5">Matched Account</SectionLabel>
             <Card padding="lg" className="mt-3 px-6 py-5">
               <div className="flex flex-wrap items-center gap-4">
                 <Avatar
@@ -133,6 +135,7 @@ export default function RoleManagement({
                 </Button>
               </div>
             </Card>
+            <ChangeRolePanel key={matchedStudent.userId} user={matchedStudent} roleOptions={roleOptions} />
           </>
         ) : null}
 
@@ -211,7 +214,7 @@ export default function RoleManagement({
         onClose={() => setPending(null)}
         tone="danger"
         title="Revoke Founder Access?"
-        description="This founder will immediately lose access to Hiring, Service, and their startup listing, and revert to Standard Student. They'll need to re-apply for incubation to regain access."
+        description="This founder will immediately lose access to Hiring, Service, and their startup listing, and become a Job Seeker. They'll need to re-apply for incubation to regain access."
         confirmLabel="Yes, Revoke Access"
         confirmDisabled={submitting}
         onConfirm={confirm}
@@ -225,7 +228,7 @@ export default function RoleManagement({
           done
             ? done.action === 'grant'
               ? `${done.target.name} now has Founder access and can manage ${done.target.startup} on the platform.`
-              : `${done.target.name} has reverted to Standard Student. They have been notified.`
+              : `${done.target.name} is now a Job Seeker. They have been notified.`
             : ''
         }
       />

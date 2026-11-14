@@ -22,3 +22,15 @@ export const POST = route(async (request) => {
   const identity = await requirePermission('user.manage')
   return created(await backend.createStaffUser(identity.user, await readJson(request)))
 })
+
+/**
+ * PATCH /api/backend/users   { userId, role }
+ *
+ * Change an account's single role to any of the five roles (replacing the old
+ * one). Staff roles need an @atlasuniversity.edu.in email.
+ */
+export const PATCH = route(async (request) => {
+  await requireRole('backend-manager')
+  const identity = await requirePermission('user.manage')
+  return ok(await backend.changeUserRole(identity.user, await readJson(request)))
+})

@@ -7,7 +7,7 @@ import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
   title: 'Revoke Access',
-  description: 'Revoke Founder access and revert an account to Standard Student.',
+  description: 'Revoke Founder access and turn the account back into a Job Seeker.',
   path: '/backend/revoke-access',
   noIndex: true,
 })
@@ -23,7 +23,7 @@ export default async function BackendRevokeAccessPage({ searchParams }) {
   return (
     <AppShell role={ROLES.BACKEND_MANAGER} user={chromeUser}>
       <PageTitle>Revoke Access</PageTitle>
-      <Subtle className="mt-3 mb-4 text-sm lg:mb-[22px]">Revoke Founder access and revert an account to Standard Student.</Subtle>
+      <Subtle className="mt-3 mb-4 text-sm lg:mb-[22px]">Revoke Founder access and turn the account back into a Job Seeker.</Subtle>
       <RoleManagement focus="revoke" {...roles} />
     </AppShell>
   )
