@@ -71,7 +71,8 @@ const usersRepo = await import('@/lib/repositories/users.repository')
 
 console.log('\nATLAS Forge — Backend Manager module verification\n')
 
-const shantanu = await usersRepo.findByAppId('ATL-2022-0012')
+const shantanu = await usersRepo.findByAppId('ATL-2022-0012') // Founder (NovaMed)
+const kabir = await usersRepo.findByAppId('ATL-2020-0002') // the Backend Manager
 const mihir = await usersRepo.findByAppId('ATL-2020-0001')
 
 /* -------------------------------------------------------------------------- */
@@ -81,7 +82,7 @@ const mihir = await usersRepo.findByAppId('ATL-2020-0001')
 const dashboard = await backend.getDashboard()
 check('getDashboard — 5 desktop counters, 4 mobile',
   dashboard.stats.length === 5 && dashboard.mobileStats.length === 4)
-check('getDashboard — total users', dashboard.stats[0].value === '15', dashboard.stats[0].value)
+check('getDashboard — total users', dashboard.stats[0].value === '16', dashboard.stats[0].value)
 check('getDashboard — pending approvals counts listings',
   dashboard.stats[2].value === '3', dashboard.stats[2].value)
 check('getDashboard — open incubations', dashboard.stats[3].value === '2',
@@ -93,18 +94,17 @@ check('getDashboard — activity names its actor',
   dashboard.activity.every((row) => row.meta.startsWith('By ')), dashboard.activity[0]?.meta)
 
 const users = await backend.getUsers()
-check('getUsers — every account', users.users.length === 15)
-// Six students, one founder-only account, three managers — and five mentor
-// records with no platform role at all, which is why the chips do not sum to
-// the 15 accounts in the directory.
+check('getUsers — every account', users.users.length === 16)
+// One user = one role (migration 015): six students plus the five mentor
+// accounts are Job Seekers, two founders, three managers — 16 in all.
 check('getUsers — role groups counted',
-  users.counts.map((count) => count.label).join(' | ') === '6 Students | 1 Founders | 3 Managers',
+  users.counts.map((count) => count.label).join(' | ') === '11 Job Seekers | 2 Founders | 3 Managers',
   users.counts.map((count) => count.label).join(' | '))
-check('getUsers — accounts with no platform role are not counted as students',
-  users.users.filter((row) => row.group === 'Unassigned').length === 5,
+check('getUsers — after migration 015 nobody is left without a role',
+  users.users.filter((row) => row.group === 'Unassigned').length === 0,
   `${users.users.filter((row) => row.group === 'Unassigned').length} unassigned`)
-check('getUsers — an account that is both manager and founder is grouped as a manager',
-  users.users.find((row) => row.appId === 'ATL-2022-0012')?.group === 'Managers',
+check('getUsers — the founder account is grouped as a founder (one role)',
+  users.users.find((row) => row.appId === 'ATL-2022-0012')?.group === 'Founders',
   users.users.find((row) => row.appId === 'ATL-2022-0012')?.role)
 check('getUsers — managers are matched by slug, not display name',
   users.users.find((row) => row.appId === 'ATL-2020-0001')?.role === 'Forge Manager',
@@ -132,14 +132,14 @@ check('getRoleManagement — grants listed', roles.grants.length === 2)
 check('getRoleManagement — grants name who gave them',
   roles.grants.every((grant) => grant.granted.startsWith('Granted by Mihir Pawar')),
   roles.grants[0]?.granted)
-check('getRoleManagement — mobile list covers students', roles.assignments.length === 7,
+check('getRoleManagement — mobile list covers Job Seekers', roles.assignments.length === 11,
   `${roles.assignments.length} students`)
 
 const byAppId = await backend.getRoleManagement('ATL-2024-0871')
 check('getRoleManagement — search by App ID finds the account',
   byAppId.matched?.name === 'Riya Kapoor', byAppId.matched?.name)
 check('getRoleManagement — the match states their current role',
-  byAppId.matched?.meta.includes('Current role: Standard Student'), byAppId.matched?.meta)
+  byAppId.matched?.meta.includes('Current role: Job Seeker'), byAppId.matched?.meta)
 check('getRoleManagement — and whether they already have access',
   byAppId.matched?.hasAccess === false)
 
@@ -177,7 +177,7 @@ const errors = await backend.getErrorLogs()
 check('getErrorLogs — reads error_logs, which is empty', errors.rows.length === 0)
 
 const profile = await backend.getProfile(shantanu)
-check('getProfile — both roles listed', profile.profile.roles.length === 2,
+check('getProfile — exactly one role listed', profile.profile.roles.length === 1,
   profile.profile.roles.join(' | '))
 check('getProfile — the founder role names the startup',
   profile.profile.roles.some((role) => role === 'Founder — NovaMed'),
@@ -198,7 +198,7 @@ check('shared reads reuse the Forge assembly — listings',
 const rejected = queue.rows.find((row) => row.decision === 'Rejected')
 check('a Forge Manager rejection exists to override', Boolean(rejected), rejected?.title)
 
-await backend.decideListing(shantanu, { listingId: rejected.listingId, decision: 'approved' })
+await backend.decideListing(kabir, { listingId: rejected.listingId, decision: 'approved' })
 
 const decisions = await queryOne(
   `SELECT
@@ -227,7 +227,7 @@ check('override — and this role’s own verdict is carried separately',
   overridden.override === 'approved', String(overridden.override))
 
 const badDecision = await backend
-  .decideListing(shantanu, { listingId: rejected.listingId, decision: 'maybe' })
+  .decideListing(kabir, { listingId: rejected.listingId, decision: 'maybe' })
   .then(() => null)
   .catch((error) => error)
 check('override — an unknown verdict is refused',
@@ -245,7 +245,7 @@ await execute(`DELETE FROM ${T.notifications} WHERE entity_type = 'listing' AND 
 ])
 await execute(
   `DELETE FROM ${T.activity_logs} WHERE entity_type = 'listing' AND entity_id = ? AND actor_user_id = ?`,
-  [rejected.listingId, shantanu.id]
+  [rejected.listingId, kabir.id]
 )
 
 /* -------------------------------------------------------------------------- */
@@ -254,7 +254,7 @@ await execute(
 
 const target = byAppId.matched // Riya Kapoor — a student with no founder role
 
-await backend.grantAccess(shantanu, { userId: target.userId })
+await backend.grantAccess(kabir, { userId: target.userId })
 
 const hasRole = await queryValue(
   `SELECT COUNT(*) FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
@@ -262,18 +262,21 @@ const hasRole = await queryValue(
   [target.userId]
 )
 check('grantAccess — the founder role is added', Number(hasRole) === 1)
+const activeAfterGrant = await queryValue(
+  `SELECT COUNT(*) FROM ${T.user_roles} WHERE user_id = ? AND revoked_at IS NULL`, [target.userId])
+check('grantAccess — one role: Founder REPLACED Job Seeker', Number(activeAfterGrant) === 1, String(activeAfterGrant))
 
 const grantRow = await queryOne(
   `SELECT granted_by, incubation_application_id FROM ${T.founder_access_grants} WHERE user_id = ? AND revoked_at IS NULL`,
   [target.userId]
 )
 check('grantAccess — the grant records who gave it',
-  Number(grantRow.granted_by) === shantanu.id)
+  Number(grantRow.granted_by) === kabir.id)
 check('grantAccess — with no application to approve, the grant stands alone',
   grantRow.incubation_application_id === null)
 
 const duplicate = await backend
-  .grantAccess(shantanu, { userId: target.userId })
+  .grantAccess(kabir, { userId: target.userId })
   .then(() => null)
   .catch((error) => error)
 check('grantAccess — granting twice is a 409',
@@ -284,7 +287,7 @@ check('grantAccess — the search result now reads as having access',
   afterGrant.matched?.hasAccess === true)
 
 // ---- revoke, by user -------------------------------------------------------
-await backend.revokeAccess(shantanu, { userId: target.userId })
+await backend.revokeAccess(kabir, { userId: target.userId })
 
 const roleGone = await queryValue(
   `SELECT COUNT(*) FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
@@ -292,6 +295,10 @@ const roleGone = await queryValue(
   [target.userId]
 )
 check('revokeAccess — the founder role is removed', Number(roleGone) === 0)
+const backToSeeker = await queryValue(
+  `SELECT COUNT(*) FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
+    WHERE ur.user_id = ? AND ur.revoked_at IS NULL AND r.slug = 'student'`, [target.userId])
+check('revokeAccess — one role: the account is a Job Seeker again', Number(backToSeeker) === 1)
 
 const grantClosed = await queryValue(
   `SELECT COUNT(*) FROM ${T.founder_access_grants} WHERE user_id = ? AND revoked_at IS NOT NULL`,
@@ -300,14 +307,14 @@ const grantClosed = await queryValue(
 check('revokeAccess — the grant is closed rather than deleted', Number(grantClosed) === 1)
 
 const revokeAgain = await backend
-  .revokeAccess(shantanu, { userId: target.userId })
+  .revokeAccess(kabir, { userId: target.userId })
   .then(() => null)
   .catch((error) => error)
 check('revokeAccess — revoking again is a 404, not a silent success',
   revokeAgain?.constructor?.name === 'NotFoundError')
 
 const noSuchUser = await backend
-  .grantAccess(shantanu, { userId: 999999 })
+  .grantAccess(kabir, { userId: 999999 })
   .then(() => null)
   .catch((error) => error)
 check('grantAccess — an account that does not exist is 404',
@@ -320,17 +327,25 @@ await execute(
     WHERE ur.user_id = ? AND r.slug = 'founder'`,
   [target.userId]
 )
+// One user = one role: approving Founder REPLACED the Job Seeker role, so
+// deleting the founder row alone would leave the account with no role.
+await execute(
+  `UPDATE ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
+      SET ur.revoked_at = NULL, ur.active_slot = 1, ur.is_primary = 1
+    WHERE ur.user_id = ? AND r.slug = 'student'`,
+  [target.userId]
+)
 await execute(`DELETE FROM ${T.notifications} WHERE type = 'access' AND user_id = ?`, [target.userId])
 await execute(
   `DELETE FROM ${T.activity_logs} WHERE module = 'Access' AND actor_user_id = ?`,
-  [shantanu.id]
+  [kabir.id]
 )
 
 /* -------------------------------------------------------------------------- */
 /* Platform settings                                                          */
 /* -------------------------------------------------------------------------- */
 
-await backend.updateSetting(shantanu, { key: 'contact_log_auto_cc', value: false })
+await backend.updateSetting(kabir, { key: 'contact_log_auto_cc', value: false })
 lookups.clearCache()
 
 const stored = await queryValue(
@@ -344,14 +359,14 @@ check('updateSetting — feature checks read the new value at once',
   map.contact_log_auto_cc === false, String(map.contact_log_auto_cc))
 
 const badNumber = await backend
-  .updateSetting(shantanu, { key: 'platform_name', value: '   ' })
+  .updateSetting(kabir, { key: 'platform_name', value: '   ' })
   .then(() => null)
   .catch((error) => error)
 check('updateSetting — a string setting cannot be blanked',
   badNumber?.constructor?.name === 'ValidationError')
 
 const unknownKey = await backend
-  .updateSetting(shantanu, { key: 'not_a_setting', value: 'x' })
+  .updateSetting(kabir, { key: 'not_a_setting', value: 'x' })
   .then(() => null)
   .catch((error) => error)
 check('updateSetting — an unknown key is 404',
@@ -363,7 +378,7 @@ await execute(`UPDATE ${T.platform_settings} SET setting_value = ? WHERE setting
   'contact_log_auto_cc',
 ])
 await execute(`DELETE FROM ${T.activity_logs} WHERE module = 'Platform' AND actor_user_id = ?`, [
-  shantanu.id,
+  kabir.id,
 ])
 lookups.clearCache()
 
@@ -372,14 +387,14 @@ lookups.clearCache()
 /* -------------------------------------------------------------------------- */
 
 const unconfirmed = await backend
-  .resetPlatform(shantanu, {})
+  .resetPlatform(kabir, {})
   .then(() => null)
   .catch((error) => error)
 check('resetPlatform — refuses without the confirmation phrase',
   unconfirmed?.constructor?.name === 'ValidationError')
 
 const wrongPhrase = await backend
-  .resetPlatform(shantanu, { confirm: 'yes' })
+  .resetPlatform(kabir, { confirm: 'yes' })
   .then(() => null)
   .catch((error) => error)
 check('resetPlatform — refuses the wrong phrase',
@@ -423,7 +438,7 @@ check('resetPlatform — and the rollback left the data untouched', Number(survi
 
 const usersSurvive = await queryValue(`SELECT COUNT(*) FROM ${T.users}`)
 check('resetPlatform — user accounts are outside its scope by design',
-  Number(usersSurvive) === 15)
+  Number(usersSurvive) === 16)
 
 /* -------------------------------------------------------------------------- */
 /* The seeded state must be exactly as it started                             */

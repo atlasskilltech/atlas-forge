@@ -100,7 +100,7 @@ try {
   check('migration 015 constraint is present', indexPresent > 0)
   if (!indexPresent) throw new Error('Apply migrations/015_one_role_per_user.sql first.')
 
-  const bm = await usersRepo.findByAppId('ATL-2022-0012') // seeded Backend Manager
+  const bm = await usersRepo.findByAppId('ATL-2020-0002') // seeded Backend Manager
   const actorId = bm.id
 
   // --- Staff creation -------------------------------------------------------
@@ -208,7 +208,11 @@ try {
   fail.push(`unexpected error: ${error.stack ?? error}`)
 } finally {
   // Clean up everything this run created.
-  if (regIds.length) await execute(`DELETE FROM ${T.registration_requests} WHERE id IN (${regIds.map(() => '?').join(',')})`, regIds)
+  if (regIds.length) {
+    const ph = regIds.map(() => '?').join(',')
+    await execute(`DELETE FROM ${T.activity_logs} WHERE entity_type = 'registration_request' AND entity_id IN (${ph})`, regIds)
+    await execute(`DELETE FROM ${T.registration_requests} WHERE id IN (${ph})`, regIds)
+  }
   if (created.length) {
     const ids = created.filter(Boolean)
     const ph = ids.map(() => '?').join(',')

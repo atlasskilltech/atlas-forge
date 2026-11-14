@@ -243,7 +243,8 @@ try {
     initials: 'TS',
   })
   const studentRole = await queryOne(`SELECT id FROM ${T.roles} WHERE slug = ?`, ['student'])
-  await usersRepo.grantRole(testUserId, studentRole.id, { isPrimary: true })
+  // One user = one role: setSingleRole replaces any role, inside a transaction.
+  await (await import('@/lib/db')).transaction((tx) => usersRepo.setSingleRole(testUserId, studentRole.id, {}, tx))
   await usersRepo.upsertStudentProfile(testUserId, {
     programme: 'BTech Computer Science',
     yearOfStudy: 2,

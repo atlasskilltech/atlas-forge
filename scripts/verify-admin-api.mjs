@@ -82,7 +82,7 @@ const overview = await json(await call('/api/admin/overview', { cookies: meera }
 check('GET /api/admin/overview', overview?.ok === true && overview.data.stats.length === 5)
 
 for (const [path, key, expected] of [
-  ['/api/admin/users', 'users', 15],
+  ['/api/admin/users', 'users', 16],
   ['/api/admin/startups', 'startups', 4],
   ['/api/admin/contacts', 'rows', 5],
   ['/api/admin/contracts', 'rows', 3],
@@ -219,7 +219,7 @@ await connection.end()
 check('the sweep left the platform exactly as it was',
   Number(counts.listings) === 7 && Number(counts.approvals) === 4 &&
     Number(counts.applications) === 6 && Number(counts.contacts) === 5 &&
-    Number(counts.grants) === 2 && Number(counts.user_roles) === 12 &&
+    Number(counts.grants) === 2 && Number(counts.user_roles) === 16 &&
     Number(counts.activity) === 10 && counts.v1 === 'true',
   `listings=${counts.listings} approvals=${counts.approvals} applications=${counts.applications} ` +
     `contacts=${counts.contacts} grants=${counts.grants} roles=${counts.user_roles} ` +

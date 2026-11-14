@@ -297,7 +297,8 @@ try {
     initials: 'TF',
   })
   const founderRole = await queryOne(`SELECT id FROM ${T.roles} WHERE slug = ?`, ['founder'])
-  await usersRepo.grantRole(testUserId, founderRole.id, { isPrimary: true })
+  // One user = one role: setSingleRole replaces any role, inside a transaction.
+  await (await import('@/lib/db')).transaction((tx) => usersRepo.setSingleRole(testUserId, founderRole.id, {}, tx))
 
   const testUser = await usersRepo.findById(testUserId)
 

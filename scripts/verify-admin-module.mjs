@@ -183,7 +183,7 @@ check('no admin route exports a mutating verb', verbs.length === 0,
 const overview = await admin.getOverview()
 check('getOverview — 5 desktop counters, 4 mobile',
   overview.stats.length === 5 && overview.mobileStats.length === 4)
-check('getOverview — total users', overview.stats[0].value === '15', overview.stats[0].value)
+check('getOverview — total users', overview.stats[0].value === '16', overview.stats[0].value)
 check('getOverview — live listings', overview.stats[2].value === '3', overview.stats[2].value)
 check('getOverview — mentor sessions', overview.stats[3].value === '6', overview.stats[3].value)
 check('getOverview — active startups listed', overview.startups.length === 2)
@@ -192,13 +192,13 @@ check('getOverview — each row names its founder and mentor',
   overview.startups.map((row) => `${row.name}/${row.mentor}`).join(', '))
 
 const users = await admin.getUsers()
-check('getUsers — every account', users.users.length === 15)
+check('getUsers — every account', users.users.length === 16)
 check('getUsers — grouped by the shared rule',
-  users.counts.map((count) => count.label).join(' | ') === '6 Students | 1 Founders | 3 Managers',
+  users.counts.map((count) => count.label).join(' | ') === '11 Job Seekers | 2 Founders | 3 Managers',
   users.counts.map((count) => count.label).join(' | '))
 check('getUsers — rows carry no action affordance',
   users.users.every((row) => !('actions' in row) && !('userId' in row)))
-check('getUsers — mobile role is shortened', users.users.some((row) => row.mobileRole === 'Student'),
+check('getUsers — mobile role is shortened', users.users.some((row) => row.mobileRole === 'Job Seeker'),
   [...new Set(users.users.map((row) => row.mobileRole))].join(', '))
 
 const startups = await admin.getStartups()

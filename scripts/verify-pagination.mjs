@@ -17,7 +17,7 @@ import { T } from '../src/lib/queries/tables.mjs'
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3100'
 const MANAGER = 'ATL-2020-0001'
-const BACKEND_MANAGER = 'ATL-2022-0012'
+const BACKEND_MANAGER = 'ATL-2020-0002'
 const STUDENT = 'ATL-2024-0871'
 const PASSWORD = 'Atlas@2026'
 
@@ -195,7 +195,7 @@ const after = await one(`
 await db.end()
 
 check('teardown - probe rows removed and seeded data intact',
-  Number(after.activity) === seededActivity && Number(after.users) === 15 &&
+  Number(after.activity) === seededActivity && Number(after.users) === 16 &&
     Number(after.messages) === 2,
   `activity=${after.activity} users=${after.users} messages=${after.messages}`)
 

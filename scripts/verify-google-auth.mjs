@@ -332,22 +332,24 @@ if (db) {
       g0.where.slice(0, 80)
     )
 
-    // 7: multi-role — add a second role; the user now sees the picker (200) with
-    // only their assigned role dashboards, still not forced to change a password.
-    await run(`INSERT INTO ${T.user_roles} (user_id, role_id, is_primary) VALUES (?, ?, 0)`, [
-      uid,
-      founderRole.id,
-    ])
-    const multi = await land(mkCookie({ uid, role: 'student', viaGoogle: true }))
-    check(
-      'multi-role Google user reaches the role picker (200), not /change-password',
-      multi.status === 200 && !hits(multi, '/change-password'),
-      `status=${multi.status}`
+    // 7: one user = one role — a second active role is refused by the
+    // database (migration 015), and after a role CHANGE (student → founder)
+    // Google sign-in lands straight on the new dashboard; there is no picker.
+    const second = await run(
+      `INSERT INTO ${T.user_roles} (user_id, role_id, is_primary) VALUES (?, ?, 0)`,
+      [uid, founderRole.id]
+    ).then(() => 'inserted', (error) => error.code)
+    check('a second active role is refused by the database', second === 'ER_DUP_ENTRY', second)
+    await run(
+      `UPDATE ${T.user_roles} SET revoked_at = NOW(), is_primary = 0, active_slot = NULL WHERE user_id = ? AND role_id = ?`,
+      [uid, studentRole.id]
     )
+    await run(`INSERT INTO ${T.user_roles} (user_id, role_id, is_primary) VALUES (?, ?, 1)`, [uid, founderRole.id])
+    const changed = await land(mkCookie({ uid, role: 'student', viaGoogle: true }))
     check(
-      'multi-role picker shows only assigned roles (student + founder, not super-admin)',
-      hits(multi, '/student/home') && hits(multi, '/founder/home') && !hits(multi, '/admin/overview'),
-      ''
+      'after a role change, Google sign-in goes straight to the new dashboard (no picker)',
+      hits(changed, '/founder/home') && !hits(changed, '/student/home'),
+      changed.where.slice(0, 80)
     )
   } finally {
     await run(`DELETE FROM ${T.users} WHERE app_id = ? OR email = ?`, [APP_ID, EMAIL])

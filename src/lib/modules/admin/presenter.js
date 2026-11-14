@@ -83,8 +83,9 @@ export function toUserRow(user, { now = new Date() } = {}) {
     tone: isManager ? 'dark' : (user.avatarTone ?? 'primary'),
     appId: user.appId,
     role,
-    // The mobile card shortens the role to a single word.
-    mobileRole: role.split(' ')[0],
+    // The mobile card shortens the role to a single word ("Job Seeker" is kept
+    // whole — "Job" alone would not say what the account is).
+    mobileRole: role === 'Job Seeker' ? role : role.split(' ')[0],
     group,
     startup: user.startupName ?? '—',
     status: user.status === 'active' ? 'Active' : 'Inactive',

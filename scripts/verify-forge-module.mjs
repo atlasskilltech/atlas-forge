@@ -186,16 +186,15 @@ check('getPlatformLogs — each entry names its actor',
   logs.logs.every((log) => log.meta.startsWith('By ')), logs.logs[0]?.meta)
 
 const users = await forge.getUsers()
-check('getUsers — every account', users.accounts.length === 15)
-// Shantanu holds founder *and* backend-manager, and is described by the
-// higher standing — the same rule the Backend Manager's directory uses, so the
-// two screens cannot disagree about the same person.
+check('getUsers — every account', users.accounts.length === 16)
+// One user = one role: Shantanu and Arjun are founders only; the Backend
+// Manager is a separate account (Kabir Sethi).
 check('getUsers — founders read as unlocked',
-  users.accounts.filter((account) => account.role === 'Founder Unlocked').length === 1,
+  users.accounts.filter((account) => account.role === 'Founder Unlocked').length === 2,
   users.accounts.filter((a) => a.role === 'Founder Unlocked').map((a) => a.name).join(', '))
-check('getUsers — a manager who is also a founder reads as their manager role',
-  users.accounts.find((account) => account.appId === 'ATL-2022-0012')?.role === 'Backend Manager',
-  users.accounts.find((account) => account.appId === 'ATL-2022-0012')?.role)
+check('getUsers — the Backend Manager reads as their manager role',
+  users.accounts.find((account) => account.appId === 'ATL-2020-0002')?.role === 'Backend Manager',
+  users.accounts.find((account) => account.appId === 'ATL-2020-0002')?.role)
 check('getUsers — the inactive account is shown as inactive',
   users.accounts.find((account) => account.name === 'Kavya Reddy')?.status === 'Inactive')
 check('getUsers — a founder’s mobile row names their startup',
@@ -381,6 +380,14 @@ await execute(`DELETE FROM ${T.founder_access_grants} WHERE incubation_applicati
 await execute(
   `DELETE ur FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
     WHERE ur.user_id = ? AND r.slug = 'founder'`,
+  [applicantId]
+)
+// One user = one role: approving Founder REPLACED the Job Seeker role, so
+// deleting the founder row alone would leave the account with no role.
+await execute(
+  `UPDATE ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
+      SET ur.revoked_at = NULL, ur.active_slot = 1, ur.is_primary = 1
+    WHERE ur.user_id = ? AND r.slug = 'student'`,
   [applicantId]
 )
 await execute(

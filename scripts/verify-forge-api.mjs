@@ -105,7 +105,7 @@ for (const [path, key, expected] of [
   ['/api/forge/contracts', 'rows', 3],
   ['/api/forge/needs', 'needs', 3],
   ['/api/forge/logs', 'logs', 10],
-  ['/api/forge/users', 'accounts', 15],
+  ['/api/forge/users', 'accounts', 16],
 ]) {
   const body = await json(await call(path, { cookies: mihir }))
   check(`GET ${path}`, body?.data?.[key]?.length === expected,
@@ -257,11 +257,9 @@ check('the startup now reads as featured',
 const shantanu = await signIn(FOUNDER)
 check('a founder cannot read the forge API',
   (await call('/api/forge/dashboard', { cookies: shantanu })).status === 403)
-// Shantanu is a founder *and* a Backend Manager, so he holds
-// `listing.approve`. He must still be refused here: this endpoint files every
-// verdict as the Forge Manager, and a Backend Manager override belongs in the
-// Backend module against its own role.
-check('an account holding listing.approve but not the role is still refused here',
+// One user = one role: Shantanu is only a founder now, so he holds neither the
+// role nor `listing.approve`, and every write here is refused.
+check('a founder cannot approve listings here',
   (await call('/api/forge/approvals', {
     method: 'POST',
     body: { listingId: undecided.listingId, decision: 'approved' },
@@ -275,6 +273,16 @@ check('and likewise for mentor assignment',
   })).status === 403)
 check('a student cannot read the forge API',
   (await call('/api/forge/dashboard', { cookies: riya })).status === 403)
+
+// The Backend Manager sees everything, including the Forge Manager area.
+const backendManager = await signIn('ATL-2020-0002')
+check('a Backend Manager CAN read the forge API',
+  (await call('/api/forge/dashboard', { cookies: backendManager })).status === 200)
+const bmOnForgePage = await call('/forge/dashboard', { cookies: backendManager })
+check('a Backend Manager CAN open the Forge Manager dashboard page',
+  bmOnForgePage.status === 200, String(bmOnForgePage.status))
+const bmOnAdmin = await call('/api/admin/overview', { cookies: backendManager })
+check('a Backend Manager CAN read the Super Admin overview API', bmOnAdmin.status === 200, String(bmOnAdmin.status))
 
 const founderOnForgePage = await call('/forge/dashboard', { cookies: shantanu })
 const founderHtml = await text(founderOnForgePage)
@@ -324,6 +332,14 @@ await run(`DELETE FROM ${T.founder_access_grants} WHERE incubation_application_i
 ])
 await run(
   `DELETE ur FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id WHERE ur.user_id = ? AND r.slug = 'founder'`,
+  [applicant.id]
+)
+// One user = one role: approving Founder REPLACED the Job Seeker role, so
+// deleting the founder row alone would leave the account with no role.
+await run(
+  `UPDATE ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
+      SET ur.revoked_at = NULL, ur.active_slot = 1, ur.is_primary = 1
+    WHERE ur.user_id = ? AND r.slug = 'student'`,
   [applicant.id]
 )
 await run(

@@ -76,10 +76,10 @@ check('settings cast to types', settings.v1_mode === true && settings.platform_n
 // ---- auth -----------------------------------------------------------------
 const identity = await auth.authenticate('ATL-2022-0012', 'Atlas@2026')
 check('auth.authenticate', identity.user.appId === 'ATL-2022-0012')
-check('multi-role identity', identity.roles.length === 2,
+check('one-role identity (Founder only)', identity.roles.length === 1 && identity.roles[0].slug === 'founder',
   identity.roles.map((r) => r.slug).join(' + '))
-check('permissions resolved', identity.permissions.length > 20,
-  `${identity.permissions.length} permissions`)
+check('permissions are the founder role only', identity.permissions.includes('startup.manage_own') &&
+  !identity.permissions.includes('user.manage'), `${identity.permissions.length} permissions`)
 check('auth rejects wrong password',
   await auth.authenticate('ATL-2022-0012', 'wrong').then(() => false).catch(() => true))
 
@@ -150,7 +150,7 @@ check('partial readiness computed', partial.percent === 50, `${partial.percent}%
 const s = await platform.stats()
 // 3 pending: Frontend Developer, Data Analyst and the student collab post.
 check('platform.stats single round trip',
-  s.total_users === 15 && s.active_startups === 2 && s.pending_listings === 3,
+  s.total_users === 16 && s.active_startups === 2 && s.pending_listings === 3,
   `users=${s.total_users} startups=${s.active_startups} pending=${s.pending_listings}`)
 
 const activity = await platform.listActivity({})
