@@ -10,11 +10,15 @@
 #   1. preflight: .env complete, clean git tree, static table-name guard,
 #      database state (legacy / prefixed / mixed — mixed aborts)
 #   2. snapshot the running build (.next -> .next.rollback), npm ci, build
+#   2b. if migration 015 is pending: verified backup of the 46 tables and a
+#       read-only record of which users' roles change (site still up)
 # Maintenance window (Forge only; other applications are never affected):
 #   3. stop Forge
 #   4. if the database still has legacy table names (one-time, migration 013):
 #      verified backup of the 46 tables, content hashes, atomic RENAME to
 #      forge_*, re-verified row-by-row against the hashes
+#   4b. one-role migrations 014 / 015 if not applied yet (idempotent; a
+#       failure rolls back and removes the 015 constraint for the old code)
 #   5. start the new build from ecosystem.config.cjs (node --env-file=.env)
 #   6. smoke checks: online, db:check, all 183 statements PREPARE, HTTP pages
 # Any failure from step 3 on rolls back automatically: rename reversed (if it
@@ -32,6 +36,9 @@ BACKUPS="$ROOT/forge-migration/backups"
 N="node --no-warnings"
 MIGRATED_NOW=0
 STOPPED=0
+NEED_014=0
+NEED_015=0
+TRIED_015=0
 
 say() { printf '\n==> %s\n' "$*"; }
 die() { printf '\nDEPLOY ABORTED: %s\n' "$*" >&2; exit 1; }
@@ -82,6 +89,15 @@ rollback() {
       echo "   Backups: $BACKUPS" >&2
     fi
   fi
+  if [ "$TRIED_015" = 1 ]; then
+    # The previous code cannot change roles while the one-role constraint is
+    # in place, so remove it (roles stay one per user). Idempotent.
+    if $N --env-file=.env scripts/apply-sql.mjs rollback/015_down_constraint_only.sql; then
+      echo "   database: one-role constraint removed for the previous release"
+    else
+      echo "   !!! could not remove the one-role constraint: run database/rollback/015_down_constraint_only.sql" >&2
+    fi
+  fi
   git reset -q --hard "$PREV_SHA" || echo "   !!! git reset to $PREV_SHA failed" >&2
   if ! git diff --quiet "$PREV_SHA" "$NEW_SHA" -- package-lock.json; then npm ci --silent || true; fi
   if [ -d .next.rollback ]; then rm -rf .next && mv .next.rollback .next; fi
@@ -129,6 +145,16 @@ if [ "$STATE" = LEGACY ]; then
   bash -c 'docker info >/dev/null 2>&1 || sudo -n docker info >/dev/null 2>&1' || die "docker is needed for the pre-migration backup."
 fi
 
+# One-role migrations (014 Google link, 015 one role per user): read-only check.
+if [ -f scripts/ops/role-migration-state.mjs ]; then
+  ROLE_STATE=$($N --env-file=.env scripts/ops/role-migration-state.mjs) || die "cannot read the role-migration state. Nothing was changed."
+  eval "$ROLE_STATE"
+  echo "   one-role migrations pending: 014=$NEED_014 015=$NEED_015"
+  if [ "$NEED_015" = 1 ]; then
+    bash -c 'docker info >/dev/null 2>&1 || sudo -n docker info >/dev/null 2>&1' || die "docker is needed for the pre-migration backup. Nothing was changed."
+  fi
+fi
+
 # --- 2. build (old app still serving) -----------------------------------------
 say "Install and build"
 rm -rf .next.rollback
@@ -139,6 +165,27 @@ if ! { npm ci && npm run build; }; then
   git diff --quiet "$PREV_SHA" "$NEW_SHA" -- package-lock.json || npm ci --silent
   [ -d .next.rollback ] && rm -rf .next && mv .next.rollback .next
   die "build failed; the previous release was never stopped and is unchanged."
+fi
+
+# --- 2b. before migration 015 (old app still serving, no downtime) ---------------
+# A verified backup of the 46 Forge tables (read-only, --single-transaction,
+# other applications are not blocked) and a record of exactly which users'
+# roles will change. Taken while the old release keeps serving, so it adds no
+# downtime. If it fails, nothing has been stopped or changed.
+if [ "$NEED_015" = 1 ]; then
+  say "Before migration 015: backup + read-only dry run (site still up)"
+  ROLE_BACKUP=$(bash scripts/ops/forge-backup.sh "$BACKUPS" "pre-one-role" | tail -1)
+  if [ ! -f "$ROLE_BACKUP" ]; then
+    git reset -q --hard "$PREV_SHA"
+    git diff --quiet "$PREV_SHA" "$NEW_SHA" -- package-lock.json || npm ci --silent
+    [ -d .next.rollback ] && rm -rf .next && mv .next.rollback .next
+    die "backup before migration 015 failed; the previous release was never stopped and is unchanged."
+  fi
+  echo "   backup: $ROLE_BACKUP"
+  DRY_RUN_FILE="$BACKUPS/$(date -u +%Y%m%dT%H%M%SZ)-roles-dry-run.txt"
+  $N --env-file=.env scripts/roles-dry-run.mjs > "$DRY_RUN_FILE" 2>&1 || true
+  echo "   role changes recorded in: $DRY_RUN_FILE"
+  grep -E "would CHANGE|would LOSE|NO role today" "$DRY_RUN_FILE" | sed 's/^/   /'
 fi
 
 # --- 3. maintenance window -----------------------------------------------------
@@ -166,6 +213,19 @@ if [ "$STATE" = LEGACY ]; then
     && $N scripts/ops/compare-hashes.mjs "Forge data before vs after rename" "$PRE_HASHES" "$POST_HASHES" \
     || rollback "row-by-row comparison after the rename failed"
   rm -f "$POST_HASHES"
+fi
+
+# --- 4b. one-role migrations (014, 015) — each idempotent ------------------------
+if [ "$NEED_014" = 1 ]; then
+  say "Migration 014: Google account link columns"
+  $N --env-file=.env scripts/apply-sql.mjs migrations/014_users_google_link.sql || rollback "migration 014 failed"
+fi
+if [ "$NEED_015" = 1 ]; then
+  say "Migration 015: one role per user"
+  TRIED_015=1
+  $N --env-file=.env scripts/apply-sql.mjs migrations/015_one_role_per_user.sql || rollback "migration 015 failed"
+  STILL=$($N --env-file=.env scripts/ops/role-migration-state.mjs | sed -n 's/^NEED_015=//p')
+  [ "$STILL" = 0 ] || rollback "migration 015 did not leave the one-role constraint in place"
 fi
 
 # --- 5. start the new release -----------------------------------------------------
