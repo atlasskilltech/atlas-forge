@@ -110,11 +110,21 @@ Stop the app first, so the old code never runs against the new constraint
 pm2 stop atlas-forge
 ```
 
+First migration 014 (links a Google account to a user on first Google
+sign-in; it comes with the routing fix and is probably not on production
+yet). It only adds two empty columns and an index, and is safe to run again:
+
+```bash
+cd /home/ubuntu/forge-015 && node --env-file=/home/ubuntu/atlas-forge/.env scripts/apply-sql.mjs migrations/014_users_google_link.sql
+```
+
+Then migration 015:
+
 ```bash
 cd /home/ubuntu/forge-015 && node --env-file=/home/ubuntu/atlas-forge/.env scripts/apply-sql.mjs migrations/015_one_role_per_user.sql
 ```
 
-It must print `migrations/015_one_role_per_user.sql applied successfully.`
+Migration 015 must print `migrations/015_one_role_per_user.sql applied successfully.`
 The data part runs in one transaction; if it fails, no role was changed. It
 is safe to run again.
 
