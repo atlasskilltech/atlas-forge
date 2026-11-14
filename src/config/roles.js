@@ -1,5 +1,9 @@
-﻿/**
+/**
  * The five platform roles and their visual identity.
+ *
+ * One user = one role. The `student` slug is shown everywhere as "Job Seeker"
+ * (it replaced both the old Standard Student and Network Member roles); the
+ * slug itself is unchanged so URLs, permissions and stored grants still work.
  *
  * Reference: /reference/mast ui/Login/Role Select.png (monogram tints)
  *            /reference/phone components/TopBar/*.png (role chip tints)
@@ -15,16 +19,15 @@ export const ROLES = {
   FORGE_MANAGER: 'forge-manager',
   BACKEND_MANAGER: 'backend-manager',
   SUPER_ADMIN: 'super-admin',
-  NETWORK_MEMBER: 'network-member',
 }
 
 export const ROLE_LIST = [
   {
     id: ROLES.STUDENT,
-    initials: 'ST',
-    label: 'Standard Student',
-    shortLabel: 'Student',
-    mobileLabel: 'Standard Student',
+    initials: 'JS',
+    label: 'Job Seeker',
+    shortLabel: 'Job Seeker',
+    mobileLabel: 'Job Seeker',
     description: 'Browse jobs, projects, mentorship & flag availability',
     mobileDescription: 'Browse jobs & projects',
     tone: 'primary',
@@ -78,18 +81,6 @@ export const ROLE_LIST = [
     tone: 'neutral',
     chipTone: 'neutral',
     viewOnly: true,
-  },
-  {
-    id: ROLES.NETWORK_MEMBER,
-    initials: 'NM',
-    label: 'Network Member',
-    shortLabel: 'Member',
-    mobileLabel: 'Network Member',
-    description: 'Member of the ATLAS Forge network',
-    mobileDescription: 'ATLAS Forge network member',
-    tone: 'primary',
-    chipTone: 'primary',
-    viewOnly: false,
   },
 ]
 

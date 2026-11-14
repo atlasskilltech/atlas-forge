@@ -83,16 +83,15 @@ export async function GET(request) {
   // clearing — both Set-Cookie headers are emitted.
   await writeSession({
     userId: identity.user.id,
-    // Identical to password login: a portal role over the network-member fallback.
+    // Identical to password login: the user's single role (one user = one role).
     role: sessionRoleFor(identity.roles),
     // Marks the session Google-authenticated so the forced password-change gate
     // exempts it. `must_change_password` is left untouched in the database.
     viaGoogle: true,
   })
 
-  // Same destination as password login; /select-role sends a single-role user
-  // straight to their dashboard and a multi-role user to the role picker, and
-  // never routes a portal user to the network-member placeholder.
+  // Same destination as password login: /select-role sends the user straight
+  // to their role's dashboard (there is no role picker).
   const destination = new URL(next ?? '/select-role', googleAuthConfig.origin)
   return clearTemp(NextResponse.redirect(destination))
 }

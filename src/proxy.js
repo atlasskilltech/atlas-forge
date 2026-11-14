@@ -41,7 +41,7 @@ export function proxy(request) {
 
 export const config = {
   /**
-   * Every authenticated area. `/member` is the network-member home and
+   * Every authenticated area. `/member` (old Network Member home, now a redirect) and
    * `/change-password` is the forced first-login reset; both need an anonymous
    * visitor sent to the login screen with a real 307 before the page renders.
    */
