@@ -1,7 +1,7 @@
-import ActAsSwitcher from '@/components/auth/ActAsSwitcher'
+import Link from 'next/link'
 import { Banner } from '@/components/ui'
+import { SWITCH_ROLE_PATH } from '@/config/navigation'
 import { getIdentity } from '@/lib/auth/guard'
-import { actAsRoleOptions } from '@/lib/auth/act-as-options'
 import { getRole } from '@/config/roles'
 import { cn } from '@/lib/utils'
 import BottomNav from './BottomNav'
@@ -39,16 +39,20 @@ export default async function AppShell({
 }) {
   const roleConfig = getRole(role)
   const showBanner = viewOnlyBanner ?? Boolean(roleConfig?.viewOnly)
-  // Backend Manager testing mode: an always-visible way back. `getIdentity` is
-  // memoised per request, so this costs nothing extra on a page that already
-  // ran its guard.
+  // A Backend Manager who has switched to another role keeps a "Switch Role"
+  // entry in that role's menu, to change again or return. Nobody else ever
+  // gets it (it needs the REAL role, from the database, to be Backend
+  // Manager). `getIdentity` is memoised per request, so this is free.
   const identity = await getIdentity().catch(() => null)
-  const actingAs = identity?.actingAs?.slug ?? null
+  const switched = Boolean(identity?.actingAs)
+  const extraGroups = switched
+    ? [{ label: 'Backend Manager', items: [{ label: 'Switch Role', href: SWITCH_ROLE_PATH }] }]
+    : []
 
   return (
     <div className="min-h-dvh bg-canvas">
       <Navbar role={role} user={user} />
-      <Sidebar role={role} />
+      <Sidebar role={role} extraGroups={extraGroups} />
       <TopBar role={role} title={mobileTitle} backHref={backHref} />
 
       <main
@@ -61,8 +65,16 @@ export default async function AppShell({
         )}
       >
         <div className={cn(padded && 'px-4 pt-6 pb-8 lg:px-8 lg:pt-7')}>
-          {actingAs ? (
-            <ActAsSwitcher variant="banner" current={actingAs} roles={actAsRoleOptions()} />
+          {switched ? (
+            // Mobile has no sidebar: the same entry, as a small link.
+            <div className="mb-4 flex justify-end lg:hidden">
+              <Link
+                href={SWITCH_ROLE_PATH}
+                className="rounded-control border border-line bg-surface px-3 py-1.5 text-xs font-bold text-primary-text"
+              >
+                Switch Role
+              </Link>
+            </div>
           ) : null}
           {showBanner ? (
             <Banner icon="👁" className="mb-4 lg:mb-5">

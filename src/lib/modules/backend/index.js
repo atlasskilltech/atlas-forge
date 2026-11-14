@@ -37,7 +37,7 @@ const QUICK_ACCESS_CONTROLS = [
   { label: 'Revoke Access', href: '/backend/revoke-access', variant: 'danger' },
   { label: 'Review Job Queue', href: '/backend/job-queue', variant: 'secondary' },
   { label: 'Platform Settings', href: '/backend/settings', variant: 'secondary' },
-  { label: 'Switch Role (Testing)', href: '/backend/switch-role', variant: 'secondary' },
+  { label: 'Switch Role', href: '/backend/switch-role', variant: 'secondary' },
 ]
 
 const MOBILE_QUICK_ACTIONS = [

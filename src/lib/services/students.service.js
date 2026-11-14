@@ -20,7 +20,7 @@ export const listAll = () => users.findAll()
  *
  * A Job Seeker may have no student-profile row yet: everyone who became a Job
  * Seeker through registration approval or migration 015 (alumni, faculty,
- * others, the mentor accounts), and a Backend Manager testing as a Job Seeker.
+ * others, the mentor accounts), and a Backend Manager switched to Job Seeker.
  * They get an EMPTY profile (nothing filled in, not available) instead of an
  * error page. Nothing is written; the row is created the first time they save
  * their availability.

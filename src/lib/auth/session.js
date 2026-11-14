@@ -42,7 +42,7 @@ export function seal({ userId, role, viaGoogle = false, actingAs = null }) {
   // the secret; it is omitted (not set to 0) for password logins, leaving their
   // cookie byte-for-byte as before.
   if (viaGoogle) payload.g = 1
-  // Backend Manager "act as role" (testing). Only honoured by the guard when
+  // Backend Manager role switch. Only honoured by the guard when
   // the user's REAL role, re-read from the database, is backend-manager.
   if (actingAs) payload.a = String(actingAs)
   const encoded = b64(JSON.stringify(payload))

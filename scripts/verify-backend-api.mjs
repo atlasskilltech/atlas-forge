@@ -360,7 +360,7 @@ check('Riya still exists after the refused attempts',
   (await call('/api/backend/access?q=ATL-2024-0871', { cookies: shantanu }).then(json)).data.matched?.userId === riyaRow.userId)
 
 /* -------------------------------------------------------------------------- */
-/* Backend Manager "act as role" (testing mode)                               */
+/* Backend Manager: switch to any role                                       */
 /* -------------------------------------------------------------------------- */
 
 const actAs = (jarIn, role) => call('/api/auth/act-as', { method: 'POST', body: { role }, cookies: jarIn })
@@ -380,8 +380,21 @@ check('…the Job Seeker API works (even with no student profile)',
   (await call('/api/student/home', { cookies: tester })).status === 200)
 const studentPage = await call('/student/home', { cookies: tester })
 const studentPageHtml = await text(studentPage)
-check('…the Job Seeker dashboard renders with the testing banner',
-  studentPage.status === 200 && studentPageHtml.includes('Testing mode') && studentPageHtml.includes('Back to Backend Manager'))
+check('…the Job Seeker dashboard renders, with a Switch Role link in its menu',
+  studentPage.status === 200 && studentPageHtml.includes('href="/backend/switch-role"') && !studentPageHtml.includes('Testing'))
+const switchWhileStudent = await call('/backend/switch-role', { cookies: tester })
+const switchWhileStudentHtml = await text(switchWhileStudent)
+check('…the Switch Role page still opens (shows Job Seeker as current, Backend Manager as an option)',
+  switchWhileStudent.status === 200 && switchWhileStudentHtml.includes('Current') && switchWhileStudentHtml.includes('Backend Manager'))
+const realStudent = await signIn(STUDENT)
+const realStudentPage = await text(await call('/student/home', { cookies: realStudent }))
+check('a real Job Seeker has no Switch Role link', !realStudentPage.includes('href="/backend/switch-role"'))
+const realStudentSwitch = await call('/backend/switch-role', { cookies: realStudent })
+check('a real Job Seeker cannot open the Switch Role page',
+  redirectsTo(realStudentSwitch, await text(realStudentSwitch), '/select-role'))
+const realForgeSwitch = await call('/backend/switch-role', { cookies: await signIn(FORGE) })
+check('a Forge Manager cannot open the Switch Role page',
+  redirectsTo(realForgeSwitch, await text(realForgeSwitch), '/select-role'))
 check('…and the Backend Manager API is closed, exactly as for a Job Seeker',
   (await call('/api/backend/dashboard', { cookies: tester })).status === 403)
 check('…as is the Forge Manager API', (await call('/api/forge/dashboard', { cookies: tester })).status === 403)

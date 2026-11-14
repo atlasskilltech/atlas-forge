@@ -15,9 +15,9 @@ import { cn } from '@/lib/utils'
  *   item 36px tall, 2px apart (38px pitch) · 12px between groups
  *   16px side padding, items inset a further 12px (bullet lands at x=28)
  */
-export default function Sidebar({ role, className }) {
+export default function Sidebar({ role, extraGroups = [], className }) {
   const pathname = usePathname()
-  const groups = SIDEBAR_NAV[role] || []
+  const groups = [...(SIDEBAR_NAV[role] || []), ...extraGroups]
 
   return (
     <aside

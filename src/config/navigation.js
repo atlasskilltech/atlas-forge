@@ -17,6 +17,9 @@ import { ROLES } from './roles'
 /* Route roots                                                                */
 /* -------------------------------------------------------------------------- */
 
+/** Where a Backend Manager switches role — shown to no one else. */
+export const SWITCH_ROLE_PATH = '/backend/switch-role'
+
 export const ROLE_HOME = {
   [ROLES.STUDENT]: '/student/home',
   [ROLES.FOUNDER]: '/founder/home',
@@ -214,14 +217,10 @@ export const SIDEBAR_NAV = {
       ],
     },
     {
-      // The Backend Manager sees everything: these open the Forge Manager and
-      // (read-only) Super Admin areas, which allow this role server-side.
-      label: 'Other Areas',
-      items: [
-        { label: 'Forge Manager Area', href: '/forge/dashboard' },
-        { label: 'Super Admin View', href: '/admin/overview' },
-        { label: 'Switch Role (Testing)', href: '/backend/switch-role' },
-      ],
+      // Backend Manager power: take on any role (and come back). The Forge
+      // Manager and Super Admin pages also still open for this role directly.
+      label: 'Roles',
+      items: [{ label: 'Switch Role', href: '/backend/switch-role' }],
     },
     {
       label: 'My Account',

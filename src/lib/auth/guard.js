@@ -28,7 +28,7 @@ export const getIdentity = cache(async () => {
 
   try {
     let identity = await auth.buildIdentity(session.userId)
-    // Backend Manager testing mode: behave exactly as the chosen role. The
+    // Backend Manager role switch: behave exactly as the chosen role. The
     // real role is re-read from the database on every request, so this ends
     // the moment the account stops being a Backend Manager.
     if (session.actingAs) identity = await auth.actAsRole(identity, session.actingAs)

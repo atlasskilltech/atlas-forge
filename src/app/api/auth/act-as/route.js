@@ -10,7 +10,7 @@ import { rolesService } from '@/lib/services'
 /**
  * POST /api/auth/act-as   { role }
  *
- * Backend Manager testing mode: from now on, behave exactly as `role` (its
+ * Backend Manager role switch: from now on, behave exactly as `role` (its
  * permissions, menus and areas only). `role: 'backend-manager'` switches back.
  *
  * Only a user whose REAL role (from the database, not the cookie) is Backend

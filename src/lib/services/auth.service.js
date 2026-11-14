@@ -73,7 +73,7 @@ export async function buildIdentity(userId) {
 }
 
 /**
- * Backend Manager "act as role" (for testing).
+ * Backend Manager role switch.
  *
  * Returns an identity that behaves EXACTLY like `slug`: that one role, that
  * role's permissions only, and that role's areas only. The real role is kept
