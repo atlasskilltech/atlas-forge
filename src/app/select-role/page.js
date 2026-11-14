@@ -2,10 +2,10 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import RoleSelectCard from '@/components/auth/RoleSelectCard'
 import { BrandLogo } from '@/components/ui'
-import { ROLE_HOME } from '@/config/navigation'
 import { ROLE_LIST, ROLES } from '@/config/roles'
 import { siteConfig } from '@/config/site'
 import { requireIdentityOrRedirect } from '@/lib/auth/guard'
+import { landingPathFor, routableRoles } from '@/lib/auth/role-routing'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
@@ -38,13 +38,16 @@ export default async function SelectRolePage() {
   // (anonymous → /login, forced password change → /change-password), then:
   //   • exactly one role → go straight to that role's dashboard (no picker);
   //   • several roles    → show the picker, limited to the roles actually held.
-  // Every dashboard still enforces its role server-side (requireRoleOrRedirect),
-  // so this client-visible routing never grants access on its own.
+  // A user who holds a real portal role is never routed to the network-member
+  // fallback (see `@/lib/auth/role-routing`). Every dashboard still enforces its
+  // role server-side (requireRoleOrRedirect), so this client-visible routing
+  // never grants access on its own.
   const identity = await requireIdentityOrRedirect('/select-role')
-  const held = identity.roles
+  const held = routableRoles(identity.roles)
 
-  if (held.length === 1) redirect(ROLE_HOME[held[0].slug] ?? '/login')
-  if (held.length === 0) redirect('/login')
+  const landing = landingPathFor(identity.roles)
+  if (!landing) redirect('/login')
+  if (landing !== '/select-role') redirect(landing)
 
   const assignedRoles = ROLE_LIST.filter((role) =>
     held.some((heldRole) => heldRole.slug === role.id)

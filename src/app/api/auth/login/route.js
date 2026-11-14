@@ -1,4 +1,5 @@
 import { ok, readJson, route } from '@/lib/api/respond'
+import { sessionRoleFor } from '@/lib/auth/role-routing'
 import { writeSession } from '@/lib/auth/session'
 import * as auth from '@/lib/services/auth.service'
 import * as rateLimit from '@/lib/services/rate-limit.service'
@@ -29,7 +30,9 @@ export const POST = route(async (request) => {
   }
 
   await rateLimit.recordAttempt({ action: 'login', identifier: appId, ipAddress, succeeded: true })
-  await writeSession({ userId: identity.user.id, role: identity.defaultRole?.slug ?? null })
+  // The same role choice Google Sign-In makes (a portal role over the
+  // network-member fallback) — see `@/lib/auth/role-routing`.
+  await writeSession({ userId: identity.user.id, role: sessionRoleFor(identity.roles) })
 
   return ok({
     user: {

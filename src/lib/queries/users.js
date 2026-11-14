@@ -35,6 +35,26 @@ export const SELECT_USER_BY_EMAIL = `
    WHERE u.email = ? AND u.deleted_at IS NULL
 `
 
+/**
+ * A live account already linked to a Google identity (`sub` = Google's stable,
+ * never-reused account id). Needs migration 014; the repository treats a
+ * missing column as "not linked" so this is safe to deploy before it.
+ */
+export const SELECT_USER_BY_GOOGLE_SUB = `
+  SELECT ${USER_FIELDS} FROM ${T.users} u
+   WHERE u.google_sub = ? AND u.deleted_at IS NULL
+`
+
+/**
+ * Link a Google identity to an account the first time it signs in with Google.
+ * Only fills an EMPTY link — an account already linked to a different Google
+ * identity is never silently re-pointed.
+ */
+export const LINK_GOOGLE_ACCOUNT = `
+  UPDATE ${T.users} SET google_sub = ?, google_linked_at = NOW()
+   WHERE id = ? AND google_sub IS NULL
+`
+
 /** Includes the hash — only the auth service may call this. */
 export const SELECT_USER_CREDENTIALS = `
   SELECT u.id, u.app_id, u.email, u.full_name, u.password_hash, u.status

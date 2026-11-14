@@ -1,7 +1,9 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import SignOutButton from '@/components/auth/SignOutButton'
 import { BrandLogo } from '@/components/ui'
-import { requireRoleOrRedirect } from '@/lib/auth/guard'
+import { requireIdentityOrRedirect, requireRoleOrRedirect } from '@/lib/auth/guard'
+import { landingPathFor } from '@/lib/auth/role-routing'
 import { ROLES } from '@/config/roles'
 import { buildMetadata } from '@/lib/seo'
 
@@ -24,6 +26,13 @@ export const metadata = buildMetadata({
  * active and gives a way to sign out.
  */
 export default async function MemberHomePage() {
+  // A user who also holds a real portal role (or opened this page through a
+  // stale `?next=` / bookmark) belongs on that role's dashboard, not on this
+  // placeholder. Same routing as /select-role and both sign-in paths.
+  const signedIn = await requireIdentityOrRedirect('/member/home')
+  const landing = landingPathFor(signedIn.roles)
+  if (landing && landing !== '/member/home') redirect(landing)
+
   const identity = await requireRoleOrRedirect(ROLES.NETWORK_MEMBER, '/member/home')
 
   return (

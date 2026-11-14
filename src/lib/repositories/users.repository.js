@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { execute, insert, query, queryOne, queryValue } from '@/lib/db'
+import { DatabaseError, execute, insert, query, queryOne, queryValue } from '@/lib/db'
 import * as sql from '@/lib/queries/users'
 import { applyFullListCap, withFullListCap } from '@/lib/queries/pagination'
 import { bool, inClause, iso, num } from '@/lib/utils/rows'
@@ -82,6 +82,41 @@ export async function findByEmailAny(email) {
 export async function findByEmail(email) {
   const row = await queryOne(sql.SELECT_USER_BY_EMAIL, [email])
   return row ? toUser(row) : null
+}
+
+/** True when the error is "column does not exist" — i.e. migration 014 not applied yet. */
+const isMissingColumn = (error) => error instanceof DatabaseError && error.code === 'ER_BAD_FIELD_ERROR'
+
+/**
+ * The live account linked to this Google `sub`, or `null`. Before migration 014
+ * adds the column there are no links, so a missing column reads as `null`.
+ */
+export async function findByGoogleSub(sub) {
+  if (!sub) return null
+  try {
+    const row = await queryOne(sql.SELECT_USER_BY_GOOGLE_SUB, [sub])
+    return row ? toUser(row) : null
+  } catch (error) {
+    if (isMissingColumn(error)) return null
+    throw error
+  }
+}
+
+/**
+ * Record that `userId` signs in with the Google identity `sub`. Best-effort and
+ * fill-only (an existing link is never overwritten): returns `true` when a link
+ * was written, `false` when it was already linked, the column does not exist
+ * yet, or the `sub` is held by another (e.g. soft-deleted) row.
+ */
+export async function linkGoogleAccount(userId, sub) {
+  if (!sub) return false
+  try {
+    const { affectedRows } = await execute(sql.LINK_GOOGLE_ACCOUNT, [sub, userId])
+    return affectedRows > 0
+  } catch (error) {
+    if (isMissingColumn(error) || (error instanceof DatabaseError && error.isDuplicate)) return false
+    throw error
+  }
 }
 
 /**

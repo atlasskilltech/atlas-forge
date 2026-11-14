@@ -105,15 +105,41 @@ export async function verifyCallback({ code, expectedNonce }) {
   return { email: payload.email, sub: payload.sub, name: payload.name ?? null }
 }
 
+/** Lower-case and trim an address so the lookup never depends on how Google or the DB cased it. */
+export function normalizeEmail(email) {
+  return typeof email === 'string' ? email.trim().toLowerCase() : ''
+}
+
 /**
- * Resolve a Google-verified email to an eligible ATLAS Forge identity, applying
- * the same gate the password path applies: the account must exist, not be
- * soft-deleted (the query enforces that), and be `active`. Returns the full
- * identity (user + roles + permissions + defaultRole) via `buildIdentity`.
+ * Resolve a Google-verified identity to an eligible ATLAS Forge account,
+ * applying the same gate the password path applies: the account must exist, not
+ * be soft-deleted (the queries enforce that), and be `active`.
+ *
+ * Lookup order:
+ *   1. the account already LINKED to this Google `sub` (a previous Google login);
+ *   2. otherwise the account whose email equals the verified Google email,
+ *      normalised to lower case.
+ *
+ * On success the Google `sub` is linked to that account (fill-only, never
+ * re-pointed) and `last_active_at` is touched, as password login does. It NEVER
+ * creates an account: a Google email with no matching account is
+ * `google_no_account`, exactly as before, so no duplicate user can appear here.
+ *
+ * Callers must only pass an email that `verifyCallback` returned — that is, one
+ * Google reported as `email_verified === true`.
+ *
+ * Returns the full identity (user + roles + permissions + defaultRole) via
+ * `buildIdentity`, the same object password login produces.
  */
-export async function resolveEligibleUser(email) {
-  const user = await users.findByEmail(email)
+export async function resolveEligibleUser({ email, sub = null } = {}) {
+  const normalized = normalizeEmail(email)
+  if (!normalized) throw new GoogleAuthError('google_unverified')
+
+  const user = (await users.findByGoogleSub(sub)) ?? (await users.findByEmail(normalized))
   if (!user) throw new GoogleAuthError('google_no_account')
   if (user.status !== 'active') throw new GoogleAuthError('google_inactive')
+
+  await users.linkGoogleAccount(user.id, sub)
+  await users.touchLastActive(user.id)
   return auth.buildIdentity(user.id)
 }
