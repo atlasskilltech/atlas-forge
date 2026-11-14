@@ -180,7 +180,8 @@ Use real accounts you own. Do not delete real users during the test.
 
 ## 6. Rollback plan
 
-Pick the case that matches.
+Pick the case that matches. The commands below call `docker`; if Docker
+needs root on the server, write `sudo docker` instead.
 
 **A. The new code misbehaves, but the roles in the database are fine.**
 
