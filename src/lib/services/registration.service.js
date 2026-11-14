@@ -30,11 +30,20 @@ import * as registration from '@/lib/repositories/registration.repository'
 import * as users from '@/lib/repositories/users.repository'
 import * as studentVerification from '@/lib/services/student-verification.service'
 import { validator } from '@/lib/validate'
+import { registrationEmailError, usesApplicationIdAsAppId } from '@/lib/auth/role-policy'
 
 import { T } from '@/lib/queries/tables.mjs'
 
-/** Approved registrants receive this role and only this role. */
-const NETWORK_MEMBER_ROLE = 'network-member'
+/**
+ * Every approved registrant becomes a Job Seeker (role slug `student`) — and
+ * holds only that role. "Who are you?" is stored as the registration's
+ * category, never as a role.
+ */
+const JOB_SEEKER_ROLE = 'student'
+
+/** Shown when an email or Application ID already belongs to someone. */
+const EMAIL_TAKEN = 'An ATLAS Forge account already uses this email address. Sign in instead, or use a different email.'
+const APPLICATION_ID_TAKEN = 'This Application ID is already registered with ATLAS Forge. Each Application ID can belong to only one person.'
 
 /** The sign-in URL emailed to applicants, from the configured public site URL. */
 const loginUrl = () =>
@@ -385,6 +394,19 @@ async function assertNotFlooding({ email, sourceIp }) {
   }
 }
 
+async function assertUnique({ email, studentApplicationId, excludingId = null }) {
+  const fields = {}
+  if (email && (await registration.findUserByEmail(email))) fields.email = EMAIL_TAKEN
+  if (studentApplicationId) {
+    const taken =
+      (await registration.findUserByAppId(studentApplicationId)) ||
+      (await registration.countLiveByStudentApplicationId(studentApplicationId, { excludingId })) > 0
+    if (taken) fields.studentApplicationId = APPLICATION_ID_TAKEN
+  }
+  const messages = Object.values(fields)
+  if (messages.length > 0) throw new ValidationError(messages[0], { fields })
+}
+
 const trimUserAgent = (value) => (value ? String(value).slice(0, 255) : null)
 
 /** Unambiguous characters only — no 0/O or 1/I — so a reference can be read aloud. */
@@ -430,7 +452,16 @@ export async function submit(input = {}, { sourceIp = '', userAgent = null } = {
         })
       : null
 
+  // Atlas Students and Atlas Faculty must use their university address.
+  const domainError = roleCategory && email ? registrationEmailError(roleCategory, email) : null
+  if (domainError) check.reject('email', domainError)
+
   check.throwIfInvalid()
+
+  // One email = one user, one Application ID = one user. Checked here for a
+  // clear message; the unique indexes on users.email / users.app_id are the
+  // database-level guarantee.
+  await assertUnique({ email, studentApplicationId })
 
   await assertNotFlooding({ email, sourceIp })
 
@@ -611,18 +642,19 @@ export const getById = (id) => registration.findById(id)
 
 /**
  * Approve a pending registration and bring the person into the platform as a
- * network member.
+ * Job Seeker.
  *
  * One transaction does everything, so the outcome is all-or-nothing — never an
  * approved row with no account, nor an account with no approved row:
  *
  *   1. claim the row (pending → approved, reviewer + time); a lost race here
  *      means someone already decided it, so the whole thing aborts with 409.
- *   2. create a new user (status 'active', must_change_password = 1, an
- *      `AFM-<year>-<id>` App ID, a scrypt-hashed temporary password) OR, when
- *      the email already belongs to an ACTIVE account, attach to that account
- *      instead of creating a second one.
- *   3. grant the `network-member` role — and ONLY that role.
+ *   2. create a new user (status 'active', must_change_password = 1, a
+ *      scrypt-hashed temporary password). App ID: an Atlas Student's own
+ *      university Application ID; everyone else gets `AFM-<year>-<id>`.
+ *      One email = one user: if the email (or the Application ID) already
+ *      belongs to an account, approval is refused — nothing is attached.
+ *   3. give the Job Seeker role — and ONLY that role.
  *   4. write the user and role ids back onto the registration row.
  *   5. one audit line.
  *
@@ -635,64 +667,69 @@ export async function approve({ applicationId, actorId }) {
   if (!application) throw new NotFoundError('Registration')
   assertPending(application)
 
-  const role = await findRoleBySlug(NETWORK_MEMBER_ROLE)
-  if (!role) {
-    throw new ConflictError(
-      'The network-member role is missing. Apply migration 011 before approving registrations.'
-    )
+  const role = await findRoleBySlug(JOB_SEEKER_ROLE)
+  if (!role) throw new ConflictError('The Job Seeker (student) role is missing from reference data.')
+
+  // Rows submitted before these rules existed are re-checked here, so an old
+  // pending registration cannot slip past them.
+  const domainError = registrationEmailError(application.roleCategory, application.email)
+  if (domainError) {
+    throw new ConflictError(`${domainError} Reject this registration and ask the person to register again with the right email.`)
+  }
+  const isStudent = usesApplicationIdAsAppId(application.roleCategory)
+  const appIdFromApplication = isStudent ? String(application.studentApplicationId ?? '').trim() : null
+  if (isStudent && !appIdFromApplication) {
+    throw new ConflictError('This Atlas Student registration has no Application ID, so no App ID can be issued. Reject it and ask the student to register again.')
   }
 
-  // Decided before the transaction so an unusable match is reported cleanly
-  // rather than surfacing as a duplicate-key failure mid-transaction.
+  // One email = one user: an existing account is never attached to.
   const existing = await registration.findUserByEmail(application.email)
-  if (existing && (existing.isDeleted || existing.status !== 'active')) {
+  if (existing) {
     throw new ConflictError(
-      `This email belongs to an account (${existing.appId}) that is not active. Reactivate it or reject this registration.`
+      `This email already belongs to account ${existing.appId}. One email can have only one account, so this registration cannot be approved. Reject it instead.`
     )
   }
+  if (isStudent) {
+    const appIdOwner = await registration.findUserByAppId(appIdFromApplication)
+    const otherLive = await registration.countLiveByStudentApplicationId(appIdFromApplication, {
+      excludingId: applicationId,
+    })
+    if (appIdOwner || otherLive > 0) throw new ConflictError(APPLICATION_ID_TAKEN)
+  }
 
-  const isNew = !existing
-  const temporaryPassword = isNew ? newTemporaryPassword() : null
-  const passwordHash = isNew ? await hashPassword(temporaryPassword) : null
+  const isNew = true
+  const temporaryPassword = newTemporaryPassword()
+  const passwordHash = await hashPassword(temporaryPassword)
 
   // Domain errors are thrown outside `transaction()`, which would otherwise
   // re-wrap them as a database failure and answer 500.
   const result = await transaction(async (tx) => {
     if (!(await registration.claimForApproval(applicationId, actorId, tx))) return null
 
-    let userId
-    let appId
-    if (existing) {
-      userId = existing.id
-      appId = existing.appId
-      // Idempotent: GRANT_ROLE upserts, so re-approval never duplicates a grant.
-      await users.grantRole(userId, role.id, { isPrimary: false, grantedBy: actorId }, tx)
-    } else {
-      appId = memberAppId(applicationId)
-      userId = await users.create(
-        {
-          appId,
-          name: application.fullName,
-          email: application.email,
-          passwordHash,
-          initials: initialsOf(application.fullName),
-          avatarTone: 'primary',
-          status: 'active',
-        },
-        tx
-      )
-      // Set here, not in users.create, so the shared create path used by staff
-      // and outsider-founder accounts is left exactly as it was.
-      await execute(`UPDATE ${T.users} SET must_change_password = 1 WHERE id = ?`, [userId], tx)
-      await users.grantRole(userId, role.id, { isPrimary: true, grantedBy: actorId }, tx)
-    }
+    const appId = appIdFromApplication ?? memberAppId(applicationId)
+    const userId = await users.create(
+      {
+        appId,
+        name: application.fullName,
+        email: String(application.email).trim().toLowerCase(),
+        passwordHash,
+        initials: initialsOf(application.fullName),
+        avatarTone: 'primary',
+        status: 'active',
+      },
+      tx
+    )
+    // Set here, not in users.create, so the shared create path used by staff
+    // and outsider-founder accounts is left exactly as it was.
+    await execute(`UPDATE ${T.users} SET must_change_password = 1 WHERE id = ?`, [userId], tx)
+    await users.setSingleRole(userId, role.id, { grantedBy: actorId }, tx)
 
     await registration.linkApproval(applicationId, { userId, roleId: role.id }, tx)
 
     await platform.logActivity(
       {
         actorUserId: actorId,
-        action: `Approved registration ${application.reference}: ${application.fullName} → ${appId} (${isNew ? 'new account' : 'existing account'})`,
+        action: `Approved registration ${application.reference}: ${application.fullName} → ${appId} (Job Seeker)`,
         module: 'Registration',
         entityType: 'registration_request',
         entityId: applicationId,

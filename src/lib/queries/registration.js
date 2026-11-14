@@ -205,3 +205,29 @@ export const SELECT_USER_BY_EMAIL = `
    WHERE email = ?
    LIMIT 1
 `
+
+/**
+ * Any account (including soft-deleted) whose App ID equals this value. Used to
+ * keep "one Application ID = one user": an Atlas Student's university
+ * Application ID becomes their App ID, so it must not already be taken.
+ * `uq_users_app_id` is the database-level guarantee; this gives a clear error.
+ */
+export const SELECT_USER_BY_APP_ID_ANY = `
+  SELECT id, app_id, status, deleted_at
+    FROM ${T.users}
+   WHERE app_id = ?
+   LIMIT 1
+`
+
+/**
+ * Another registration (pending or approved) already carrying this Student
+ * Application ID. A rejected one does not count, so a student whose earlier
+ * attempt was rejected can apply again. Collation is case-insensitive.
+ */
+export const COUNT_LIVE_BY_STUDENT_APPLICATION_ID = `
+  SELECT COUNT(*) AS total
+    FROM ${T.registration_requests}
+   WHERE student_application_id = ?
+     AND status IN ('pending', 'approved')
+     AND (? IS NULL OR id <> ?)
+`

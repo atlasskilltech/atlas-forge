@@ -207,3 +207,15 @@ export async function findUserByEmail(email) {
       }
     : null
 }
+
+/** An account (live or soft-deleted) that already uses this App ID, or `null`. */
+export async function findUserByAppId(appId) {
+  const row = await queryOne(sql.SELECT_USER_BY_APP_ID_ANY, [appId])
+  return row
+    ? { id: num(row.id), appId: row.app_id, status: row.status, isDeleted: Boolean(row.deleted_at) }
+    : null
+}
+
+/** Pending/approved registrations with this Student Application ID (optionally ignoring one row). */
+export const countLiveByStudentApplicationId = (applicationId, { excludingId = null } = {}) =>
+  count(sql.COUNT_LIVE_BY_STUDENT_APPLICATION_ID, [applicationId, excludingId, excludingId])
