@@ -2,7 +2,8 @@ import 'server-only'
 
 import { randomBytes } from 'node:crypto'
 import { transaction } from '@/lib/db'
-import { ConflictError, NotFoundError } from '@/lib/errors'
+import { ConflictError, NotFoundError, ValidationError } from '@/lib/errors'
+import { isStaffRole, normalizeEmail, staffEmailError } from '@/lib/auth/role-policy'
 import { hashPassword } from '@/lib/auth/password'
 import * as users from '@/lib/repositories/users.repository'
 import * as lookups from '@/lib/repositories/lookups.repository'
@@ -30,7 +31,18 @@ import * as platform from '@/lib/repositories/platform.repository'
  * it. The whole thing runs in a transaction: a failure after the user row is
  * written must not leave a roleless account behind.
  */
-export async function createStaffUser({ name, email, roleSlug, password = null, actorId = null }) {
+export async function createStaffUser({ name, email: rawEmail, roleSlug, password = null, actorId = null }) {
+  // Only the three staff roles can be created here. Job Seekers come only from
+  // the registration form and Founders only from incubation approval.
+  if (!isStaffRole(roleSlug)) {
+    throw new ValidationError('Only Forge Manager, Backend Manager or Super Admin accounts can be created here.', {
+      fields: { role: 'Choose Forge Manager, Backend Manager or Super Admin.' },
+    })
+  }
+  const email = normalizeEmail(rawEmail)
+  const emailError = staffEmailError(roleSlug, email)
+  if (emailError) throw new ValidationError(emailError, { fields: { email: emailError } })
+
   const resolvedRole = await findRole(roleSlug)
   if (!resolvedRole) throw new NotFoundError('Role')
 
@@ -61,7 +73,7 @@ export async function createStaffUser({ name, email, roleSlug, password = null, 
       tx
     )
 
-    await users.grantRole(userId, resolvedRole.id, { isPrimary: true, grantedBy: actorId }, tx)
+    await users.setSingleRole(userId, resolvedRole.id, { grantedBy: actorId }, tx)
 
     await platform.logActivity(
       {

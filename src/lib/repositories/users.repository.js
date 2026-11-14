@@ -142,8 +142,8 @@ export async function findRoles(userId) {
   return rows.map(toRole)
 }
 
-export async function findPermissions(userId) {
-  const rows = await query(sql.SELECT_USER_PERMISSIONS, [userId])
+export async function findRolePermissions(roleId) {
+  const rows = await query(sql.SELECT_ROLE_PERMISSIONS, [roleId])
   return rows.map((row) => row.slug)
 }
 
@@ -265,13 +265,19 @@ export async function replaceSkills(userId, skillIds, conn) {
   }
 }
 
-export async function grantRole(userId, roleId, { isPrimary = false, grantedBy = null } = {}, conn) {
-  await execute(sql.GRANT_ROLE, [userId, roleId, isPrimary, grantedBy], conn)
-}
-
-export async function revokeRole(userId, roleId, conn) {
-  const { affectedRows } = await execute(sql.REVOKE_ROLE, [userId, roleId], conn)
-  return affectedRows > 0
+/**
+ * Give a user exactly ONE role, replacing whatever they held before.
+ *
+ * Must run on a transaction connection (`conn`) so the revoke and the grant
+ * commit together. Re-setting the role a user already holds is a no-op apart
+ * from making sure it is the only active one. Old role rows are kept with
+ * `revoked_at` set (history), never deleted.
+ */
+export async function setSingleRole(userId, roleId, { grantedBy = null } = {}, conn) {
+  if (!conn) throw new Error('setSingleRole must run inside a transaction.')
+  await query(sql.LOCK_USER_ROLES, [userId], conn)
+  await execute(sql.REVOKE_OTHER_ROLES, [userId, roleId], conn)
+  await execute(sql.SET_SINGLE_ROLE, [userId, roleId, grantedBy], conn)
 }
 
 export async function softDelete(userId, conn) {

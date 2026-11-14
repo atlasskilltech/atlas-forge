@@ -6,6 +6,7 @@ import * as incubation from '@/lib/repositories/incubation.repository'
 import * as platform from '@/lib/repositories/platform.repository'
 import * as users from '@/lib/repositories/users.repository'
 import { getReadinessItems, getRoleBySlug, getStages, resolveId } from './lookups.service'
+import { assertCanBecomeFounder } from './roles.service'
 
 export const listApplications = (filters) => incubation.findApplications(filters)
 export const getApplication = (id) => incubation.findApplicationById(id)
@@ -113,8 +114,9 @@ export async function saveReadiness({ applicationId, readiness = {} }) {
  * Approve an application and unlock Founder access in one transaction.
  *
  * Three things must happen together: the application is marked approved, a
- * grant is recorded with its actor, and the founder role is added to the user.
- * If any step fails the applicant must not be left half-promoted.
+ * grant is recorded with its actor, and the user's role is REPLACED by founder
+ * (one user = one role: a Job Seeker stops being a Job Seeker). If any step
+ * fails the applicant must not be left half-promoted.
  */
 export async function grantFounderAccess({ applicationId, actorId, reason = null }) {
   const application = await incubation.findApplicationById(applicationId)
@@ -122,6 +124,7 @@ export async function grantFounderAccess({ applicationId, actorId, reason = null
 
   const founderRole = await getRoleBySlug('founder')
   if (!founderRole) throw new ValidationError('Founder role is missing from reference data.')
+  await assertCanBecomeFounder(application.applicant.id)
 
   return transaction(async (tx) => {
     await incubation.review(applicationId, 'approved', actorId, tx)
@@ -137,12 +140,7 @@ export async function grantFounderAccess({ applicationId, actorId, reason = null
       tx
     )
 
-    await users.grantRole(
-      application.applicant.id,
-      founderRole.id,
-      { isPrimary: false, grantedBy: actorId },
-      tx
-    )
+    await users.setSingleRole(application.applicant.id, founderRole.id, { grantedBy: actorId }, tx)
 
     await platform.logActivity(
       {
@@ -192,6 +190,7 @@ export async function grantAccessToUser({ userId, actorId, reason = null }) {
   if (existing.some((grant) => grant.isActive)) {
     throw new ConflictError('This account already has Founder access.')
   }
+  await assertCanBecomeFounder(userId)
 
   const applications = await incubation.findApplications({ applicantId: userId })
   const application = applications.find((row) => row.status !== 'approved') ?? applications[0] ?? null
@@ -212,7 +211,7 @@ export async function grantAccessToUser({ userId, actorId, reason = null }) {
       tx
     )
 
-    await users.grantRole(userId, founderRole.id, { isPrimary: false, grantedBy: actorId }, tx)
+    await users.setSingleRole(userId, founderRole.id, { grantedBy: actorId }, tx)
 
     await platform.logActivity(
       {
@@ -241,17 +240,20 @@ export async function grantAccessToUser({ userId, actorId, reason = null }) {
   })
 }
 
-/** Revoke Founder access — removes the role and closes the grant together. */
+/**
+ * Revoke Founder access — closes the grant and REPLACES the founder role with
+ * Job Seeker (`student`) together, so the account always has exactly one role.
+ */
 export async function revokeFounderAccess({ grantId, userId, actorId, reason = null }) {
-  const founderRole = await getRoleBySlug('founder')
-  if (!founderRole) throw new ValidationError('Founder role is missing from reference data.')
+  const jobSeekerRole = await getRoleBySlug('student')
+  if (!jobSeekerRole) throw new ValidationError('Job Seeker role is missing from reference data.')
 
   const user = await users.findById(userId)
   if (!user) throw new NotFoundError('User')
 
   return transaction(async (tx) => {
     if (grantId) await incubation.revokeGrant(grantId, actorId, reason, tx)
-    await users.revokeRole(userId, founderRole.id, tx)
+    await users.setSingleRole(userId, jobSeekerRole.id, { grantedBy: actorId }, tx)
 
     await platform.logActivity(
       {
@@ -270,7 +272,7 @@ export async function revokeFounderAccess({ grantId, userId, actorId, reason = n
         userId,
         type: 'access',
         title: 'Founder access revoked',
-        body: 'Your account has reverted to Standard Student.',
+        body: 'Your account is now a Job Seeker account.',
         linkUrl: '/student/home',
       },
       tx

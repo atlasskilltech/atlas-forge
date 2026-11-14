@@ -26,6 +26,7 @@ import {
   storeImage,
 } from '@/lib/storage/uploads'
 import { validator } from '@/lib/validate'
+import { assertCanBecomeFounder } from './roles.service'
 import {
   getIndustries,
   getReadinessItems,
@@ -366,6 +367,9 @@ export async function approve({ applicationId, actorId }) {
         `This email belongs to an account (${existing.appId}) that is not active. Reactivate it or reject this application.`
       )
     }
+    // One user = one role: an existing Job Seeker is turned INTO a Founder
+    // below; a staff account is never silently demoted.
+    await assertCanBecomeFounder(existing.id)
     if (await startups.findByOwner(existing.id)) {
       throw new ConflictError(
         `This email belongs to ${existing.appId}, which already owns a startup on ATLAS Forge. Reject this application or ask the applicant to use a different email.`
@@ -418,13 +422,9 @@ export async function approve({ applicationId, actorId }) {
       )
     }
 
-    // A new account's only role is founder, so it is also the primary one.
-    await users.grantRole(
-      userId,
-      founderRole.id,
-      { isPrimary: !existing, grantedBy: actorId },
-      tx
-    )
+    // One user = one role: founder REPLACES whatever an existing account held
+    // (normally Job Seeker); a new account simply starts as a founder.
+    await users.setSingleRole(userId, founderRole.id, { grantedBy: actorId }, tx)
 
     // --- startupsService.createForOwner ------------------------------------
     const slug = await startups.nextSlug(name, tx)
