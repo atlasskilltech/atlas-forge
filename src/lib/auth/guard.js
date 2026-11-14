@@ -27,7 +27,11 @@ export const getIdentity = cache(async () => {
   if (!session) return null
 
   try {
-    const identity = await auth.buildIdentity(session.userId)
+    let identity = await auth.buildIdentity(session.userId)
+    // Backend Manager testing mode: behave exactly as the chosen role. The
+    // real role is re-read from the database on every request, so this ends
+    // the moment the account stops being a Backend Manager.
+    if (session.actingAs) identity = await auth.actAsRole(identity, session.actingAs)
     // One user = one role. The role always comes from the database on every
     // request (never from the cookie), so a role change or removal takes
     // effect immediately instead of lasting until the cookie expires.

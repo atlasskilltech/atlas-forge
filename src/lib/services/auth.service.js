@@ -4,7 +4,9 @@ import { execute, transaction } from '@/lib/db'
 import { ForbiddenError, UnauthorizedError, ValidationError } from '@/lib/errors'
 import { hashPassword, needsRehash, verifyPassword } from '@/lib/auth/password'
 import * as users from '@/lib/repositories/users.repository'
-import { canOpenArea } from '@/lib/auth/role-policy'
+import { canOpenArea, isAssignableRole } from '@/lib/auth/role-policy'
+import { ROLES } from '@/config/roles'
+import { getRoleBySlug } from './lookups.service'
 import { effectiveRole } from '@/lib/auth/role-routing'
 
 import { T } from '@/lib/queries/tables.mjs'
@@ -67,6 +69,41 @@ export async function buildIdentity(userId) {
     roles: role ? [{ ...role, isPrimary: true }] : [],
     permissions,
     defaultRole: role ? { ...role, isPrimary: true } : null,
+  }
+}
+
+/**
+ * Backend Manager "act as role" (for testing).
+ *
+ * Returns an identity that behaves EXACTLY like `slug`: that one role, that
+ * role's permissions only, and that role's areas only. The real role is kept
+ * in `realRole` so the user can always switch back. Only applies when the
+ * REAL role (from the database) is backend-manager; for anyone else, or for an
+ * unknown role, the identity is returned unchanged. Nothing is written to the
+ * database: the user's real role stays backend-manager.
+ */
+export async function actAsRole(identity, slug) {
+  const real = identity?.defaultRole
+  if (real?.slug !== ROLES.BACKEND_MANAGER) return identity
+  if (!slug || slug === ROLES.BACKEND_MANAGER || !isAssignableRole(slug)) return identity
+
+  const row = await getRoleBySlug(slug)
+  if (!row) return identity
+  const role = {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    description: row.description ?? null,
+    isViewOnly: Boolean(row.isViewOnly ?? row.is_view_only),
+    isPrimary: true,
+  }
+  return {
+    ...identity,
+    roles: [role],
+    permissions: await users.findRolePermissions(role.id),
+    defaultRole: role,
+    realRole: real,
+    actingAs: { slug: role.slug, name: role.name },
   }
 }
 

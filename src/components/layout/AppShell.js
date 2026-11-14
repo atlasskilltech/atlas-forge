@@ -1,4 +1,7 @@
+import ActAsSwitcher from '@/components/auth/ActAsSwitcher'
 import { Banner } from '@/components/ui'
+import { getIdentity } from '@/lib/auth/guard'
+import { actAsRoleOptions } from '@/lib/auth/act-as-options'
 import { getRole } from '@/config/roles'
 import { cn } from '@/lib/utils'
 import BottomNav from './BottomNav'
@@ -24,7 +27,7 @@ import TopBar from './TopBar'
  * @param {boolean} [props.viewOnlyBanner] Defaults to the role's view-only flag.
  * @param {boolean} [props.padded]        Set false for screens that manage their own padding.
  */
-export default function AppShell({
+export default async function AppShell({
   role,
   children,
   mobileTitle,
@@ -36,6 +39,11 @@ export default function AppShell({
 }) {
   const roleConfig = getRole(role)
   const showBanner = viewOnlyBanner ?? Boolean(roleConfig?.viewOnly)
+  // Backend Manager testing mode: an always-visible way back. `getIdentity` is
+  // memoised per request, so this costs nothing extra on a page that already
+  // ran its guard.
+  const identity = await getIdentity().catch(() => null)
+  const actingAs = identity?.actingAs?.slug ?? null
 
   return (
     <div className="min-h-dvh bg-canvas">
@@ -53,6 +61,9 @@ export default function AppShell({
         )}
       >
         <div className={cn(padded && 'px-4 pt-6 pb-8 lg:px-8 lg:pt-7')}>
+          {actingAs ? (
+            <ActAsSwitcher variant="banner" current={actingAs} roles={actAsRoleOptions()} />
+          ) : null}
           {showBanner ? (
             <Banner icon="👁" className="mb-4 lg:mb-5">
               {/* The mobile frames shorten this copy. */}

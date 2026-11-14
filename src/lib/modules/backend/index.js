@@ -37,12 +37,14 @@ const QUICK_ACCESS_CONTROLS = [
   { label: 'Revoke Access', href: '/backend/revoke-access', variant: 'danger' },
   { label: 'Review Job Queue', href: '/backend/job-queue', variant: 'secondary' },
   { label: 'Platform Settings', href: '/backend/settings', variant: 'secondary' },
+  { label: 'Switch Role (Testing)', href: '/backend/switch-role', variant: 'secondary' },
 ]
 
 const MOBILE_QUICK_ACTIONS = [
   { label: 'All Users', href: '/backend/users', primary: true },
   { label: 'Job Queue', href: '/backend/job-queue' },
   { label: 'Settings', href: '/backend/settings' },
+  { label: 'Switch Role', href: '/backend/switch-role' },
 ]
 
 const USER_FILTERS = ['All', 'Job Seekers', 'Founders', 'Managers', 'Inactive']

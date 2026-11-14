@@ -160,6 +160,42 @@ try {
   check('change: the last Backend Manager cannot be moved', error?.status === 409, error?.message)
   check('change: …and keeps their role', JSON.stringify(await activeRoles(actorId)) === '["backend-manager"]')
 
+  // --- A Job Seeker with NO student-profile row (alumni/faculty/others/mentors
+  // after migration 015, or a Backend Manager acting as Job Seeker) ----------
+  {
+    const student = await import('@/lib/modules/student')
+    const results = []
+    for (const name of ['getHome', 'getProfile', 'getAvailability', 'getJobs', 'getApplications', 'getMentorship', 'getIncubation']) {
+      const outcome = await student[name](gmailId).then(() => 'ok', (error) => `${error.constructor.name}: ${error.message}`)
+      results.push(`${name}=${outcome}`)
+    }
+    const broken = results.filter((line) => !line.endsWith('=ok'))
+    check('job seeker without a profile row: every Job Seeker screen loads', broken.length === 0, broken.join(' | ') || 'all ok')
+  }
+
+  // --- Backend Manager "act as role" --------------------------------------
+  {
+    const base = await authService.buildIdentity(actorId)
+    for (const slug of ['student', 'founder', 'forge-manager', 'super-admin']) {
+      const acting = await authService.actAsRole(base, slug)
+      const ownRole = (await import('@/lib/repositories/users.repository')).findRolePermissions
+      const expected = (await ownRole(acting.roles[0].id)).sort().join(',')
+      check(`act as ${slug}: exactly that one role, that role's permissions`,
+        acting.roles.length === 1 && acting.roles[0].slug === slug && acting.permissions.sort().join(',') === expected &&
+        acting.realRole?.slug === 'backend-manager')
+      check(`act as ${slug}: the Backend Manager area is closed`, !authService.holdsRole(acting, 'backend-manager'))
+      check(`act as ${slug}: its own area opens`, authService.holdsRole(acting, slug))
+    }
+    const asStudent = await authService.actAsRole(base, 'student')
+    check('act as Job Seeker: Forge Manager area is closed', !authService.holdsRole(asStudent, 'forge-manager'))
+    check('act as Job Seeker: no user.manage permission', !asStudent.permissions.includes('user.manage'))
+    const notBm = await authService.buildIdentity(gmailId)
+    const ignored = await authService.actAsRole(notBm, 'super-admin')
+    check('a non-Backend-Manager cannot act as another role (ignored)', ignored.roles[0]?.slug === 'student' && !ignored.actingAs)
+    const bogus = await authService.actAsRole(base, 'network-member')
+    check('acting as an unknown role is ignored', bogus.roles[0]?.slug === 'backend-manager' && !bogus.actingAs)
+  }
+
   // --- Registration approval -----------------------------------------------
   const insertReg = async (category, email, studentAppId = null) => {
     const ref = `AFN-T-${TAG}-${regIds.length}`.slice(0, 24)

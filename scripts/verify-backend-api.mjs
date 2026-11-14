@@ -360,6 +360,53 @@ check('Riya still exists after the refused attempts',
   (await call('/api/backend/access?q=ATL-2024-0871', { cookies: shantanu }).then(json)).data.matched?.userId === riyaRow.userId)
 
 /* -------------------------------------------------------------------------- */
+/* Backend Manager "act as role" (testing mode)                               */
+/* -------------------------------------------------------------------------- */
+
+const actAs = (jarIn, role) => call('/api/auth/act-as', { method: 'POST', body: { role }, cookies: jarIn })
+check('a Job Seeker cannot switch roles (403)', (await actAs(await signIn(STUDENT), 'backend-manager')).status === 403)
+check('a Forge Manager cannot switch roles (403)', (await actAs(await signIn(FORGE), 'backend-manager')).status === 403)
+
+const tester = await signIn(MANAGER)
+check('an unknown role is refused (422)', (await actAs(tester, 'network-member')).status === 422)
+
+const asStudent = await actAs(tester, 'student')
+check('Backend Manager can act as Job Seeker', asStudent.status === 200 &&
+  (await json(asStudent))?.data?.home === '/student/home')
+const sessionAsStudent = await json(await call('/api/auth/session', { cookies: tester }))
+check('…the session holds exactly the Job Seeker role',
+  JSON.stringify(sessionAsStudent?.data?.roles?.map((r) => r.slug)) === '["student"]')
+check('…the Job Seeker API works (even with no student profile)',
+  (await call('/api/student/home', { cookies: tester })).status === 200)
+const studentPage = await call('/student/home', { cookies: tester })
+const studentPageHtml = await text(studentPage)
+check('…the Job Seeker dashboard renders with the testing banner',
+  studentPage.status === 200 && studentPageHtml.includes('Testing mode') && studentPageHtml.includes('Back to Backend Manager'))
+check('…and the Backend Manager API is closed, exactly as for a Job Seeker',
+  (await call('/api/backend/dashboard', { cookies: tester })).status === 403)
+check('…as is the Forge Manager API', (await call('/api/forge/dashboard', { cookies: tester })).status === 403)
+
+check('while acting, can switch straight to Forge Manager', (await actAs(tester, 'forge-manager')).status === 200)
+check('…Forge Manager API opens', (await call('/api/forge/dashboard', { cookies: tester })).status === 200)
+check('…Backend Manager API stays closed', (await call('/api/backend/dashboard', { cookies: tester })).status === 403)
+
+check('can act as Super Admin', (await actAs(tester, 'super-admin')).status === 200)
+check('…Super Admin API opens', (await call('/api/admin/overview', { cookies: tester })).status === 200)
+check('…and a Backend Manager write is refused (view only)',
+  (await call('/api/backend/settings', { method: 'PATCH', body: { key: 'platform_name', value: 'x' }, cookies: tester })).status === 403)
+
+check('can act as Founder', (await actAs(tester, 'founder')).status === 200)
+const founderAsBm = await call('/founder/home', { cookies: tester })
+check('…the Founder dashboard renders (no startup yet)', founderAsBm.status === 200, String(founderAsBm.status))
+check('…Founder API answers without a server error', (await call('/api/founder/home', { cookies: tester })).status < 500)
+
+check('Back to Backend Manager works', (await actAs(tester, 'backend-manager')).status === 200)
+check('…the Backend Manager API opens again', (await call('/api/backend/dashboard', { cookies: tester })).status === 200)
+const sessionBack = await json(await call('/api/auth/session', { cookies: tester }))
+check('…and the session holds the Backend Manager role again',
+  JSON.stringify(sessionBack?.data?.roles?.map((r) => r.slug)) === '["backend-manager"]')
+
+/* -------------------------------------------------------------------------- */
 /* Teardown                                                                   */
 /* -------------------------------------------------------------------------- */
 
@@ -372,6 +419,9 @@ const connection = await mysql.createConnection({
   database: process.env.DB_NAME,
 })
 const run = (sql, params = []) => connection.execute(sql, params)
+
+// Act-as switches write one activity row each; remove them.
+await run(`DELETE FROM ${T.activity_logs} WHERE module = 'Access' AND action LIKE 'Backend Manager %'`)
 
 if (postedBody?.data?.listingId) {
   await run(`DELETE FROM ${T.listing_skills} WHERE listing_id = ?`, [postedBody.data.listingId])

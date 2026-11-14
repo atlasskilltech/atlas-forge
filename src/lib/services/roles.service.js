@@ -125,3 +125,22 @@ export async function changeRole({ userId, roleSlug, actorId, reason = null }) {
 
   return { userId, role: { slug: target.slug, name: target.name }, previous: before?.slug ?? null, changed: true }
 }
+
+/**
+ * Backend Manager "act as role" (testing): record the switch in the activity
+ * log. Who (the Backend Manager), when, and which role — nothing else.
+ */
+export async function logActAs({ actorId, roleSlug }) {
+  const target = await getRoleBySlug(roleSlug)
+  await platform.logActivity({
+    actorUserId: actorId,
+    action:
+      roleSlug === ROLES.BACKEND_MANAGER
+        ? 'Backend Manager returned to their own role'
+        : `Backend Manager started acting as ${target?.name ?? roleSlug} (testing)`,
+    module: 'Access',
+    entityType: 'user',
+    entityId: actorId,
+    status: 'action',
+  })
+}

@@ -15,12 +15,34 @@ import * as platform from '@/lib/repositories/platform.repository'
 export const getPool = (filters) => users.findStudentPool(filters)
 export const listAll = () => users.findAll()
 
-/** Full profile: user, student fields and skills. */
+/**
+ * Full profile: user, student fields and skills.
+ *
+ * A Job Seeker may have no student-profile row yet: everyone who became a Job
+ * Seeker through registration approval or migration 015 (alumni, faculty,
+ * others, the mentor accounts), and a Backend Manager testing as a Job Seeker.
+ * They get an EMPTY profile (nothing filled in, not available) instead of an
+ * error page. Nothing is written; the row is created the first time they save
+ * their availability.
+ */
 export async function getProfile(userId) {
   const profile = await users.findStudentProfile(userId)
-  if (!profile) throw new NotFoundError('Student profile')
-  const skills = await users.findSkills(userId)
-  return { ...profile, skills }
+  if (profile) {
+    const skills = await users.findSkills(userId)
+    return { ...profile, skills }
+  }
+  const user = await users.findById(userId)
+  if (!user) throw new NotFoundError('Student profile')
+  return {
+    ...user,
+    programme: null,
+    yearOfStudy: null,
+    hoursPerWeek: null,
+    workTypes: null,
+    availabilityTiming: null,
+    isAvailable: false,
+    skills: [],
+  }
 }
 
 export async function updateProfile(userId, { name, email, bio }) {

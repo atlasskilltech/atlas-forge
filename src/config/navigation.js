@@ -220,6 +220,7 @@ export const SIDEBAR_NAV = {
       items: [
         { label: 'Forge Manager Area', href: '/forge/dashboard' },
         { label: 'Super Admin View', href: '/admin/overview' },
+        { label: 'Switch Role (Testing)', href: '/backend/switch-role' },
       ],
     },
     {

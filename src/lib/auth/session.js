@@ -27,7 +27,7 @@ function sign(encodedPayload) {
 }
 
 /** Serialise and sign. Returns the cookie value. */
-export function seal({ userId, role, viaGoogle = false }) {
+export function seal({ userId, role, viaGoogle = false, actingAs = null }) {
   const nowSeconds = Math.floor(Date.now() / 1000)
   const payload = {
     uid: userId,
@@ -42,6 +42,9 @@ export function seal({ userId, role, viaGoogle = false }) {
   // the secret; it is omitted (not set to 0) for password logins, leaving their
   // cookie byte-for-byte as before.
   if (viaGoogle) payload.g = 1
+  // Backend Manager "act as role" (testing). Only honoured by the guard when
+  // the user's REAL role, re-read from the database, is backend-manager.
+  if (actingAs) payload.a = String(actingAs)
   const encoded = b64(JSON.stringify(payload))
   return `${encoded}.${sign(encoded)}`
 }
@@ -79,6 +82,7 @@ export function unseal(value) {
     userId: payload.uid,
     role: payload.role ?? null,
     viaGoogle: payload.g === 1,
+    actingAs: typeof payload.a === 'string' ? payload.a : null,
     expiresAt: payload.exp,
   }
 }
@@ -97,9 +101,9 @@ export async function readSession() {
 }
 
 /** Write the session cookie. Only a Route Handler or Server Action may call this. */
-export async function writeSession({ userId, role, viaGoogle = false }) {
+export async function writeSession({ userId, role, viaGoogle = false, actingAs = null }) {
   const store = await cookies()
-  store.set(sessionConfig.cookieName, seal({ userId, role, viaGoogle }), {
+  store.set(sessionConfig.cookieName, seal({ userId, role, viaGoogle, actingAs }), {
     ...COOKIE_OPTIONS,
     maxAge: sessionConfig.ttlSeconds,
   })
