@@ -44,6 +44,7 @@
     "test:student-activity": "node --env-file=.env scripts/verify-student-activity.mjs",
     "test:auth:google": "node --env-file=.env scripts/verify-google-auth.mjs",
     "test:roles": "node --import ./scripts/lib/app-alias-loader.mjs --test scripts/verify-role-policy.mjs",
+    "test:delete:db": "node --env-file=.env scripts/verify-user-delete-db.mjs",
     "test:roles:db": "node --env-file=.env scripts/verify-one-role-db.mjs",
     "test:auth:routing": "node --import ./scripts/lib/app-alias-loader.mjs --test scripts/verify-role-routing.mjs",
     "db:reset": "npm run db:schema -- --force && npm run db:reference && npm run db:seed"

@@ -12,6 +12,7 @@ import {
 } from '@/components/ui'
 import { api } from '@/lib/api/client'
 import ChangeRolePanel from './ChangeRolePanel'
+import DeleteUserPanel from './DeleteUserPanel'
 
 /**
  * Reference: /reference/mast ui/BM/Role Management.png
@@ -136,6 +137,7 @@ export default function RoleManagement({
               </div>
             </Card>
             <ChangeRolePanel key={matchedStudent.userId} user={matchedStudent} roleOptions={roleOptions} />
+            <DeleteUserPanel key={`del-${matchedStudent.userId}`} user={matchedStudent} />
           </>
         ) : null}
 

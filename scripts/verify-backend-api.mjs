@@ -337,6 +337,29 @@ check('a student is redirected away from backend pages',
 check('and never sees the platform counters', !studentHtml.includes('Total Users'))
 
 /* -------------------------------------------------------------------------- */
+/* Permanent delete: preview + confirmation (nothing is actually deleted)     */
+/* -------------------------------------------------------------------------- */
+
+const riyaRow = (await json(await call('/api/backend/access?q=ATL-2024-0871', { cookies: shantanu }))).data.matched
+const deletePreview = await call(`/api/backend/users/delete-preview?userId=${riyaRow.userId}`, { cookies: shantanu })
+const deletePreviewBody = await json(deletePreview)
+check('GET delete-preview is 200 and lists what would be removed',
+  deletePreview.status === 200 && deletePreviewBody.data.removed.some((item) => item.key === 'applications'),
+  String(deletePreview.status))
+const wrongEmail = await call('/api/backend/users', {
+  method: 'DELETE', body: { userId: riyaRow.userId, confirmEmail: 'not-her@example.com' }, cookies: shantanu,
+})
+check('DELETE with the wrong confirmation email is 422', wrongEmail.status === 422, String(wrongEmail.status))
+const forgeDelete = await call('/api/backend/users', {
+  method: 'DELETE', body: { userId: riyaRow.userId, confirmEmail: 'riya.kapoor@atlasuniversity.edu.in' }, cookies: await signIn(FORGE),
+})
+check('a Forge Manager cannot delete users (403)', forgeDelete.status === 403, String(forgeDelete.status))
+const forgePreview = await call(`/api/backend/users/delete-preview?userId=${riyaRow.userId}`, { cookies: await signIn(FORGE) })
+check('a Forge Manager cannot see the delete preview (403)', forgePreview.status === 403, String(forgePreview.status))
+check('Riya still exists after the refused attempts',
+  (await call('/api/backend/access?q=ATL-2024-0871', { cookies: shantanu }).then(json)).data.matched?.userId === riyaRow.userId)
+
+/* -------------------------------------------------------------------------- */
 /* Teardown                                                                   */
 /* -------------------------------------------------------------------------- */
 

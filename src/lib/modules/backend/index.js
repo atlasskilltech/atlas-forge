@@ -12,6 +12,7 @@ import {
   rolesService,
   startupsService,
   studentsService,
+  userDeletionService,
 } from '@/lib/services'
 import { ASSIGNABLE_ROLES } from '@/lib/auth/role-policy'
 import * as forge from '@/lib/modules/forge'
@@ -306,6 +307,24 @@ export async function changeUserRole(user, input) {
     roleSlug,
     actorId: user.id,
     reason: input?.reason?.trim() || null,
+  })
+}
+
+/** What a permanent delete of `userId` would remove (the confirmation step). */
+export function previewUserDelete(user, userId) {
+  return userDeletionService.previewDelete({ userId, actorId: user.id })
+}
+
+/**
+ * PERMANENT hard delete. `confirmEmail` must be the user's email, typed by the
+ * Backend Manager. Self-delete and deleting the last Backend Manager are
+ * refused in the service.
+ */
+export function deleteUser(user, input) {
+  return userDeletionService.hardDeleteUser({
+    userId: input?.userId,
+    actorId: user.id,
+    confirmEmail: typeof input?.confirmEmail === 'string' ? input.confirmEmail : '',
   })
 }
 
