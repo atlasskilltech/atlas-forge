@@ -9,9 +9,9 @@
 # (--single-transaction: no LOCK TABLES, no FLUSH TABLES WITH READ LOCK).
 #
 # Writes, all outside the app directory:
-#   ~/forge-migration/backups/<ts>-forge-46-tables.sql.gz   (+ .sha256)
-#   ~/forge-migration/backups/<ts>-full-database.sql.gz     (+ .sha256)
-#   ~/forge-migration/backups/<ts>-*.json  (hashes / fingerprints, no row data)
+#   $APP/forge-migration/backups/<ts>-forge-46-tables.sql.gz   (+ .sha256)
+#   $APP/forge-migration/backups/<ts>-full-database.sql.gz     (+ .sha256)
+#   $APP/forge-migration/backups/<ts>-*.json  (hashes / fingerprints, no row data)
 # Uses Docker for the official MariaDB 10.11 client (the server has no MySQL
 # tools) and for an ISOLATED restore server: bound to 127.0.0.1 only, random
 # credentials, data on tmpfs, removed at the end. The rename rehearsal runs on
@@ -20,7 +20,7 @@
 set -uo pipefail
 : "${DIAG:?}" "${APP:?}" "${RUN_ID:?}"
 IMAGE=mariadb:10.11
-BK="$HOME/forge-migration/backups"
+BK="$APP/forge-migration/backups"
 TS=$(date -u +%Y%m%dT%H%M%SZ)
 CN="forge-restore-$RUN_ID"
 FAILS=0
@@ -32,7 +32,7 @@ cd "$APP" || die "$APP missing"
 [ -f .env ] || die ".env missing"
 for k in $(env | grep -oE '^DB_[A-Z_]*'); do unset "$k"; done
 [ -e "$DIAG/node_modules" ] || ln -s "$APP/node_modules" "$DIAG/node_modules"
-mkdir -p "$BK" && chmod 700 "$HOME/forge-migration" "$BK"
+mkdir -p "$BK" && chmod 700 "$APP/forge-migration" "$BK"
 umask 077
 N="node --no-warnings"
 PROD="$N --env-file=$APP/.env"

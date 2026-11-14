@@ -8,7 +8,7 @@ name: ATLAS Forge — prefix migration backup + rehearsal (no production change)
 #   - production DB is only READ: investigation + content hashes in READ ONLY
 #     transactions, and a consistent `mariadb-dump --single-transaction`
 #     (no table or global locks) of the 46 Forge tables and of the whole DB
-#   - backups are stored in ~/forge-migration/backups (mode 600, sha256)
+#   - backups are stored in $APP/forge-migration/backups (mode 600, sha256)
 #   - they are restored into an ISOLATED throw-away MariaDB 10.11 container
 #     (127.0.0.1 only, tmpfs, random credentials) and compared row-for-row
 #   - the full rename + rollback is rehearsed on that restored copy

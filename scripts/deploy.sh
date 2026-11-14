@@ -23,11 +23,12 @@
 # Never runs schema, seed or reset, never drops or truncates, never edits .env.
 # ---------------------------------------------------------------------------
 set -uo pipefail
+umask 077   # backup / report files created below are 0600, dirs 0700
 
 APP=atlas-forge
 cd "$(dirname "$0")/.."
 ROOT=$(pwd)
-BACKUPS="$HOME/forge-migration/backups"
+BACKUPS="$ROOT/forge-migration/backups"
 N="node --no-warnings"
 MIGRATED_NOW=0
 STOPPED=0

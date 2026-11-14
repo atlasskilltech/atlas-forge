@@ -34,3 +34,7 @@ next-env.d.ts
 #okay
 # Previous production build kept by scripts/deploy.sh for instant rollback.
 .next.rollback
+
+# DB dumps, migration reports and rehearsal artifacts written on the server
+# (scripts/deploy.sh and scripts/ops/*). Kept inside the project, never uploaded.
+/forge-migration/
