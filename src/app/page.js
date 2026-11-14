@@ -1,5 +1,4 @@
 import Image from 'next/image'
-import Link from 'next/link'
 import { roboto } from '@/app/fonts/roboto'
 import EnquiryButton from '@/components/landing/EnquiryButton'
 import EnquiryProvider from '@/components/landing/EnquiryProvider'
@@ -365,12 +364,9 @@ export default function LandingPage() {
                         Supported Every Step of the Way.
                       </h2>
 
-                      <Link
-                        href="/login"
-                        className="inline-flex h-[40px] w-fit shrink-0 items-center justify-center rounded-[6px] bg-forge-ink px-6 text-[14px] font-medium text-white transition-colors hover:bg-forge-purple"
-                      >
+                      <IncubationApplyButton className="inline-flex h-[40px] w-fit shrink-0 items-center justify-center rounded-[6px] bg-forge-ink px-6 text-[14px] font-medium text-white transition-colors hover:bg-forge-purple">
                         Apply For Atlas Incubation
-                      </Link>
+                      </IncubationApplyButton>
                     </div>
                   </div>
                 </div>
