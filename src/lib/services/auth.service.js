@@ -4,6 +4,8 @@ import { execute, transaction } from '@/lib/db'
 import { ForbiddenError, UnauthorizedError, ValidationError } from '@/lib/errors'
 import { hashPassword, needsRehash, verifyPassword } from '@/lib/auth/password'
 import * as users from '@/lib/repositories/users.repository'
+import { canOpenArea } from '@/lib/auth/role-policy'
+import { effectiveRole } from '@/lib/auth/role-routing'
 
 import { T } from '@/lib/queries/tables.mjs'
 
@@ -44,20 +46,27 @@ export async function authenticate(identifier, password) {
   return buildIdentity(record.id)
 }
 
-/** The signed-in user plus everything authorisation needs. */
+/**
+ * The signed-in user plus everything authorisation needs.
+ *
+ * One user = one role. `roles` is always a list of at most ONE role (kept as a
+ * list so existing callers keep working), and `permissions` are that role's
+ * only. If the database still holds several active roles for this user (only
+ * possible before migration 015), the highest by priority is used and the
+ * others grant nothing.
+ */
 export async function buildIdentity(userId) {
-  const [user, roles, permissions] = await Promise.all([
-    users.findById(userId),
-    users.findRoles(userId),
-    users.findPermissions(userId),
-  ])
+  const [user, heldRoles] = await Promise.all([users.findById(userId), users.findRoles(userId)])
   if (!user) throw new UnauthorizedError('Account no longer exists.')
+
+  const role = effectiveRole(heldRoles)
+  const permissions = role ? await users.findRolePermissions(role.id) : []
 
   return {
     user,
-    roles,
+    roles: role ? [{ ...role, isPrimary: true }] : [],
     permissions,
-    defaultRole: roles.find((role) => role.isPrimary) ?? roles[0] ?? null,
+    defaultRole: role ? { ...role, isPrimary: true } : null,
   }
 }
 
@@ -71,9 +80,13 @@ export function assertCan(identity, permission) {
   if (!can(identity, permission)) throw new ForbiddenError()
 }
 
-/** True when the chosen role is one the user actually holds. */
+/**
+ * True when the identity may open the area that belongs to `roleSlug`: its own
+ * role's area, plus — for a Backend Manager only — the Forge Manager and Super
+ * Admin areas (see `canOpenArea` in `@/lib/auth/role-policy`).
+ */
 export function holdsRole(identity, roleSlug) {
-  return Boolean(identity?.roles?.some((role) => role.slug === roleSlug))
+  return canOpenArea((identity?.roles ?? []).map((role) => role.slug), roleSlug)
 }
 
 export async function changePassword(userId, currentPassword, newPassword) {

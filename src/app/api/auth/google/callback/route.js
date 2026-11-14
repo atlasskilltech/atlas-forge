@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { googleAuthConfig, isProduction } from '@/lib/config/env'
+import { sessionRoleFor } from '@/lib/auth/role-routing'
 import { writeSession } from '@/lib/auth/session'
 import {
   GoogleAuthError,
@@ -69,8 +70,9 @@ export async function GET(request) {
 
   let identity
   try {
-    const { email } = await verifyCallback({ code, expectedNonce: nonce })
-    identity = await resolveEligibleUser(email)
+    // `verifyCallback` only returns once Google says `email_verified === true`.
+    const { email, sub } = await verifyCallback({ code, expectedNonce: nonce })
+    identity = await resolveEligibleUser({ email, sub })
   } catch (error) {
     const reason = error instanceof GoogleAuthError ? error.reason : 'google_failed'
     return redirectToLogin(reason)
@@ -81,14 +83,15 @@ export async function GET(request) {
   // clearing — both Set-Cookie headers are emitted.
   await writeSession({
     userId: identity.user.id,
-    role: identity.defaultRole?.slug ?? null,
+    // Identical to password login: the user's single role (one user = one role).
+    role: sessionRoleFor(identity.roles),
     // Marks the session Google-authenticated so the forced password-change gate
     // exempts it. `must_change_password` is left untouched in the database.
     viaGoogle: true,
   })
 
-  // Same destination as password login; /select-role sends a single-role user
-  // straight to their dashboard and a multi-role user to the role picker.
+  // Same destination as password login: /select-role sends the user straight
+  // to their role's dashboard (there is no role picker).
   const destination = new URL(next ?? '/select-role', googleAuthConfig.origin)
   return clearTemp(NextResponse.redirect(destination))
 }

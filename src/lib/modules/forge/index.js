@@ -35,7 +35,7 @@ const MOBILE_QUICK_ACTIONS = [
 ]
 
 const LISTING_FILTERS = ['All', 'Live', 'Pending Approval', 'Rejected', 'Job Listing', 'Collab Post']
-const USER_FILTERS = ['All', 'Students', 'Founders', 'Managers']
+const USER_FILTERS = ['All', 'Job Seekers', 'Founders', 'Managers']
 const PROJECT_BEHAVIOUR_FILTERS = ['Hiring', 'Featured']
 
 /* -------------------------------------------------------------------------- */

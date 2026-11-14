@@ -28,12 +28,10 @@ export const getIdentity = cache(async () => {
 
   try {
     const identity = await auth.buildIdentity(session.userId)
-    // The cookie names a role, but the roles the user *holds* come from the
-    // database on every request — so a revoked role stops working immediately
-    // instead of lasting until the cookie expires.
-    const activeRole =
-      identity.roles.find((role) => role.slug === session.role) ?? identity.defaultRole
-    return { ...identity, activeRole, session }
+    // One user = one role. The role always comes from the database on every
+    // request (never from the cookie), so a role change or removal takes
+    // effect immediately instead of lasting until the cookie expires.
+    return { ...identity, activeRole: identity.defaultRole, session }
   } catch {
     // Account deleted or deactivated since the cookie was issued.
     return null

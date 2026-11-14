@@ -28,7 +28,7 @@ import * as present from './presenter'
  * two.
  */
 
-const USER_FILTERS = ['All', 'Students', 'Founders', 'Managers']
+const USER_FILTERS = ['All', 'Job Seekers', 'Founders', 'Managers']
 
 export const READ_ONLY_NOTE =
   'This is a read-only view. To make changes, contact the Backend Manager or Forge Manager.'

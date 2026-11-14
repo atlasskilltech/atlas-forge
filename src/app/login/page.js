@@ -23,6 +23,7 @@ const GOOGLE_ERROR_MESSAGES = {
     'No ATLAS Forge account is linked to that Google email. Sign in with your App ID, or contact the Forge Manager.',
   google_inactive: 'This account is not active. Contact the Forge Manager.',
   google_failed: 'Google sign-in didn’t work. Please try again or use your App ID and password.',
+  no_role: 'Your account has no role assigned yet. Contact the Forge Manager.',
 }
 
 /** Reference: /reference/mast ui/Login Screen.png — left dark panel value props. */

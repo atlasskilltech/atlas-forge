@@ -1,5 +1,8 @@
 /**
- * How an account is described when it holds more than one role.
+ * How an account is described in the manager directories.
+ *
+ * One user = one role, so normally there is exactly one slug. The precedence
+ * below only matters for data that has not been through migration 015 yet.
  *
  * Both manager directories — the Forge Manager's User Accounts and the Backend
  * Manager's All Users — render the same people, so the rule lives here rather
@@ -33,5 +36,5 @@ export function classifyAccount(user) {
   if (slugs.length === 0) {
     return { group: 'Unassigned', role: 'No role assigned', isManager: false }
   }
-  return { group: 'Students', role: 'Student — Standard', isManager: false }
+  return { group: 'Job Seekers', role: 'Job Seeker', isManager: false }
 }

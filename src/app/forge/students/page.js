@@ -23,7 +23,7 @@ export default async function ForgeAllStudentsPage() {
     <AppShell role={ROLES.FORGE_MANAGER} user={chromeUser}>
       <PageTitle>All Students</PageTitle>
       <Subtle className="mt-3 mb-4 text-sm lg:mb-[22px]">Every student registered on ATLAS Forge.</Subtle>
-      <UserAccountsTable groups={['Students']} accounts={accounts} filters={filters} />
+      <UserAccountsTable groups={['Job Seekers']} accounts={accounts} filters={filters} />
     </AppShell>
   )
 }

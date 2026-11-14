@@ -351,9 +351,11 @@ const roleSwap = await call('/api/auth/role', {
   body: { role: 'student' },
   cookies: mihir,
 })
+// One user = one role: the role-switch endpoint was removed, so there is no
+// way to assume another role at all (404/405 = the route does not exist).
 check(
   'a role the account does not hold cannot be assumed',
-  roleSwap.status === 403,
+  [403, 404, 405].includes(roleSwap.status),
   String(roleSwap.status)
 )
 

@@ -17,7 +17,7 @@ const TOPICS = [
   {
     title: 'Granting and revoking Founder access',
     detail:
-      'Search by App ID, then grant or revoke. Revoking reverts the account to Standard Student.',
+      'Search by App ID, then grant or revoke. Revoking turns the account back into a Job Seeker.',
     href: '/backend/role-assignments',
   },
   {

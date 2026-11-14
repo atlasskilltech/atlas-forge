@@ -35,6 +35,26 @@ export const SELECT_USER_BY_EMAIL = `
    WHERE u.email = ? AND u.deleted_at IS NULL
 `
 
+/**
+ * A live account already linked to a Google identity (`sub` = Google's stable,
+ * never-reused account id). Needs migration 014; the repository treats a
+ * missing column as "not linked" so this is safe to deploy before it.
+ */
+export const SELECT_USER_BY_GOOGLE_SUB = `
+  SELECT ${USER_FIELDS} FROM ${T.users} u
+   WHERE u.google_sub = ? AND u.deleted_at IS NULL
+`
+
+/**
+ * Link a Google identity to an account the first time it signs in with Google.
+ * Only fills an EMPTY link — an account already linked to a different Google
+ * identity is never silently re-pointed.
+ */
+export const LINK_GOOGLE_ACCOUNT = `
+  UPDATE ${T.users} SET google_sub = ?, google_linked_at = NOW()
+   WHERE id = ? AND google_sub IS NULL
+`
+
 /** Includes the hash — only the auth service may call this. */
 export const SELECT_USER_CREDENTIALS = `
   SELECT u.id, u.app_id, u.email, u.full_name, u.password_hash, u.status
@@ -80,12 +100,12 @@ export const SELECT_USER_ROLES = `
    ORDER BY r.sort_order
 `
 
-export const SELECT_USER_PERMISSIONS = `
+/** The permissions of ONE role — a user acts with their single role only. */
+export const SELECT_ROLE_PERMISSIONS = `
   SELECT DISTINCT p.slug
-    FROM ${T.user_roles} ur
-    JOIN ${T.role_permissions} rp ON rp.role_id = ur.role_id
-    JOIN ${T.permissions} p       ON p.id = rp.permission_id
-   WHERE ur.user_id = ? AND ur.revoked_at IS NULL
+    FROM ${T.role_permissions} rp
+    JOIN ${T.permissions} p ON p.id = rp.permission_id
+   WHERE rp.role_id = ?
 `
 
 export const SELECT_STUDENT_PROFILE = `
@@ -202,15 +222,37 @@ export const INSERT_USER_SKILL = `
   INSERT IGNORE INTO ${T.student_skills} (user_id, skill_id) VALUES (?, ?)
 `
 
-export const GRANT_ROLE = `
-  INSERT INTO ${T.user_roles} (user_id, role_id, is_primary, granted_by)
-  VALUES (?, ?, ?, ?)
-  ON DUPLICATE KEY UPDATE revoked_at = NULL, granted_by = VALUES(granted_by), granted_at = NOW()
+/*
+ * One user = one role. A role change is two statements in one transaction:
+ * revoke every OTHER active role, then (re)activate the target role. Order
+ * matters: migration 015 adds a unique index on "one active row per user", so
+ * the old row must be revoked before the new one becomes active. Requires
+ * migration 015 (the `active_slot` column).
+ */
+export const REVOKE_OTHER_ROLES = `
+  UPDATE ${T.user_roles} SET revoked_at = NOW(), is_primary = 0, active_slot = NULL
+   WHERE user_id = ? AND role_id <> ? AND revoked_at IS NULL
 `
 
-export const REVOKE_ROLE = `
-  UPDATE ${T.user_roles} SET revoked_at = NOW()
-   WHERE user_id = ? AND role_id = ? AND revoked_at IS NULL
+// `active_slot` (migration 015) is 1 on the one active row, NULL on revoked
+// rows; UNIQUE (user_id, active_slot) is the database's one-role guarantee.
+// REVOKE_OTHER_ROLES must run first: the table has two unique keys, and if an
+// old active row still held the slot, ON DUPLICATE KEY UPDATE would update
+// THAT row instead of this one.
+export const SET_SINGLE_ROLE = `
+  INSERT INTO ${T.user_roles} (user_id, role_id, is_primary, granted_by, active_slot)
+  VALUES (?, ?, 1, ?, 1)
+  ON DUPLICATE KEY UPDATE
+    granted_by = IF(revoked_at IS NULL, granted_by, VALUES(granted_by)),
+    granted_at = IF(revoked_at IS NULL, granted_at, NOW()),
+    is_primary = 1,
+    revoked_at = NULL,
+    active_slot = 1
+`
+
+/** Locks the user's role rows so two concurrent role changes serialise. */
+export const LOCK_USER_ROLES = `
+  SELECT role_id FROM ${T.user_roles} WHERE user_id = ? FOR UPDATE
 `
 
 export const SOFT_DELETE_USER = `

@@ -65,7 +65,7 @@ async function insertUser({ appId, email }) {
 
 async function grantRole(userId) {
   const [roles] = await db.query(
-    `SELECT id FROM ${T.roles} WHERE slug = 'network-member' LIMIT 1`
+    `SELECT id FROM ${T.roles} WHERE slug = 'student' LIMIT 1`
   )
   const roleId = roles[0]?.id ?? (await db.query(`SELECT id FROM ${T.roles} ORDER BY id LIMIT 1`))[0][0].id
   await db.query(

@@ -17,6 +17,7 @@
     "db:reference": "node --env-file=.env scripts/apply-sql.mjs reference-data.sql",
     "db:seed": "node --env-file=.env scripts/apply-sql.mjs seed.sql",
     "db:migrate": "node --env-file=.env scripts/apply-sql.mjs",
+    "db:roles:dryrun": "node --env-file=.env scripts/roles-dry-run.mjs",
     "db:verify": "node --env-file=.env scripts/verify-schema.mjs",
     "smtp:verify": "node --env-file=.env scripts/verify-smtp.mjs",
     "db:test": "node --env-file=.env scripts/verify-data-layer.mjs",
@@ -42,6 +43,10 @@
     "test:student-verification": "node --env-file=.env scripts/verify-student-verification.mjs",
     "test:student-activity": "node --env-file=.env scripts/verify-student-activity.mjs",
     "test:auth:google": "node --env-file=.env scripts/verify-google-auth.mjs",
+    "test:roles": "node --import ./scripts/lib/app-alias-loader.mjs --test scripts/verify-role-policy.mjs",
+    "test:delete:db": "node --env-file=.env scripts/verify-user-delete-db.mjs",
+    "test:roles:db": "node --env-file=.env scripts/verify-one-role-db.mjs",
+    "test:auth:routing": "node --import ./scripts/lib/app-alias-loader.mjs --test scripts/verify-role-routing.mjs",
     "db:reset": "npm run db:schema -- --force && npm run db:reference && npm run db:seed"
   },
   "dependencies": {

@@ -260,7 +260,11 @@ export default function RegisterForm() {
                 name="email"
                 type="email"
                 autoComplete="email"
-                placeholder="you@company.com"
+                placeholder={
+                  role === 'atlas_student' || role === 'atlas_faculty'
+                    ? 'you@atlasuniversity.edu.in (required)'
+                    : 'you@company.com'
+                }
                 value={val('email')}
                 onChange={set('email')}
                 error={fieldErrors.email}

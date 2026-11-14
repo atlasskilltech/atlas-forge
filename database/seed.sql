@@ -39,19 +39,23 @@ INSERT INTO forge_users (app_id, full_name, email, password_hash, initials, avat
   ('ATL-2019-0011','Ananya Iyer','ananya.iyer@industry.partner.in',         @PWD,'AI','primary','active', DATE_SUB(NOW(), INTERVAL 7 DAY), NULL),
   ('ATL-2019-0012','Karan Malhotra','karan.malhotra@industry.partner.in',   @PWD,'KM','primary','active', DATE_SUB(NOW(), INTERVAL 8 DAY), NULL),
   ('ATL-2019-0013','Priya Deshmukh','priya.deshmukh@atlasuniversity.edu.in',@PWD,'PD','primary','active', DATE_SUB(NOW(), INTERVAL 9 DAY), NULL),
-  ('ATL-2018-0014','Sanjay Verma','sanjay.verma@alumni.atlasuniversity.edu.in',@PWD,'SV','primary','active',DATE_SUB(NOW(), INTERVAL 10 DAY), NULL)
+  ('ATL-2018-0014','Sanjay Verma','sanjay.verma@alumni.atlasuniversity.edu.in',@PWD,'SV','primary','active',DATE_SUB(NOW(), INTERVAL 10 DAY), NULL),
+  -- The Backend Manager. A separate person since one user = one role (this
+  -- role used to sit on Shantanu's founder account as a second role).
+  ('ATL-2020-0002','Kabir Sethi','kabir.sethi@atlasuniversity.edu.in',      @PWD,'KS','danger','active', NOW(),
+   'Backend Manager — platform settings and user roles.')
 ON DUPLICATE KEY UPDATE full_name = VALUES(full_name), initials = VALUES(initials),
   avatar_tone = VALUES(avatar_tone), status = VALUES(status);
 
 -- ---------------------------------------------------------------------------
--- Role assignments. Shantanu holds TWO roles — the Shared Profile screen shows
--- "Backend Manager" and "Founder — NovaMed" on one account.
+-- Role assignments. One user = one role (see migration 015): every account
+-- below holds exactly one role. The mentor accounts hold none here; migration
+-- 015 turns them into Job Seekers.
 -- ---------------------------------------------------------------------------
 INSERT INTO forge_user_roles (user_id, role_id, is_primary, granted_by)
 SELECT u.id, r.id, x.is_primary, (SELECT id FROM forge_users WHERE app_id = 'ATL-2020-0001')
 FROM (
   SELECT 'ATL-2024-0871' app_id, 'student' role, TRUE  is_primary UNION ALL
-  SELECT 'ATL-2023-0342', 'student',        FALSE UNION ALL
   SELECT 'ATL-2023-0342', 'founder',        TRUE  UNION ALL
   SELECT 'ATL-2021-0119', 'student',        TRUE  UNION ALL
   SELECT 'ATL-2025-0988', 'student',        TRUE  UNION ALL
@@ -59,7 +63,7 @@ FROM (
   SELECT 'ATL-2024-0902', 'student',        TRUE  UNION ALL
   SELECT 'ATL-2023-0777', 'student',        TRUE  UNION ALL
   SELECT 'ATL-2022-0012', 'founder',        TRUE  UNION ALL
-  SELECT 'ATL-2022-0012', 'backend-manager',FALSE UNION ALL
+  SELECT 'ATL-2020-0002', 'backend-manager',TRUE  UNION ALL
   SELECT 'ATL-2020-0001', 'forge-manager',  TRUE  UNION ALL
   SELECT 'ATL-2019-0004', 'super-admin',    TRUE
 ) x

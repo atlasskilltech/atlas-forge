@@ -119,7 +119,7 @@ function relativeLabel(value, now) {
 export function toUserCounts(rows) {
   const count = (group) => rows.filter((row) => row.group === group).length
   return [
-    { label: `${count('Students')} Students`, tone: 'info' },
+    { label: `${count('Job Seekers')} Job Seekers`, tone: 'info' },
     { label: `${count('Founders')} Founders`, tone: 'success' },
     { label: `${count('Managers')} Managers`, tone: 'warning' },
   ]
@@ -171,9 +171,16 @@ export function toQueueCount(rows) {
 /* Role management                                                            */
 /* -------------------------------------------------------------------------- */
 
+/** The account's single role, as shown on Role Management. */
+function roleLabel(user) {
+  const slugs = user.roleSlugs ?? []
+  if (slugs.includes('founder')) return 'Founder Unlocked'
+  return classifyAccount(user).role
+}
+
 export function toMatchedUser(user, profile) {
   const slugs = user.roleSlugs ?? []
-  const current = slugs.includes('founder') ? 'Founder Unlocked' : 'Standard Student'
+  const current = roleLabel(user)
 
   return {
     id: String(user.id),
@@ -190,6 +197,9 @@ export function toMatchedUser(user, profile) {
     ),
     startup: user.startupName ?? '—',
     hasAccess: slugs.includes('founder'),
+    // One user = one role: the role the "Change role" control starts on.
+    roleSlug: user.primaryRoleSlug ?? null,
+    email: user.email,
   }
 }
 
@@ -213,14 +223,13 @@ export function toGrantRow(grant) {
 
 /** The mobile Role Assignments list, which is about accounts rather than grants. */
 export function toRoleAssignment(user) {
-  const slugs = user.roleSlugs ?? []
   return {
     id: `role-${user.id}`,
     userId: user.id,
     name: user.name,
     initials: user.initials,
     tone: user.avatarTone ?? 'primary',
-    role: slugs.includes('founder') ? 'Founder Unlocked' : 'Standard Student',
+    role: roleLabel(user),
   }
 }
 

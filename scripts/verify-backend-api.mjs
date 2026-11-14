@@ -11,7 +11,8 @@ import { T } from '../src/lib/queries/tables.mjs'
  */
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3100'
-const MANAGER = 'ATL-2022-0012' // Shantanu — founder + backend-manager
+const MANAGER = 'ATL-2020-0002' // Kabir — the Backend Manager (one role)
+const FOUNDER = 'ATL-2022-0012' // Shantanu — founder (one role)
 const FORGE = 'ATL-2020-0001'
 const STUDENT = 'ATL-2024-0871'
 const PASSWORD = 'Atlas@2026'
@@ -93,7 +94,7 @@ check('the error counter reads the real table',
   dashboard.data.stats[4].value === '0' && dashboard.data.stats[4].tone === 'neutral')
 
 for (const [path, key, expected] of [
-  ['/api/backend/users', 'users', 15],
+  ['/api/backend/users', 'users', 16],
   ['/api/backend/logs', 'rows', 10],
   ['/api/backend/errors', 'rows', 0],
   ['/api/backend/contacts', 'rows', 5],
@@ -141,7 +142,7 @@ for (const [path, needle] of [
   ['/backend/role-assignments', 'Current Founders With Access'],
   ['/backend/grant-access', 'Grant Founder Access'],
   ['/backend/revoke-access', 'Revoke'],
-  ['/backend/profile', 'Shantanu Ghuriani'],
+  ['/backend/profile', 'Kabir Sethi'],
 ]) {
   const response = await call(path, { cookies: shantanu })
   const html = await text(response)
@@ -248,7 +249,7 @@ check('the setting reads back as changed',
 
 // A founder posting a job while approval is off should get a live listing —
 // this setting is a real feature check, not a label.
-const founderJar = await signIn(MANAGER)
+const founderJar = await signIn(FOUNDER)
 const posted = await call('/api/founder/listings', {
   method: 'POST',
   body: { title: '__api_probe__ No Approval Needed', description: 'x' },
@@ -336,6 +337,29 @@ check('a student is redirected away from backend pages',
 check('and never sees the platform counters', !studentHtml.includes('Total Users'))
 
 /* -------------------------------------------------------------------------- */
+/* Permanent delete: preview + confirmation (nothing is actually deleted)     */
+/* -------------------------------------------------------------------------- */
+
+const riyaRow = (await json(await call('/api/backend/access?q=ATL-2024-0871', { cookies: shantanu }))).data.matched
+const deletePreview = await call(`/api/backend/users/delete-preview?userId=${riyaRow.userId}`, { cookies: shantanu })
+const deletePreviewBody = await json(deletePreview)
+check('GET delete-preview is 200 and lists what would be removed',
+  deletePreview.status === 200 && deletePreviewBody.data.removed.some((item) => item.key === 'applications'),
+  String(deletePreview.status))
+const wrongEmail = await call('/api/backend/users', {
+  method: 'DELETE', body: { userId: riyaRow.userId, confirmEmail: 'not-her@example.com' }, cookies: shantanu,
+})
+check('DELETE with the wrong confirmation email is 422', wrongEmail.status === 422, String(wrongEmail.status))
+const forgeDelete = await call('/api/backend/users', {
+  method: 'DELETE', body: { userId: riyaRow.userId, confirmEmail: 'riya.kapoor@atlasuniversity.edu.in' }, cookies: await signIn(FORGE),
+})
+check('a Forge Manager cannot delete users (403)', forgeDelete.status === 403, String(forgeDelete.status))
+const forgePreview = await call(`/api/backend/users/delete-preview?userId=${riyaRow.userId}`, { cookies: await signIn(FORGE) })
+check('a Forge Manager cannot see the delete preview (403)', forgePreview.status === 403, String(forgePreview.status))
+check('Riya still exists after the refused attempts',
+  (await call('/api/backend/access?q=ATL-2024-0871', { cookies: shantanu }).then(json)).data.matched?.userId === riyaRow.userId)
+
+/* -------------------------------------------------------------------------- */
 /* Teardown                                                                   */
 /* -------------------------------------------------------------------------- */
 
@@ -367,6 +391,14 @@ await run(
   `DELETE ur FROM ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id WHERE ur.user_id = ? AND r.slug = 'founder'`,
   [target.userId]
 )
+// One user = one role: approving Founder REPLACED the Job Seeker role, so
+// deleting the founder row alone would leave the account with no role.
+await run(
+  `UPDATE ${T.user_roles} ur JOIN ${T.roles} r ON r.id = ur.role_id
+      SET ur.revoked_at = NULL, ur.active_slot = 1, ur.is_primary = 1
+    WHERE ur.user_id = ? AND r.slug = 'student'`,
+  [target.userId]
+)
 await run(`DELETE FROM ${T.notifications} WHERE type = 'access' AND user_id = ?`, [target.userId])
 await run(`UPDATE ${T.platform_settings} SET setting_value = 'true' WHERE setting_key = ?`, [
   'job_listings_require_approval',
@@ -387,7 +419,7 @@ await connection.end()
 check('teardown — seeded data restored',
   Number(counts.listings) === 7 && Number(counts.approvals) === 4 &&
     Number(counts.grants) === 2 && Number(counts.activity) === 10 &&
-    Number(counts.users) === 15,
+    Number(counts.users) === 16,
   `listings=${counts.listings} approvals=${counts.approvals} grants=${counts.grants} activity=${counts.activity}`)
 
 /* -------------------------------------------------------------------------- */

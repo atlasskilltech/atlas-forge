@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { execute, insert, query, queryOne, queryValue } from '@/lib/db'
+import { DatabaseError, execute, insert, query, queryOne, queryValue } from '@/lib/db'
 import * as sql from '@/lib/queries/users'
 import { applyFullListCap, withFullListCap } from '@/lib/queries/pagination'
 import { bool, inClause, iso, num } from '@/lib/utils/rows'
@@ -84,6 +84,41 @@ export async function findByEmail(email) {
   return row ? toUser(row) : null
 }
 
+/** True when the error is "column does not exist" — i.e. migration 014 not applied yet. */
+const isMissingColumn = (error) => error instanceof DatabaseError && error.code === 'ER_BAD_FIELD_ERROR'
+
+/**
+ * The live account linked to this Google `sub`, or `null`. Before migration 014
+ * adds the column there are no links, so a missing column reads as `null`.
+ */
+export async function findByGoogleSub(sub) {
+  if (!sub) return null
+  try {
+    const row = await queryOne(sql.SELECT_USER_BY_GOOGLE_SUB, [sub])
+    return row ? toUser(row) : null
+  } catch (error) {
+    if (isMissingColumn(error)) return null
+    throw error
+  }
+}
+
+/**
+ * Record that `userId` signs in with the Google identity `sub`. Best-effort and
+ * fill-only (an existing link is never overwritten): returns `true` when a link
+ * was written, `false` when it was already linked, the column does not exist
+ * yet, or the `sub` is held by another (e.g. soft-deleted) row.
+ */
+export async function linkGoogleAccount(userId, sub) {
+  if (!sub) return false
+  try {
+    const { affectedRows } = await execute(sql.LINK_GOOGLE_ACCOUNT, [sub, userId])
+    return affectedRows > 0
+  } catch (error) {
+    if (isMissingColumn(error) || (error instanceof DatabaseError && error.isDuplicate)) return false
+    throw error
+  }
+}
+
 /**
  * The next free App ID for the given year, in the platform's `ATL-<year>-NNNN`
  * format. Runs on the caller's transaction connection so the `FOR UPDATE` lock
@@ -107,8 +142,8 @@ export async function findRoles(userId) {
   return rows.map(toRole)
 }
 
-export async function findPermissions(userId) {
-  const rows = await query(sql.SELECT_USER_PERMISSIONS, [userId])
+export async function findRolePermissions(roleId) {
+  const rows = await query(sql.SELECT_ROLE_PERMISSIONS, [roleId])
   return rows.map((row) => row.slug)
 }
 
@@ -230,13 +265,19 @@ export async function replaceSkills(userId, skillIds, conn) {
   }
 }
 
-export async function grantRole(userId, roleId, { isPrimary = false, grantedBy = null } = {}, conn) {
-  await execute(sql.GRANT_ROLE, [userId, roleId, isPrimary, grantedBy], conn)
-}
-
-export async function revokeRole(userId, roleId, conn) {
-  const { affectedRows } = await execute(sql.REVOKE_ROLE, [userId, roleId], conn)
-  return affectedRows > 0
+/**
+ * Give a user exactly ONE role, replacing whatever they held before.
+ *
+ * Must run on a transaction connection (`conn`) so the revoke and the grant
+ * commit together. Re-setting the role a user already holds is a no-op apart
+ * from making sure it is the only active one. Old role rows are kept with
+ * `revoked_at` set (history), never deleted.
+ */
+export async function setSingleRole(userId, roleId, { grantedBy = null } = {}, conn) {
+  if (!conn) throw new Error('setSingleRole must run inside a transaction.')
+  await query(sql.LOCK_USER_ROLES, [userId], conn)
+  await execute(sql.REVOKE_OTHER_ROLES, [userId, roleId], conn)
+  await execute(sql.SET_SINGLE_ROLE, [userId, roleId, grantedBy], conn)
 }
 
 export async function softDelete(userId, conn) {

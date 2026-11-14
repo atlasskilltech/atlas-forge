@@ -23,7 +23,6 @@ export const ROLE_HOME = {
   [ROLES.FORGE_MANAGER]: '/forge/dashboard',
   [ROLES.BACKEND_MANAGER]: '/backend/dashboard',
   [ROLES.SUPER_ADMIN]: '/admin/overview',
-  [ROLES.NETWORK_MEMBER]: '/member/home',
 }
 
 /* -------------------------------------------------------------------------- */
@@ -212,6 +211,15 @@ export const SIDEBAR_NAV = {
         { label: 'Platform Settings', href: '/backend/settings' },
         { label: 'Platform Logs', href: '/backend/logs' },
         { label: 'Error Logs', href: '/backend/error-logs' },
+      ],
+    },
+    {
+      // The Backend Manager sees everything: these open the Forge Manager and
+      // (read-only) Super Admin areas, which allow this role server-side.
+      label: 'Other Areas',
+      items: [
+        { label: 'Forge Manager Area', href: '/forge/dashboard' },
+        { label: 'Super Admin View', href: '/admin/overview' },
       ],
     },
     {

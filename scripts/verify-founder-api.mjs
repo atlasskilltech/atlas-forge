@@ -109,7 +109,8 @@ check('anonymous founder API is 401', (await call('/api/founder/home')).status =
 const shantanu = await signIn(FOUNDER)
 
 const session = await json(await call('/api/auth/session', { cookies: shantanu }))
-check('a multi-role account resolves both roles', session?.data?.roles?.length === 2,
+check('one user = one role: the founder session holds exactly one role',
+  session?.data?.roles?.length === 1 && session.data.roles[0].slug === 'founder',
   session?.data?.roles?.map((role) => role.slug).join(' + '))
 
 const home = await json(await call('/api/founder/home', { cookies: shantanu }))
