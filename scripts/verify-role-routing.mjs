@@ -3,16 +3,11 @@ import { test } from 'node:test'
 
 import { ROLE_HOME } from '@/config/navigation'
 import { ROLES } from '@/config/roles'
-import {
-  hasPortalRole,
-  landingPathFor,
-  routableRoles,
-  sessionRoleFor,
-} from '@/lib/auth/role-routing'
+import { effectiveRole, landingPathFor, sessionRoleFor } from '@/lib/auth/role-routing'
 
 /**
  * Post-login routing, shared by password login, Google Sign-In, /select-role
- * and /member/home.
+ * and /member/home. One user = one role, so there is never a role picker.
  *
  *   npm run test:auth:routing      (no database or server needed)
  *
@@ -22,7 +17,7 @@ import {
 
 const role = (slug, isPrimary = false) => ({ slug, isPrimary })
 
-test('a user with one portal role lands on that role dashboard (every role)', () => {
+test('each of the five roles lands on its own dashboard', () => {
   for (const slug of [
     ROLES.STUDENT,
     ROLES.FOUNDER,
@@ -36,46 +31,32 @@ test('a user with one portal role lands on that role dashboard (every role)', ()
   }
 })
 
-test('a portal user who ALSO holds network-member skips /member/home', () => {
-  // Registration approval attaches network-member to an existing account as a
-  // non-primary role — this is the "Google login lands on member home" case.
-  const roles = [role(ROLES.FORGE_MANAGER, true), role(ROLES.NETWORK_MEMBER)]
-  assert.equal(landingPathFor(roles), '/forge/dashboard')
-  assert.equal(sessionRoleFor(roles), ROLES.FORGE_MANAGER)
-  assert.equal(hasPortalRole(roles), true)
+test('the Job Seeker role (slug student) lands on /student/home', () => {
+  assert.equal(landingPathFor([role(ROLES.STUDENT, true)]), '/student/home')
 })
 
-test('portal role wins even when network-member is the primary role', () => {
-  const roles = [role(ROLES.STUDENT), role(ROLES.NETWORK_MEMBER, true)]
-  assert.equal(landingPathFor(roles), '/student/home')
-  assert.equal(sessionRoleFor(roles), ROLES.STUDENT)
-})
-
-test('several portal roles → role picker, member role not offered', () => {
-  const roles = [
-    role(ROLES.FORGE_MANAGER, true),
-    role(ROLES.BACKEND_MANAGER),
-    role(ROLES.NETWORK_MEMBER),
-  ]
-  assert.equal(landingPathFor(roles), '/select-role')
-  assert.deepEqual(
-    routableRoles(roles).map((r) => r.slug),
-    [ROLES.FORGE_MANAGER, ROLES.BACKEND_MANAGER]
+test('never a role picker: old multi-role data resolves to ONE role by priority', () => {
+  // Same priority migration 015 uses: Super Admin > Backend > Forge > Founder > Job Seeker.
+  assert.equal(sessionRoleFor([role(ROLES.STUDENT, true), role(ROLES.FOUNDER)]), ROLES.FOUNDER)
+  assert.equal(sessionRoleFor([role(ROLES.FOUNDER, true), role(ROLES.BACKEND_MANAGER)]), ROLES.BACKEND_MANAGER)
+  assert.equal(
+    sessionRoleFor([role(ROLES.FORGE_MANAGER), role(ROLES.BACKEND_MANAGER), role(ROLES.SUPER_ADMIN)]),
+    ROLES.SUPER_ADMIN
   )
-  assert.equal(sessionRoleFor(roles), ROLES.FORGE_MANAGER)
+  assert.notEqual(landingPathFor([role(ROLES.FORGE_MANAGER), role(ROLES.BACKEND_MANAGER)]), '/select-role')
 })
 
-test('a member-only user (brand-new Google registrant) keeps /member/home', () => {
-  const roles = [role(ROLES.NETWORK_MEMBER, true)]
-  assert.equal(landingPathFor(roles), '/member/home')
-  assert.equal(sessionRoleFor(roles), ROLES.NETWORK_MEMBER)
-  assert.equal(hasPortalRole(roles), false)
+test('the retired network-member role has no dashboard and is ignored', () => {
+  assert.equal(landingPathFor([role('network-member', true)]), null)
+  assert.equal(landingPathFor([role('network-member', true), role(ROLES.STUDENT)]), '/student/home')
+  assert.equal(ROLE_HOME['network-member'], undefined)
 })
 
 test('no roles → no landing (caller sends to /login)', () => {
   assert.equal(landingPathFor([]), null)
   assert.equal(sessionRoleFor([]), null)
   assert.equal(landingPathFor(undefined), null)
+  assert.equal(effectiveRole(undefined), null)
 })
 
 test('unknown role slugs are ignored', () => {
