@@ -5,12 +5,13 @@
 #
 #   DIAG=/tmp/forge-db-diag-<run> APP=/home/ubuntu/atlas-forge bash prod-readonly-report.sh
 #
-# Never writes to the app directory, .env, PM2 or the database. The only file
-# it writes outside $DIAG is the investigation baseline JSON (table names,
-# counts and fingerprints — no row data) under ~/forge-migration/.
+# Never writes to the app directory's tracked files, .env, PM2 or the database.
+# The only file it writes outside $DIAG is the investigation baseline JSON (table
+# names, counts and fingerprints — no row data) under $APP/forge-migration/.
 # All output passes through redact.cjs, which blanks secret values from .env.
 # ---------------------------------------------------------------------------
 set -uo pipefail
+umask 077   # the investigation baseline JSON written below is 0600
 : "${DIAG:?}" "${APP:?}"
 cd "$APP" || { echo "FAIL: $APP not found"; exit 1; }
 [ -f .env ] || { echo "FAIL: $APP/.env not found"; exit 1; }
@@ -63,8 +64,8 @@ find "$HOME" /var/backups /backup /backups -maxdepth 4 -type f \
   -printf '  %TY-%Tm-%Td %TH:%TM %12s %p\n' 2>/dev/null | sort -r | head -20
 echo "  (end of list)"
 
-section "backup integrity (sha256 + gzip test of every backup in ~/forge-migration/backups)"
-BK="$HOME/forge-migration/backups"
+section "backup integrity (sha256 + gzip test of every backup in \$APP/forge-migration/backups)"
+BK="$APP/forge-migration/backups"
 if ls "$BK"/*.sql.gz >/dev/null 2>&1; then
   for f in "$BK"/*.sql.gz; do
     ok=OK; (cd "$BK" && sha256sum -c --quiet "$(basename "$f").sha256" >/dev/null 2>&1) || ok=SHA-MISMATCH
@@ -80,8 +81,8 @@ node --env-file=.env "$DIAG/scripts/check-db.mjs"
 rc_check=$?
 
 section "read-only prefix-migration investigation"
-mkdir -p "$HOME/forge-migration" && chmod 700 "$HOME/forge-migration"
-BASE="$HOME/forge-migration/investigation-$(date -u +%Y%m%dT%H%M%SZ).json"
+mkdir -p "$APP/forge-migration" && chmod 700 "$APP/forge-migration"
+BASE="$APP/forge-migration/investigation-$(date -u +%Y%m%dT%H%M%SZ).json"
 node --env-file=.env "$DIAG/scripts/investigate-prefix.mjs" --json="$BASE"
 rc_inv=$?
 [ -f "$BASE" ] && echo "  baseline sha256 $(sha256sum "$BASE" | cut -c1-64)"
@@ -89,7 +90,7 @@ rc_inv=$?
 rc_post=0
 if node -e "process.exit(require('$BASE').forge.every(r=>r.prefixedExists&&!r.legacyExists)?0:1)" 2>/dev/null; then
   section "POST-MIGRATION verification (read-only)"
-  PRE=$(ls -t "$HOME"/forge-migration/backups/*-investigation.json 2>/dev/null | head -1)
+  PRE=$(ls -t "$APP"/forge-migration/backups/*-investigation.json 2>/dev/null | head -1)
   echo "  baseline (pre-migration): $PRE"
   node "$DIAG/scripts/ops/compare-investigations.mjs" "$PRE" "$BASE" || rc_post=1
   node --no-warnings --env-file=.env "$DIAG/scripts/verify-queries.mjs" | grep -E 'prepared|FAIL' | sed 's/^/  /'
